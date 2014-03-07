@@ -18,10 +18,9 @@ Purpose: plot 2 things:
 import math
 import numpy
 import os
-from astropy.table import Table
+from astropy.io.misc import hdf5
 from astropy import wcs
 from astropy.io import fits
-import glob
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
@@ -194,7 +193,7 @@ goodregion = mask == 0
 rms = im[goodregion].std()
 #print rms
 #npix_sma2 = math.pi * bmaj2/2 * bmin2/2 / celldata**2 / math.log(2)
-immin = -0.3e-3
+immin = -rms
 immax = im.max()
 
 #------------------------------------------------------------------------------
@@ -203,7 +202,8 @@ bestfitloc = 'posteriorpdf.dat'
 
 # read the latest posterior PDFs
 print "Found latest posterior PDF file: " + bestfitloc
-fitresults = Table.read(bestfitloc, format='ascii', data_start=-5000)
+fitresults = hdf5.read_table_hdf5(bestfitloc)
+fitresults = fitresults[-5000:]
 #fitresults = Table.read(bestfitloc, format='ascii')
 fitresults = modifypdf.prune(fitresults)
 

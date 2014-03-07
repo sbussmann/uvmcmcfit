@@ -8,7 +8,7 @@ Purpose: Look for degeneracies between parameters of lens model
 """
 
 import matplotlib.pyplot as plt
-from astropy.table import Table
+from astropy.io.misc import hdf5
 import numpy
 from pylab import savefig
 import modifypdf
@@ -16,12 +16,13 @@ import modifypdf
 
 # examine each inputs_lens.dat file to determine total number of lenses
 
-posteriorpdfloc = 'posteriorpdf.dat'
-posteriorpdf = Table.read(posteriorpdfloc, format='ascii', data_start=-5000)
+posteriorpdfloc = 'posteriorpdf.hdf5'
+posteriorpdf = hdf5.read_table_hdf5(posteriorpdfloc)
+posteriorpdf = posteriorpdf[-5000:]
 
 posteriorpdfgood = modifypdf.prune(posteriorpdf)
 
-headers = posteriorpdf.keys()
+headers = posteriorpdf.colnames()
 ncol = len(headers)
 k = 0
 xsize = ncol * 3

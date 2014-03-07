@@ -8,19 +8,17 @@ Purpose: Plot convergence of lnprob
 
 """
 
-from astropy.table import Table
+from astropy.io.misc import hdf5
 import matplotlib.pyplot as plt
 from pylab import savefig
 import os
-import rdconfig
-import glob
 import numpy
 
 keyname = 'lnprob'
 
-posteriorloc = 'posteriorpdf.dat'
+posteriorloc = 'posteriorpdf.hdf5'
 print "Reading burnin results from " + posteriorloc
-pdf = Table.read(posteriorloc, format='ascii')
+pdf = hdf5.read_table_hdf5(posteriorloc)
 lnprob = pdf[keyname]
 
 lnprob = numpy.array(lnprob)

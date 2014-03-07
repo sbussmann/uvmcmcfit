@@ -17,10 +17,9 @@ Purpose: plot 2 things:
 import math
 import numpy
 import os
-from astropy.table import Table
 from astropy import wcs
 from astropy.io import fits
-import glob
+from astropy.io.misc import hdf5
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
@@ -64,10 +63,13 @@ im = im[0,0,:,:].copy()
 headim = fits.getheader(config.ImageName)
 
 # get the object name from directory
-startindx = cwd.find('ModelFits')
-endindx = cwd.find('uvfit')
-objectname = cwd[startindx + 10 : endindx - 1]
-#objectname = headim['OBJECT']
+#startindx = cwd.find('ModelFits')
+#endindx = cwd.find('uvfit')
+#objectname = cwd[startindx + 10 : endindx - 1]
+try:
+    objectname = headim['OBJECT']
+except KeyError:
+    objectname = 'No objname in header'
 
 # Obtain measurements of beamsize and image min/max
 bmaj = headim['BMAJ'] * 3600
@@ -191,23 +193,22 @@ goodregion = mask == 0
 rms = im[goodregion].std()
 #print rms
 #npix_sma2 = math.pi * bmaj2/2 * bmin2/2 / celldata**2 / math.log(2)
-immin = -0.3e-3
+immin = -rms
 immax = im.max()
 
 #------------------------------------------------------------------------------
 # Read best-fit results file
-bestfitloc = 'posteriorpdf.dat'
+bestfitloc = 'posteriorpdf.hdf5'
 
 # read the latest posterior PDFs
 print "Found latest posterior PDF file: " + bestfitloc
-fitresults = Table.read(bestfitloc, format='ascii', data_start=-5000)
+fitresults = hdf5.read_table_hdf5(bestfitloc)
 #fitresults = Table.read(bestfitloc, format='ascii')
 
 # identify best-fit model
 minchi2 = fitresults['lnprob'].max()
 indx = fitresults['lnprob'] == minchi2#fitresults['lnprob'][1]
-bestfit = fitresults[indx]
-bestfit = bestfit[0]
+bestfit = fitresults[indx][0]
 
 nmu = 2 * (numpy.array(nsource_regions).sum() + nregions)
 pzero_regions = list(bestfit.data)[1:-nmu]

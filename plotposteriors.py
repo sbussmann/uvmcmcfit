@@ -8,7 +8,7 @@
 #def plot(objname, redo, deltachi2):
 
 import numpy
-from astropy.table import Table
+from astropy.io.misc import hdf5
 #import aplpy
 import matplotlib.pyplot as mpl
 from pylab import savefig
@@ -25,13 +25,14 @@ rc('font',**{'family':'sans-serif','sans-serif':['Arial Narrow'],'size':'6'})
 nticks = 5
 
 #deltachi2 = 100
-posteriorloc = 'posteriorpdf.dat'
+posteriorloc = 'posteriorpdf.hdf5'
 
 # read posterior PDF
 
 print "Reading output from emcee"
 
-fitresults = Table.read(posteriorloc, format='ascii', data_start=-5000)
+fitresults = hdf5.read_table_hdf5(posteriorloc)
+fitresults = fitresults[-5000:]
 print 'prior to pruning: ', fitresults['lnprob'].mean()
 
 # identify the good fits
