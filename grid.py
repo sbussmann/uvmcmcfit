@@ -1,6 +1,8 @@
 # - return gridding correction for Mr. Schwab's optimal gridding system
 # - Essentially a transription of grid.for
 
+from __future__ import print_function
+
 import numpy
 import math
 #import pdb
@@ -173,7 +175,7 @@ def getspherewave():
 def spheroid(eta, m, alpha, p, q):
     # Currently alpha can only be eq to 1
     if (alpha != 1):
-        print 'grid.pro: ALPHA MUST BE 1'
+        print('grid.py: ALPHA MUST BE 1')
 
     etalim = [1., 1., 0.75, 0.775, 0.775]
     nnum   = [5, 7, 5, 5, 6]
@@ -182,11 +184,11 @@ def spheroid(eta, m, alpha, p, q):
     # checks and balances
     twoalp = numpy.int(numpy.round(2. * alpha))
     if (numpy.abs(eta) > 1):
-        print 'Abs(ETA) exceeds 1'
+        print("Abs(ETA) exceeds 1: {:f}".format(eta))
     if (twoalp < 0) or (twoalp > 4):
-        print 'Illlegal value of ALPHA'
+        print("Illegal value of ALPHA")
     if (m < 4) or (m > 8):
-        print 'Illegal value of M'
+        print("Illegal value of M: {:f}".format(m))
 
     # - Go to appropriate approximation
     if (numpy.abs(eta) > etalim[m - 4]):
@@ -199,13 +201,13 @@ def spheroid(eta, m, alpha, p, q):
     # - Get numerator via Horners rule:
     np = nnum[m - 4] - 1
     num = p[np, twoalp, m - 4, ip]
-    for i in xrange(np - 1, -1, -1):
+    for i in range(np - 1, -1, -1):
         num = num * x + p[i, twoalp, m - 4, ip]
 
     # - Get denominator via Horners rule"
     nq = ndenom[m - 4] - 1
     denom = q[nq, twoalp, m - 4, ip] 
-    for i in xrange(nq - 1, -1, -1):
+    for i in range(nq - 1, -1, -1):
         denom = denom * x + q[i, twoalp, m - 4, ip]
 
     return num/denom
@@ -230,8 +232,8 @@ def corrfun(n, width, alpha):
     ppp, qqq = getspherewave()
     phi = numpy.zeros(n)
     dx = 2. / n
-    i0 = numpy.int(n) / 2 + 1
-    for i in xrange(n):
+    i0 = numpy.int(n) // 2 + 1
+    for i in range(n):
         x = (i + 1 - i0) * dx
         phi[i] = spheroid(x, width, alpha, ppp, qqq)
     return phi
@@ -247,35 +249,35 @@ def ModCorr(nxd, nyd):
     #ycorr1 = numpy.zeros(nyd)
 
     data = corrfun(nxd, width, 1.)
-    offset = numpy.int(nxd) / 2
-    indx = numpy.arange(nxd / 2)
+    offset = numpy.int(nxd) // 2
+    indx = numpy.arange(nxd // 2)
     ix = indx.astype(int)
     xcorr[ix] = data[ix + offset]
-    indx = numpy.arange(nxd / 2) + nxd / 2
+    indx = numpy.arange(nxd // 2) + nxd // 2
     ix = indx.astype(int)
     xcorr[ix] = data[ix - offset]
-    #for i in numpy.arange(nxd / 2):
+    #for i in numpy.arange(nxd // 2):
     #    xcorr1[i] = data[i + offset]
-    #for i in numpy.arange(nxd / 2) + nxd / 2:
+    #for i in numpy.arange(nxd // 2) + nxd // 2:
     #    xcorr1[i] = data[i - offset]
 
     data = corrfun(nyd, width, 1.)
-    offset = numpy.int(nyd) / 2
-    indx = numpy.arange(0, nyd / 2, 2)
+    offset = numpy.int(nyd) // 2
+    indx = numpy.arange(0, nyd // 2, 2)
     ycorr[indx] = data[indx + offset]
-    indx = numpy.arange(0, nyd / 2, 2)
+    indx = numpy.arange(0, nyd // 2, 2)
     ycorr[indx + 1] = data[indx + offset + 1]
-    indx = numpy.arange(nyd / 2, nyd, 2)
+    indx = numpy.arange(nyd // 2, nyd, 2)
     ycorr[indx] = data[indx - offset]
-    indx = numpy.arange(nyd / 2, nyd, 2)
+    indx = numpy.arange(nyd // 2, nyd, 2)
     ycorr[indx + 1] = data[indx - offset + 1]
-    #for i in numpy.arange(0, nyd / 2, 2):
+    #for i in numpy.arange(0, nyd // 2, 2):
     #    ycorr1[i]   =  data[i + offset]
     #    ycorr1[i + 1] =  data[i + 1 + offset]
-    #for i in numpy.arange(nyd / 2, nyd, 2):
+    #for i in numpy.arange(nyd // 2, nyd, 2):
     #    ycorr1[i]   =  data[i - offset]
     #    ycorr1[i + 1] =  data[i + 1 - offset]
-    #print ycorr - ycorr1
+    #print(ycorr - ycorr1)
     return ycorr, xcorr
 
 def ModShift(uu, vv, xref1, yref1, xref2, yref2, freq1, freq, intp):
