@@ -467,6 +467,9 @@ if os.path.exists(posteriorloc):
             namej = posteriordat.colnames[j + startindx]
             pzero[:, j] = posteriordat[namej][-nwalkers:]
 
+        # number of mu measurements
+        nmu = len(posteriordat.colnames) - nparams - nlnprob
+
         # output name is based on most recent burnin file name
         realpdf = True
     else:
@@ -540,13 +543,12 @@ for pos, prob, state, amp in sampler.sample(pzero, iterations=10000):
           format(numpy.mean(sampler.acceptance_fraction)))
     os.system('date')
     #ff.write(str(prob))
-    yesamp = amp > 0
-    namp = len(amp[yesamp]) # This odd bit of code always checks the 2nd element of amp
-    superpos = numpy.zeros(1 + nparams + namp)
+    superpos = numpy.zeros(1 + nparams + nmu)
+
     for wi in range(nwalkers):
         superpos[0] = prob[wi]
         superpos[1:nparams + 1] = pos[wi]
-        superpos[nparams + 1:nparams + namp + 1] = amp[wi]
+        superpos[nparams + 1:nparams + nmu + 1] = amp[wi]
         posteriordat.add_row(superpos)
     hdf5.write_table_hdf5(posteriordat, 'posteriorpdf.hdf5', 
             path = '/posteriorpdf', overwrite=True, compression=True)
