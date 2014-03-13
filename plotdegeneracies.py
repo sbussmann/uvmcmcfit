@@ -7,6 +7,8 @@ Purpose: Look for degeneracies between parameters of lens model
 
 """
 
+from __future__ import print_function
+
 import matplotlib.pyplot as plt
 from astropy.io.misc import hdf5
 import numpy
@@ -73,7 +75,7 @@ for i in numpy.arange(ncol):
         plt.hexbin(datax, datay, C = lnprob)
         plt.xlabel(namex)
         plt.ylabel(namey)
-        print i, j, plotspot, namex, namey
+        print(i, j, plotspot, namex, namey)
         k += 1
 
 #plt.suptitle(iau_address, x=0.5, y=0.987, fontsize='xx-large')

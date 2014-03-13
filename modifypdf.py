@@ -8,6 +8,8 @@ functions.
 
 """
 
+from __future__ import print_function
+
 from astropy.table import Table
 import numpy
 
@@ -26,7 +28,7 @@ def prune(PDFdata, scaler=5.0):
     # get the last niters iterations
     #PDFdata = Table.read(oldpdfloc, format='ascii')
 
-    print 'prior to pruning: ', PDFdata['lnprob'].mean()
+    print("prior to pruning, <Lnprob>: {:f}".format(PDFdata['lnprob'].mean()))
     #import pdb; pdb.set_trace()
 
     # identify the good fits
@@ -56,7 +58,7 @@ def prune(PDFdata, scaler=5.0):
         medlnprob = numpy.median(dlnprob)
         avglnprob = numpy.mean(dlnprob)
         skewlnprob = numpy.abs(avglnprob - medlnprob)
-        print medlnprob, avglnprob, skewlnprob
+        print(medlnprob, avglnprob, skewlnprob)
         if medlnprob == medlnprob_previous:
             scaler /= 1.5
         medlnprob_previous = medlnprob

@@ -8,6 +8,8 @@ Purpose: Plot convergence of lnprob
 
 """
 
+from __future__ import print_function
+
 from astropy.io.misc import hdf5
 import matplotlib.pyplot as plt
 from pylab import savefig
@@ -17,7 +19,7 @@ import numpy
 keyname = 'lnprob'
 
 posteriorloc = 'posteriorpdf.hdf5'
-print "Reading burnin results from " + posteriorloc
+print("Reading burnin results from {0:s}".format(posteriorloc))
 pdf = hdf5.read_table_hdf5(posteriorloc)
 lnprob = pdf[keyname]
 
