@@ -237,7 +237,6 @@ def lnprob(pzero_regions, p_u_regions, p_l_regions, fixindx,
     if probln * 0 != 0:
         probln = -numpy.inf
     #print(ndof, probln, sigmaterm_all.sum(), chi2_all.sum())
-    print(probln)
 
     return probln, amp
 
@@ -320,7 +319,8 @@ npos = wgt.size
 
 #----------------------------------------------------------------------------
 # Define the number of walkers
-nwalkers = 32
+nwalkers = config.Nwalkers
+print(nwalkers)
 
 # determine the number of regions for which we need surface brightness maps
 regionIDs = config.RegionID
