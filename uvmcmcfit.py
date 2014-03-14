@@ -315,7 +315,7 @@ npos = wgt.size
 
 #----------------------------------------------------------------------------
 # Define the number of walkers
-nwalkers = 32
+nwalkers = config.Nwalkers
 
 # determine the number of regions for which we need surface brightness maps
 regionIDs = config.RegionID
