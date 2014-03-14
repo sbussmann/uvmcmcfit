@@ -24,7 +24,6 @@ from __future__ import print_function, division
 import numpy
 import grid
 #cimport numpy
-#import pdb
 
 # define some constants
 c = 3e10
@@ -682,8 +681,6 @@ def uvmodel(model, modelheader, u, v, pcd):
     #    wgt * (numpy.imag(mvis_opt) - ivis) ** 2
     #print('chi squared value is :', chi2v.sum())
     # 4.7212017638007328e-06
-    #pdb.set_trace()
     #print(numpy.abs(mvis_opt).max())
     #print(numpy.abs(mvis_opt).min())
-    #import pdb; pdb.set_trace()
     return mvis_opt

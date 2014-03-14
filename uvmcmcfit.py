@@ -199,6 +199,10 @@ def lnprob(pzero_regions, p_u_regions, p_l_regions, fixindx,
         #plt.imshow(g_lensimage, origin='lower')
         #plt.colorbar()
         #plt.show()
+        #plt.imshow(g_image, origin='lower')
+        #plt.colorbar()
+        #plt.show()
+        #import pdb; pdb.set_trace()
 
     # use all visibilities
     goodvis = (real * 0 == 0)
@@ -233,6 +237,7 @@ def lnprob(pzero_regions, p_u_regions, p_l_regions, fixindx,
     if probln * 0 != 0:
         probln = -numpy.inf
     #print(ndof, probln, sigmaterm_all.sum(), chi2_all.sum())
+    print(probln)
 
     return probln, amp
 

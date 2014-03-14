@@ -5,7 +5,6 @@ from __future__ import print_function
 
 import numpy
 import math
-#import pdb
 
 def getspherewave():
 
