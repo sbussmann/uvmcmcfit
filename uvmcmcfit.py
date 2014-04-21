@@ -61,7 +61,7 @@
  - Sources: Sources are represented by Gaussian profiles.  Source positions are
  always defined relative to the primary lens, unless there is no lens, in which
  case they are defined relative to the emission centroid defined in
- "config.txt."
+ "config.py."
 
 --------
  OUTPUTS
