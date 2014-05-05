@@ -66,9 +66,13 @@ im = im[0,0,:,:].copy()
 headim = fits.getheader(config.ImageName)
 
 # get the object name from directory
-startindx = cwd.find('ModelFits')
-endindx = cwd.find('uvfit')
-objectname = cwd[startindx + 10 : endindx - 1]
+#startindx = cwd.find('ModelFits')
+#endindx = cwd.find('uvfit')
+#objectname = cwd[startindx + 10 : endindx - 1]
+try:
+    objectname = headim['OBJECT']
+except KeyError:
+    objectname = 'No objname in header'
 #objectname = headim['OBJECT']
 
 # Obtain measurements of beamsize and image min/max
@@ -198,7 +202,7 @@ immax = im.max()
 
 #------------------------------------------------------------------------------
 # Read best-fit results file
-bestfitloc = 'posteriorpdf.dat'
+bestfitloc = 'posteriorpdf.hdf5'
 
 # read the latest posterior PDFs
 print "Found latest posterior PDF file: " + bestfitloc

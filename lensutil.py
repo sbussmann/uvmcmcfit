@@ -207,7 +207,6 @@ def sie_grad(x, y, par):
         #plt.imshow(mu, origin='lower')
         #plt.colorbar()
         #plt.show()
-        #import pdb; pdb.set_trace()
     else:
         xtg = b * xsie / (r_ell + (r_ell == 0))
         ytg = b * ysie / (r_ell + (r_ell == 0))
@@ -220,15 +219,14 @@ def sie_grad(x, y, par):
     #plt.imshow(M, origin='lower')
     #plt.colorbar()
     #plt.show()
-    #import pdb; pdb.set_trace()
     # Return value:
     return (xg, yg, mu)
 
 def sbmap(x, y, nlens, nsource, parameters, model_types):
 
     # define the x, y, and magnification maps
-    dx = N.zeros(x.shape)
-    dy = N.zeros(y.shape)
+    dx = x.copy()
+    dy = y.copy()
     dmu = N.zeros(x.shape)
 
     # loop over each lens
@@ -246,8 +244,8 @@ def sbmap(x, y, nlens, nsource, parameters, model_types):
         (xg, yg, mu) = sie_grad(x, y, lpar)
 
         # apply the gradients and magnifications
-        dx += xg
-        dy += yg
+        dx -= xg
+        dy -= yg
         dmu += mu
 
     # hack to get the right index from the pzero vector

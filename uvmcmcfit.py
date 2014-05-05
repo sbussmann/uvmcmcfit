@@ -61,7 +61,7 @@
  - Sources: Sources are represented by Gaussian profiles.  Source positions are
  always defined relative to the primary lens, unless there is no lens, in which
  case they are defined relative to the emission centroid defined in
- "config.txt."
+ "config.py."
 
 --------
  OUTPUTS
@@ -187,7 +187,7 @@ def lnprob(pzero_regions, p_u_regions, p_l_regions, fixindx, \
             amp.extend([amp_tot])
             amp.extend([amp_mask])
 
-        model_complex = sample_vis.uvmodel(g_image, headmod, uuu, vvv, pcd)
+        model_complex = sample_vis.uvmodel(g_lensimage, headmod, uuu, vvv, pcd)
         model_real += numpy.real(model_complex)
         model_imag += numpy.imag(model_complex)
 
@@ -197,6 +197,10 @@ def lnprob(pzero_regions, p_u_regions, p_l_regions, fixindx, \
         #plt.imshow(g_lensimage, origin='lower')
         #plt.colorbar()
         #plt.show()
+        #plt.imshow(g_image, origin='lower')
+        #plt.colorbar()
+        #plt.show()
+        #import pdb; pdb.set_trace()
 
     # use all visibilities
     goodvis = (real * 0 == 0)
@@ -230,7 +234,6 @@ def lnprob(pzero_regions, p_u_regions, p_l_regions, fixindx, \
     probln = -0.5 * lnlike[goodvis].sum()
     if probln * 0 != 0:
         probln = -numpy.inf
-    #print ndof, probln, sigmaterm_all.sum(), chi2_all.sum()
 
     return probln, amp
 
@@ -312,7 +315,7 @@ npos = wgt.size
 
 #----------------------------------------------------------------------------
 # Define the number of walkers
-nwalkers = 32
+nwalkers = config.Nwalkers
 
 # determine the number of regions for which we need surface brightness maps
 regionIDs = config.RegionID
@@ -540,5 +543,6 @@ for pos, prob, state, amp in sampler.sample(pzero, iterations=10000):
         superpos[1:nparams + 1] = pos[wi]
         superpos[nparams + 1:nparams + nmu + 1] = amp[wi]
         posteriordat.add_row(superpos)
-    hdf5.write_table_hdf5(posteriordat, 'posteriorpdf.hdf5', 
+    posteriordat.write('posteriorpdf.hdf5', 
             path = '/posteriorpdf', overwrite=True, compression=True)
+    #posteriordat.write('posteriorpdf.txt', format='ascii')

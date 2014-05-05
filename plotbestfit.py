@@ -629,4 +629,4 @@ for regioni in range(nregions):
     savefig(rename + '.sbmap.Region' + sri + '.pdf')
 
 cmd = 'rm -rf sbmap* *pyreplace* *pysubtract* dump'
-#os.system(cmd)
+os.system(cmd)

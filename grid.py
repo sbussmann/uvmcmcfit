@@ -3,7 +3,6 @@
 
 import numpy
 import math
-#import pdb
 
 def getspherewave():
 
