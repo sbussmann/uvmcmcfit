@@ -14,6 +14,8 @@ Outputs:
     visheader: uvfits header for model
 """
 
+from __future__ import print_function
+
 from astropy.io import fits
 import numpy
 #import pyximport
@@ -71,7 +73,7 @@ def replace(sbmodelloc, visdataloc):
         visfile[0].data['DATA'][:, 0, 0, :, :, 0] = real
         visfile[0].data['DATA'][:, 0, 0, :, :, 1] = imag
 
-    print "Exiting replace"
+    print("Exiting replace")
 
     #visfile[0].data = vismodel
 
@@ -126,7 +128,7 @@ def subtract(sbmodelloc, visdataloc):
         visfile[0].data['DATA'][:, 0, 0, :, :, 1] -= imag
 
     #visfile[0].data = vismodel
-    print "Exiting subtract"
+    print("Exiting subtract")
 
     return visfile
 
