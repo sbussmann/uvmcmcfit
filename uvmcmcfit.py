@@ -72,8 +72,6 @@
 
 """
 
-from __future__ import print_function
-
 # import the required modules
 import os
 import os.path
@@ -83,6 +81,7 @@ from astropy.io.misc import hdf5
 import numpy
 from astropy.table import Table
 import emcee
+from emcee.utils import MPIPool
 #import pyximport
 #pyximport.install(setup_args={"include_dirs":numpy.get_include()})
 import sample_vis
@@ -96,29 +95,28 @@ import config
 
 
 # the function that computes the ln-probabilities
-def lnprob(pzero_regions, p_u_regions, p_l_regions, fixindx,
-           real, imag, wgt, uuu, vvv, pcd, lnlikemethod, 
-           x_regions, y_regions, headmod_regions, celldata,
-           model_types_regions, nregions, nlens_regions, nsource_regions):
-    """ Function that computed the Ln probabilities of the data"""
+def lnprob(pzero_regions, p_u_regions, p_l_regions, fixindx, \
+        real, imag, wgt, uuu, vvv, pcd, lnlikemethod, \
+        x_regions, y_regions, headmod_regions, celldata, \
+        model_types_regions, nregions, nlens_regions, nsource_regions):
 
     # impose constraints on parameters by setting chi^2 to enormously high
     # value when a walker chooses a parameter outside the constraints
     if (pzero_regions < p_l_regions).any():
         probln = -numpy.inf
         mu_flux = 0
-        #print(probln, mu_flux, pzero)
-        #print(probln, ["%0.2f" % i for i in pzero])
+        #print probln, mu_flux, pzero
+        #print probln, ["%0.2f" % i for i in pzero]
         return probln, mu_flux
     if (pzero_regions > p_u_regions).any():
         probln = -numpy.inf
         mu_flux = 0
-        #print(probln, ["%0.2f" % i for i in pzero])
+        #print probln, ["%0.2f" % i for i in pzero]
         return probln, mu_flux
     if (pzero_regions * 0 != 0).any():
         probln = -numpy.inf
         mu_flux = 0
-        #print(probln, ["%0.2f" % i for i in pzero])
+        #print probln, ["%0.2f" % i for i in pzero]
         return probln, mu_flux
 
     # search poff_models for parameters fixed relative to other parameters
@@ -136,7 +134,7 @@ def lnprob(pzero_regions, p_u_regions, p_l_regions, fixindx,
     npar_previous = 0
     prindx = 0
 
-    amp = []  # Will contain the 'blobs' we compute
+    amp = []
 
     for regioni in range(nregions):
 
@@ -195,7 +193,7 @@ def lnprob(pzero_regions, p_u_regions, p_l_regions, fixindx,
 
         #fits.writeto('g_lensimage.fits', g_lensimage, headmod, clobber=True)
         #import matplotlib.pyplot as plt
-        #print(pzero_regions)
+        #print pzero_regions
         #plt.imshow(g_lensimage, origin='lower')
         #plt.colorbar()
         #plt.show()
@@ -232,7 +230,7 @@ def lnprob(pzero_regions, p_u_regions, p_l_regions, fixindx,
     probln = -0.5 * lnlike[goodvis].sum()
     if probln * 0 != 0:
         probln = -numpy.inf
-    #print(ndof, probln, sigmaterm_all.sum(), chi2_all.sum())
+    #print ndof, probln, sigmaterm_all.sum(), chi2_all.sum()
 
     return probln, amp
 
@@ -247,7 +245,6 @@ if mpi != 'MPI':
 
 # multiple processors on a cluster using MPI
 else:
-    from emcee.utils import MPIPool
 
     # One thread per slot
     Nthreads = 1
@@ -282,7 +279,7 @@ real = []
 imag = []
 wgt = []
 for file in fitsfiles:
-    print("Doing file {:s}".format(file))
+    print file
     vis_data = fits.open(file)
 
     uu, vv = uvutil.uvload(vis_data)
@@ -315,7 +312,7 @@ npos = wgt.size
 
 #----------------------------------------------------------------------------
 # Define the number of walkers
-nwalkers = config.Nwalkers
+nwalkers = 32
 
 # determine the number of regions for which we need surface brightness maps
 regionIDs = config.RegionID
@@ -371,16 +368,16 @@ for i in range(nregions):
     crpix2 = nymod / 2 + 1
     cdelt1 = -1 * celldata / 3600 / oversample
     cdelt2 = celldata / 3600 / oversample
-    headmod['naxis1'] = nxmod
-    headmod['cdelt1'] = cdelt1
-    headmod['crpix1'] = crpix1
-    headmod['crval1'] = ra_centroid
-    headmod['ctype1'] = 'RA---SIN'
-    headmod['naxis2'] = nymod
-    headmod['cdelt2'] = cdelt2
-    headmod['crpix2'] = crpix2
-    headmod['crval2'] = dec_centroid
-    headmod['ctype2'] = 'DEC--SIN'
+    headmod.update('naxis1', nxmod)
+    headmod.update('cdelt1', cdelt1)
+    headmod.update('crpix1', crpix1)
+    headmod.update('crval1', ra_centroid)
+    headmod.update('ctype1', 'RA---SIN')
+    headmod.update('naxis2', nymod)
+    headmod.update('cdelt2', cdelt2)
+    headmod.update('crpix2', crpix2)
+    headmod.update('crval2', dec_centroid)
+    headmod.update('ctype2', 'DEC--SIN')
     modelheader.append(headmod)
 
     # the parameter initialization vectors
@@ -437,7 +434,7 @@ for i in range(nregions):
 
     # Otherwise, choose an initial set of positions for the walkers.
     pzero_model = numpy.zeros((nwalkers, nparams))
-    for j in range(nparams):
+    for j in xrange(nparams):
         #if p3[j] == 'uniform':
         pzero_model[:, j] = numpy.random.uniform(p1[j], p2[j], nwalkers)
         #if p3[j] == 'normal':
@@ -455,7 +452,7 @@ posteriorloc = 'posteriorpdf.hdf5'
 if os.path.exists(posteriorloc):
 
     # read the latest posterior PDFs
-    print("Found existing posterior PDF file: {:s}".format(posteriorloc))
+    print "Found existing posterior PDF file: " + posteriorloc
     posteriordat = hdf5.read_table_hdf5(posteriorloc)
     if len(posteriordat) > 1:
 
@@ -498,7 +495,7 @@ if not realpdf:
 arrayp_u = numpy.array(p_u)
 arrayp_l = numpy.array(p_l)
 arraypzero = numpy.array(pzero)
-for j in range(nwalkers):
+for j in xrange(nwalkers):
     exceed = arraypzero[j] >= arrayp_u
     arraypzero[j, exceed] = 2 * arrayp_u[exceed] - arraypzero[j, exceed]
     exceed = arraypzero[j] <= arrayp_l
@@ -533,18 +530,11 @@ else:
 # Sample, outputting to a file
 os.system('date')
 
-# pos is the position of the sampler
-# prob the Ln probability
-# state the random number generator state
-# amp the metadata 'blobs' associated with the current positoni
 for pos, prob, state, amp in sampler.sample(pzero, iterations=10000):
 
-    print("Mean acceptance fraction: {:f}".
-          format(numpy.mean(sampler.acceptance_fraction)))
-    os.system('date')
-    #ff.write(str(prob))
+    print numpy.mean(sampler.acceptance_fraction)
+    print os.system('date')
     superpos = numpy.zeros(1 + nparams + nmu)
-
     for wi in range(nwalkers):
         superpos[0] = prob[wi]
         superpos[1:nparams + 1] = pos[wi]

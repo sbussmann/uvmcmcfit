@@ -7,8 +7,6 @@ Purpose: plot 2 things:
 
 """
 
-from __future__ import print_function
-
 #from matplotlib import rc
 #rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
 ## for Palatino and other serif fonts use:
@@ -193,7 +191,7 @@ goodregion = mask == 0
 #Result = GAUSSFIT( X, Y, A )
 #rms = A[2]
 rms = im[goodregion].std()
-#print(rms)
+#print rms
 #npix_sma2 = math.pi * bmaj2/2 * bmin2/2 / celldata**2 / math.log(2)
 immin = -rms
 immax = im.max()
@@ -203,7 +201,7 @@ immax = im.max()
 bestfitloc = 'posteriorpdf.hdf5'
 
 # read the latest posterior PDFs
-print("Found latest posterior PDF file: {:s}".format(bestfitloc))
+print "Found latest posterior PDF file: " + bestfitloc
 fitresults = hdf5.read_table_hdf5(bestfitloc)
 #fitresults = Table.read(bestfitloc, format='ascii')
 
@@ -217,7 +215,7 @@ pzero_regions = list(bestfit.data)[1:-nmu]
 #if len(bestfit) > 1:
 #bestfit = bestfit[0]
 
-print(objectname, bestfit.data)
+print objectname, bestfit.data
 #rint bestfit['shear']
 
 # search poff_models for parameters fixed relative to other parameters
@@ -283,16 +281,16 @@ for regioni in range(nregions):
     crpix2 = nymod / 2 + 1
     cdelt1 = -1 * celldata / 3600 / oversample
     cdelt2 = celldata / 3600 / oversample    
-    modelheader['naxis1'] = nxmod
-    modelheader['cdelt1'] = cdelt1
-    modelheader['crpix1'] = crpix1
-    modelheader['crval1'] = ra_centroid
-    modelheader['ctype1'] = 'RA---SIN'
-    modelheader['naxis2'] = nymod
-    modelheader['cdelt2'] = cdelt2
-    modelheader['crpix2'] = crpix2
-    modelheader['crval2'] = dec_centroid
-    modelheader['ctype2'] = 'DEC--SIN'
+    modelheader.update('naxis1', nxmod)
+    modelheader.update('cdelt1', cdelt1)
+    modelheader.update('crpix1', crpix1)
+    modelheader.update('crval1', ra_centroid)
+    modelheader.update('ctype1', 'RA---SIN')
+    modelheader.update('naxis2', nymod)
+    modelheader.update('cdelt2', cdelt2)
+    modelheader.update('crpix2', crpix2)
+    modelheader.update('crval2', dec_centroid)
+    modelheader.update('ctype2', 'DEC--SIN')
 
     g_image, g_lensimage, e_image, e_lensimage, amp_tot, amp_mask = \
             lensutil.sbmap(x, y, nlens, nsource, parameters, model_types)
@@ -302,7 +300,7 @@ for regioni in range(nregions):
     numer = g_lensimage.sum()
     denom = g_image.sum()
     mu_fluxratio = numer / denom
-    print("F_out / F_in = {:f}".format(mu_fluxratio))
+    print 'F_out / F_in = ', mu_fluxratio
     #--------------------------------------------------------------------------
 
     # write the lensed and unlensed surface brightness maps to disk
@@ -324,7 +322,7 @@ for regioni in range(nregions):
     # read in Python visibilities
         
     fitsfiles = config.FitsFiles
-    #print(fitsfiles)
+    #print fitsfiles
     nfiles = len(fitsfiles)
 
     # read in the observed visibilities
@@ -349,7 +347,7 @@ for regioni in range(nregions):
         #dreal = py_real - data_real
         #dimag = py_imag - data_imag
         #py_chi2 = py_wgt * (dreal ** 2 + dimag ** 2)
-        #print(name, 'py-replace ', py_chi2.sum(), py_wgt.sum())
+        #print name, 'py-replace ', py_chi2.sum(), py_wgt.sum()
 
         modelvisfile = name + '_pyreplace.uvfits'
         os.system('rm -rf ' + modelvisfile)
@@ -373,7 +371,7 @@ for regioni in range(nregions):
         py_subtract = uvmodel.subtract(outfits, file)
         #py_real, py_imag, py_wgt = uvmodel.components(py_subtract)
         #py_chi2 = py_wgt * (py_real ** 2 + py_imag ** 2)
-        #print(name, 'py-subtract ', py_chi2.sum(), py_wgt.sum())
+        #print name, 'py-subtract ', py_chi2.sum(), py_wgt.sum()
 
         modelvisfile = name + '_pysubtract.uvfits'
         os.system('rm -rf ' + modelvisfile)

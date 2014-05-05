@@ -5,8 +5,6 @@
 
 """
 
-from __future__ import print_function
-
 #def plot(objname, redo, deltachi2):
 
 import numpy
@@ -31,11 +29,11 @@ posteriorloc = 'posteriorpdf.hdf5'
 
 # read posterior PDF
 
-print("Reading output from emcee")
+print "Reading output from emcee"
 
 fitresults = hdf5.read_table_hdf5(posteriorloc)
 fitresults = fitresults[-5000:]
-print("prior to pruning <Ln Prob>: {:f}".format(fitresults['lnprob'].mean()))
+print 'prior to pruning: ', fitresults['lnprob'].mean()
 
 # identify the good fits
 fitresultsgood = modifypdf.prune(fitresults)
@@ -61,7 +59,7 @@ for pname in pnames:
         rmsval = numpy.std(frg)
         if rmsval > 1e-6:
             avgval = numpy.mean(frg)
-            print(pname + ' = ', avgval, ' +/- ', rmsval)
+            print pname + ' = ', avgval, ' +/- ', rmsval
             totalwidth = frg.max() - frg.min()
             nbins = totalwidth / rmsval * 5
             ax = mpl.subplot(nrow, ncol, j)

@@ -5,8 +5,6 @@ Shane Bussmann
 Varius utilities related to operations on uvfits data files.
 """
 
-from __future__ import print_function
-
 import numpy
 from astropy.io import fits
 
@@ -217,7 +215,7 @@ def scalewt(visdataloc, newvisdataloc):
     wgtrealimag = wgt_scaled * (data_real ** 2 + data_imag ** 2)
     wgtsum = wgtrealimag[wgzero].sum()
     wgtscale = N_vis / wgtsum
-    print(wgtscale)
+    print wgtscale
     wgt_scaled = wgt_scaled * wgtscale
 
     # read in the uvfits data

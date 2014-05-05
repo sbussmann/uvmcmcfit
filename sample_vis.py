@@ -12,8 +12,6 @@ Ported from an IDL routine of the same name from Katherine Rosenfeld
  - See MIRIAD's ModMap in model.for
 """
 
-from __future__ import print_function, division
-
 # load constants and helper functions
 #@grid.pro
 #@ModGrid.pro
@@ -70,37 +68,37 @@ def ModGrid1(vv, uu, v0, u0, Grd, gcf, ngcf, nyd, width):
     # numpy bug(?): vectors with values close to zero are handled poorly
     checkhigh = vvv == nyd
     vvv[checkhigh] = nyd - 1
-    #print(uuu)
-    #print(vvv)
+    #print uuu
+    #print vvv
 
     nvis = vvv.size
     wu = numpy.zeros([width, nvis])
     wv = numpy.zeros([width, nvis])
-    step = (ngcf - 1) // width
+    step = (ngcf - 1) / width
     rv = vvv - numpy.floor(vvv)
     ru = uuu - numpy.floor(uuu)
     uuu = numpy.floor(uuu).astype(int)
     vvv = numpy.floor(vvv).astype(int)
-    p  = ngcf // 2 - numpy.around(step * rv)
-    q  = ngcf // 2 - numpy.around(step * ru)
-    #print(p)
-    #print(q)
-    #toohigh = p >= ngcf // 2
+    p  = ngcf / 2 - numpy.around(step * rv)
+    q  = ngcf / 2 - numpy.around(step * ru)
+    #print p
+    #print q
+    #toohigh = p >= ngcf / 2
     #p[toohigh] = p[toohigh] - ngcf
     #toohigh = q >= ngcf / 2
     #q[toohigh] = q[toohigh] - ngcf
     for i in range(width):
-        wuindx = q.astype(int) + step * (i - width // 2 + 1)
+        wuindx = q.astype(int) + step * (i - width / 2 + 1)
         wu[i, :] = gcf[wuindx]
-        wvindx = p.astype(int) + step * (i - width // 2 + 1)
+        wvindx = p.astype(int) + step * (i - width / 2 + 1)
         wv[i, :] = gcf[wvindx]
-        #print(uuu.min(), uuu.max(), vvv.min(), vvv.max())
-        #print(wuindx - ngcf // 2, gcf[wuindx])
+        #print uuu.min(), uuu.max(), vvv.min(), vvv.max()
+        #print wuindx - ngcf / 2, gcf[wuindx]
 
-    #print(wu.sum(axis=0).shape, wv.sum(axis=0).shape)
+    #print wu.sum(axis=0).shape, wv.sum(axis=0).shape
     w = wu.sum(axis = 0) * wv.sum(axis = 0)
-    #print(w.shape)
-    #print(uuu.max(), vvv.max())
+    #print w.shape
+    #print uuu.max(), vvv.max()
 
     uuun2 = uuu - 2
     uuun1 = uuu - 1
@@ -157,7 +155,7 @@ def ModGrid1(vv, uu, v0, u0, Grd, gcf, ngcf, nyd, width):
         #else:
         #    jvp3 = jv + 3
 
-    #print(wu.sum(axis=0).size)
+    #print wu.sum(axis=0).size
     wu0 = wu[0, :] * Grd[uuun2, vvvn2]
     wu1 = wu[1, :] * Grd[uuun1, vvvn2]
     wu2 = wu[2, :] * Grd[uuu, vvvn2]
@@ -200,7 +198,7 @@ def ModGrid1(vv, uu, v0, u0, Grd, gcf, ngcf, nyd, width):
     wu4 = wu[4, :] * Grd[uuup2, vvvp3]
     wu5 = wu[5, :] * Grd[uuup3, vvvp3]
     wv5 = wv[5, :] * (wu0 + wu1 + wu2 + wu3 + wu4 + wu5)
-    #print(wu, wv)
+    #print wu, wv
     Intp = (wv0 + wv1 + wv2 + wv3 + wv4 + wv5) / w
     #Intp = \
     #    wv[0, :] * ( \
@@ -267,8 +265,8 @@ def ModGrid1(vv, uu, v0, u0, Grd, gcf, ngcf, nyd, width):
     #    jv = numpy.int(v)
         #p  = ngcf / 2 #- numpy.around(step * (v - jv))
         #q  = ngcf / 2 #- numpy.around(step * (u - ju))
-        #print(ju, jv, p, q, step)
-        #print(numpy.around(step * (u - ju)), numpy.around(step * (u - numpy.int(u))))
+        #print ju, jv, p, q, step
+        #print numpy.around(step * (u - ju)), numpy.around(step * (u - numpy.int(u)))
 
         # - from here width = 6 (see ModGrid in Model.for)
         #wu1 = gcf[q - 2 * step]
@@ -363,7 +361,7 @@ def ModGrid1(vv, uu, v0, u0, Grd, gcf, ngcf, nyd, width):
     #           wu[2] * Grd[ju, jvp2] + wu[3] * Grd[jup1, jvp2] + \
     #           wu[4] * Grd[jup2, jvp2])
 
-    #    print(u, ju, v, jv)
+    #    print u, ju, v, jv
         #cdef double wu1G1 = wu1 * Grd[jun2, jvn2]
         #cdef double wu2G1 = wu2 * Grd[jun1, jvn2]
         #cdef double wu3G1 = wu3 * Grd[ju, jvn2]
@@ -414,7 +412,7 @@ def ModGrid1(vv, uu, v0, u0, Grd, gcf, ngcf, nyd, width):
 
     #    Intp[i] = Intpi / w
 
-    #print(Intp)
+    #print Intp
     return Intp
 
 
@@ -468,8 +466,8 @@ def uvmodel(model, modelheader, u, v, pcd):
     # - now follow ModFFT in model.for
     #dra  = -1e0 * modelheader['CDELT1'] * pi / 180  # - pixel size in radians 
     #ddec = modelheader['CDELT2'] * pi / 180  # - pixel size in radians 
-    iref = nx // 2 + 1
-    jref = ny // 2 + 1
+    iref = nx / 2 + 1
+    jref = ny / 2 + 1
     modelcrpix1 = modelheader['CRPIX1']
     modelcrpix2 = modelheader['CRPIX2']
     pcm = [modelheader['CRVAL1'], modelheader['CRVAL2']]
@@ -488,16 +486,16 @@ def uvmodel(model, modelheader, u, v, pcd):
     noff = nxd - nx
     areal = shifted.copy()
     aimag = shifted.copy()
-    #x1 = nxd // 2 - nx // 2
-    #x2 = nxd // 2 + nx // 2
-    #y1 = nyd // 2 - ny // 2
-    #y2 = nyd // 2 + ny // 2
+    #x1 = nxd / 2 - nx / 2
+    #x2 = nxd / 2 + nx / 2
+    #y1 = nyd / 2 - ny / 2
+    #y2 = nyd / 2 + ny / 2
     #areal[x1:x2, y1:y2] = model
     areal[noff:, noff:] = model
     #image = model + 0j * model
     image = areal + 1j * aimag
-    image = numpy.roll(image, ny // 2, axis=0)
-    image = numpy.roll(image, nx // 2, axis=1)
+    image = numpy.roll(image, ny/2, axis=0)
+    image = numpy.roll(image, nx/2, axis=1)
 
     #mu_grid, dump = numpy.meshgrid(mu, numpy.zeros(nxd) + 1)
     #mu_grid_shifty = numpy.roll(mu_grid, -1 * u0int, axis=0)
@@ -516,33 +514,33 @@ def uvmodel(model, modelheader, u, v, pcd):
     ud = ucoeff[0] * u + ucoeff[1] * v
     vd = vcoeff[0] * u + vcoeff[1] * v
 
-    #print(u.max(), ud.max(), du)
+    #print u.max(), ud.max(), du
 
     nvis = len(u)
-    #print('# of visibilites:', nvis)
+    #print '# of visibilites:', nvis
 
     # - calculate gridding correction function
     if igrid == 1:
-        #print('ModCorr (grid.for)')
+        #print 'ModCorr (grid.for)'
         #import time
         #start = time.time()
         ycorr, xcorr = grid.ModCorr(nyd, nxd)
         mcorr = numpy.outer(ycorr, xcorr)
         image = image / mcorr
         #time_modgrid = time.time()-start
-        #print('time to run ModCorr: ', time_modgrid, 'seconds')
+        #print 'time to run ModCorr: ', time_modgrid, 'seconds'
 
     # - take FFT
-    #print('ModPlane (model.for)')
+    #print 'ModPlane (model.for)'
     #cdef numpy.ndarray mvis_real
     #cdef numpy.ndarray mvis_imag
     mvis = numpy.fft.fft2(image)
     mvis = numpy.conjugate(mvis)
 
     # - Follow ModGrid in model.for
-    #print('ModGrid (model.for)')
+    #print 'ModGrid (model.for)'
     #cdef numpy.ndarray gcf
-    ngcf = width * ((maxgcf - 1) // width) + 1
+    ngcf = width * ((maxgcf - 1) / width) + 1
     gcf = grid.gcffun(ngcf, width, alpha)
 
     #cdef numpy.ndarray uu
@@ -550,10 +548,10 @@ def uvmodel(model, modelheader, u, v, pcd):
 
     # - interpolate grid
     if igrid == 1:
-        #print('interpolating grid')
+        #print 'interpolating grid'
         # mvis = transpose(mvis)
-        uu = ud / du  # calculate fractional index in the grid
-        vv = vd / dv  # calculate fractional index in the grid
+        uu = ud / du  # calculate index in the grid
+        vv = vd / dv  # calculate index in the grid
         #mvis_opt = numpy.zeros(nvis) + 1.j * numpy.zeros(nvis)
         # - weighted interpolation
         #import pyximport
@@ -571,8 +569,8 @@ def uvmodel(model, modelheader, u, v, pcd):
         #ru = uu - uuint
         #rv = vv - vvint
         mvis_opt = ModGrid1(uu, vv, u0, v0, mvis, gcf, ngcf, nyd, width)
-        #print(uu)
-        #print(vv)
+        #print uu
+        #print vv
         overmax = numpy.abs(vv) > vmax
         mvis_opt[overmax] = 0.
         overmax = numpy.abs(uu) > umax
@@ -594,10 +592,10 @@ def uvmodel(model, modelheader, u, v, pcd):
                 #mvis_opt[i] = grid.ModShift(ud[i], vd[i], raref1, decref1, raref2, \
                 #        decref2, 1, 1, mvis_opt[i])
 
-        #print(uu)
+        #print uu
         #diffmvis = numpy.abs((mvis_opt - mvis_opt1) / mvis_opt)
-        #print(diffmvis)
-        #print(diffmvis.min(), diffmvis.max())
+        #print diffmvis
+        #print diffmvis.min(), diffmvis.max()
         #mvis_opt_imag = ModGrid(uuint, vvint, mvis_imag, gcf, ngcf, nyd, width, step)
         #mvis_opt = mvis_opt_real + 1.j * mvis_opt_imag
         #        time_modgrid = time_modgrid + time.time()-start
@@ -611,10 +609,10 @@ def uvmodel(model, modelheader, u, v, pcd):
         #        mvis_opt[i] = grid.ModShift(ud[i], vd[i], raref1, decref1, raref2, \
         #                decref2, 1, 1, mvis_opt[i])
                 #time_modshift = time_modshift + time.time()-start
-        #print(time_modgrid, time_modshift)
+        #print time_modgrid, time_modshift
     if igrid == 2:
-        u0 = nxd // 2 + 1		# - central u cell id
-        #v0 = nyd // 2 + 1		# - central v cell id
+        u0 = nxd / 2 + 1		# - central u cell id
+        #v0 = nyd / 2 + 1		# - central v cell id
         mu = numpy.arange(nxd)
         u0int = numpy.int(u0)
         mu[u0int:] = u0int - nxd + numpy.arange(u0int - 2)
@@ -638,7 +636,7 @@ def uvmodel(model, modelheader, u, v, pcd):
             mvis_opt[i] = grid.ModShift(ud[i], vd[i], raref1, decref1, raref2, \
                     decref2, 1, 1, mvis_opt[i])
             time_modgrid = time_modgrid + time.time()-start
-        #print(time_modgrid)
+        #print time_modgrid
 
     #mvis_opt = numpy.conjugate(mvis_opt)
     # - read in visibilities MIRIAD produces
@@ -680,10 +678,10 @@ def uvmodel(model, modelheader, u, v, pcd):
     # calculate chi-squared 
     #chi2v = wgt * (numpy.real(mvis_opt) - rvis) ** 2 + \
     #    wgt * (numpy.imag(mvis_opt) - ivis) ** 2
-    #print('chi squared value is :', chi2v.sum())
+    #print 'chi squared value is :', chi2v.sum()
     # 4.7212017638007328e-06
     #pdb.set_trace()
-    #print(numpy.abs(mvis_opt).max())
-    #print(numpy.abs(mvis_opt).min())
+    #print numpy.abs(mvis_opt).max()
+    #print numpy.abs(mvis_opt).min()
     #import pdb; pdb.set_trace()
     return mvis_opt
