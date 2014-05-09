@@ -132,10 +132,44 @@ def visload(visfile):
 
     return data_real, data_imag, data_wgt
 
-def statwt(visdataloc, newvisdataloc):
+def getStatWgt(real_raw, imag_raw, wgt_raw):
 
-    visfile = fits.open(visdataloc)
+    """
+    Compute the weights as the rms scatter in the real and imaginary 
+    visibilities.
+    """
+
+    nvis = real_raw[:, 0].size
+    freqsize = real_raw[0, :].size
+    wgt_scaled = numpy.zeros([nvis, freqsize])
+    for i in range(nvis):
+        gwgt = wgt_raw[i, :] > 0
+        ngwgt = wgt_raw[i, gwgt].size
+        if ngwgt > 2:
+            reali = real_raw[i, gwgt]
+            imagi = imag_raw[i, gwgt]
+            rms_real = numpy.std(reali)
+            rms_imag = numpy.std(imagi)
+            rms_avg = (rms_real + rms_imag) / 2.
+            wgt_scaled[i, gwgt] = 1 / rms_avg ** 2
+    return wgt_scaled
+
+def statwt(visfile, ExcludeChannels=False):
+    """
+    Replace the weights in 'visfile' with weights computed via getStatWgt.
+    """
+
     data_real, data_imag, data_wgt = visload(visfile)
+
+    if ExcludeChannels:
+        nwindows = len(ExcludeChannels) / 2
+        for win in range(0, nwindows * 2, 2):
+            chan1 = ExcludeChannels[win]
+            chan2 = ExcludeChannels[win + 1]
+            if data_real.ndim == 4:
+                data_wgt[:, :, chan1:chan2, :, 2] = 0.0
+            else:
+                data_wgt[:, chan1:chan2, :, 2] = 0.0    
 
     # get the number of visibilities, spws, frequencies, polarizations
     if data_real.ndim == 4:
@@ -161,19 +195,7 @@ def statwt(visdataloc, newvisdataloc):
                 imag_raw = data_imag[:, ispw, :, ipol]
                 wgt_raw = data_wgt[:, ispw, :, ipol]
 
-                # derive the weights directly from the data
-                freqsize = real_raw[0, :].size
-                wgt_scaled = numpy.zeros([nvis, freqsize])
-                for i in range(nvis):
-                    gwgt = wgt_raw[i, :] > 0
-                    ngwgt = wgt_raw[i, gwgt].size
-                    if ngwgt > 2:
-                        reali = real_raw[i, gwgt]
-                        imagi = imag_raw[i, gwgt]
-                        rms_real = numpy.std(reali)
-                        rms_imag = numpy.std(imagi)
-                        rms_avg = (rms_real + rms_imag) / 2.
-                        wgt_scaled[i, gwgt] = 1 / rms_avg ** 2
+                wgt_scaled = getStatWgt(real_raw, imag_raw, wgt_raw)
                 wgt[:, ispw, :, ipol] = wgt_scaled
         visfile[0].data['DATA'][:, 0, 0, :, :, :, 2] = wgt
     else:
@@ -185,24 +207,11 @@ def statwt(visdataloc, newvisdataloc):
             imag_raw = data_imag[:, :, ipol]
             wgt_raw = data_wgt[:, :, ipol]
 
-            # derive the weights directly from the data
-            freqsize = real_raw[0, :].size
-            wgt_scaled = numpy.zeros([nvis, freqsize])
-            for i in range(nvis):
-                gwgt = wgt_raw[i, :] > 0
-                ngwgt = wgt_raw[i, gwgt].size
-                if ngwgt > 2:
-                    reali = real_raw[i, gwgt]
-                    imagi = imag_raw[i, gwgt]
-                    rms_real = numpy.std(reali)
-                    rms_imag = numpy.std(imagi)
-                    rms_avg = (rms_real + rms_imag) / 2.
-                    wgt_scaled[i, gwgt] = 1 / rms_avg ** 2
+            wgt_scaled = getStatWgt(real_raw, imag_raw, wgt_raw)
             wgt[:, :, ipol] = wgt_scaled
         visfile[0].data['DATA'][:, 0, 0, :, :, 2] = wgt
 
-    # write out the uvfits data
-    visfile.writeto(newvisdataloc)
+    return visfile
 
 def scalewt(visdataloc, newvisdataloc):
 
