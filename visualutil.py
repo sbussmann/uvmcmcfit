@@ -1,3 +1,68 @@
+
+def plotPDF(fitresults, tag, Ngood=5000):
+
+    """
+
+    Plot the PDF of each parameter of the model.
+
+    """
+
+    import numpy
+    import matplotlib.pyplot as plt
+    from pylab import savefig
+    from matplotlib import rc
+    import modifypdf
+
+
+    # plotting parameters
+    rc('font',**{'family':'sans-serif', 'sans-serif':['Arial Narrow'], 
+        'size':'6'})
+    nticks = 5
+
+    # grab the last Ngood fits
+    fitresults = fitresults[-Ngood:]
+    lnprobstring = "prior to pruning <Ln Prob>: {:f}"
+    print(lnprobstring.format(fitresults['lnprob'].mean()))
+
+    # identify the good fits
+    fitresultsgood = modifypdf.prune(fitresults)
+
+    # determine dimensions of PDF plots
+    nparams = len(fitresultsgood[0])
+    ncol = 4
+    nrow = nparams / ncol + 1
+    j = 1
+
+    fig = plt.figure(figsize=(8.0, 1.0 * nrow))
+
+    # set up the plotting window
+    plt.subplots_adjust(left=0.08, bottom=0.1, right=0.95, top=0.95,
+        wspace=0.4, hspace=0.65)
+
+    pnames = fitresultsgood.keys()
+
+    for pname in pnames:
+
+        # Position of primary lens
+        frg = fitresultsgood[pname]
+        rmsval = numpy.std(frg)
+        if rmsval > 1e-6:
+            avgval = numpy.mean(frg)
+            print(pname + ' = ', avgval, ' +/- ', rmsval)
+            totalwidth = frg.max() - frg.min()
+            nbins = totalwidth / rmsval * 5
+            ax = plt.subplot(nrow, ncol, j)
+            j += 1
+            plt.hist(frg, nbins, edgecolor='blue')
+            plt.ylabel('N')
+            plt.xlabel(pname)
+            start, end = ax.get_xlim()
+            stepsize = (end - start) / nticks
+            ax.xaxis.set_ticks(numpy.arange(start, end + 0.99*stepsize, 
+                stepsize))
+
+    savefig(tag + 'PDFs.pdf')
+
 def makeSBmap(config, parameters, regioni):
 
     """

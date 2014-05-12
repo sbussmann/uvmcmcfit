@@ -55,7 +55,7 @@ def convergence(bestfitloc='posteriorpdf.hdf5'):
     outfile = 'convergence'
     savefig(outfile)
 
-def posteriorPDF(bestfitloc='posteriorpdf.hdf5'):
+def posteriorPDF(bestfitloc):
 
     """
 
@@ -63,63 +63,31 @@ def posteriorPDF(bestfitloc='posteriorpdf.hdf5'):
 
     """
 
-    import numpy
-    import matplotlib.pyplot as plt
-    from pylab import savefig
-    from matplotlib import rc
-    import modifypdf
+    # read posterior PDF
+    print("Reading output from emcee")
+    fitresults = hdf5.read_table_hdf5(bestfitloc)
+    tag = 'posterior'
+    visualutil.plotPDF(fitresults, tag, Ngood=5000)
 
-    rc('font',**{'family':'sans-serif', 'sans-serif':['Arial Narrow'], 
-        'size':'6'})
+def evolvePDF(bestfitloc, stepsize=50000):
 
-    nticks = 5
+    """
+
+    Plot the evolution of the PDF of each parameter of the model.
+
+    """
 
     # read posterior PDF
-
     print("Reading output from emcee")
-
     fitresults = hdf5.read_table_hdf5(bestfitloc)
-    fitresults = fitresults[-5000:]
-    print("prior to pruning <Ln Prob>: {:f}".format(fitresults['lnprob'].mean()))
+    nresults = len(fitresults)
+    for iresult in range(0, nresults, stepsize):
 
-    # identify the good fits
-    fitresultsgood = modifypdf.prune(fitresults)
-
-    # determine dimensions of PDF plots
-    nparams = len(fitresultsgood[0])
-    ncol = 4
-    nrow = nparams / ncol + 1
-    j = 1
-
-    fig = plt.figure(figsize=(8.0, 1.0 * nrow))
-
-    # set up the plotting window
-    plt.subplots_adjust(left=0.08, bottom=0.1, right=0.95, top=0.95,
-        wspace=0.4, hspace=0.65)
-
-    pnames = fitresultsgood.keys()
-
-    for pname in pnames:
-
-        # Position of primary lens
-        frg = fitresultsgood[pname]
-        rmsval = numpy.std(frg)
-        if rmsval > 1e-6:
-            avgval = numpy.mean(frg)
-            print(pname + ' = ', avgval, ' +/- ', rmsval)
-            totalwidth = frg.max() - frg.min()
-            nbins = totalwidth / rmsval * 5
-            ax = plt.subplot(nrow, ncol, j)
-            j += 1
-            plt.hist(frg, nbins, edgecolor='blue')
-            plt.ylabel('N')
-            plt.xlabel(pname)
-            start, end = ax.get_xlim()
-            stepsize = (end - start) / nticks
-            ax.xaxis.set_ticks(numpy.arange(start, end + 0.99*stepsize, 
-                stepsize))
-
-    savefig('posteriorsPDFs.pdf')
+        strstep = str(stepsize)
+        lenstep = len(strstep)
+        striresult = str(iresult).zfill(lenstep)
+        tag = 'evolution' + strstep + '.' + striresult + '.'
+        visualutil.plotPDF(fitresults, tag, Ngood=5000)
 
 def convariance(bestfitloc='posteriorpdf.hdf5'):
 
