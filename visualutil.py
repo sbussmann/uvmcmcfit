@@ -1,5 +1,5 @@
 
-def plotPDF(fitresults, tag, Ngood=5000):
+def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
 
     """
 
@@ -17,7 +17,6 @@ def plotPDF(fitresults, tag, Ngood=5000):
     # plotting parameters
     rc('font',**{'family':'sans-serif', 'sans-serif':['Arial Narrow'], 
         'size':'6'})
-    nticks = 5
 
     # grab the last Ngood fits
     fitresults = fitresults[-Ngood:]
@@ -41,6 +40,7 @@ def plotPDF(fitresults, tag, Ngood=5000):
 
     pnames = fitresultsgood.keys()
 
+    counter = 0
     for pname in pnames:
 
         # Position of primary lens
@@ -56,14 +56,34 @@ def plotPDF(fitresults, tag, Ngood=5000):
             plt.hist(frg, nbins, edgecolor='blue')
             plt.ylabel('N')
             plt.xlabel(pname)
-            start, end = ax.get_xlim()
-            stepsize = (end - start) / nticks
-            ax.xaxis.set_ticks(numpy.arange(start, end + 0.99*stepsize, 
-                stepsize))
+            if axes == 'auto':
+                start, end = ax.get_xlim()
+                nticks = 5
+                stepsize = (end - start) / nticks
+                ax.xaxis.set_ticks(numpy.arange(start, end + 0.99*stepsize, 
+                    stepsize))
+            elif axes == 'initial':
+                oldaxis = plt.axis()
+                if pname[0:6] == 'lnprob':
+                    xmin = frg.min()
+                    xmax = frg.max()
+                elif pname[0:2] == 'mu':
+                    xmin = 0
+                    xmax = 30
+                else:
+                    p_l = limits[0]
+                    p_u = limits[1]
+                    xmin = p_l[counter]
+                    xmax = p_u[counter]
+                    counter += 1
+                ymin = oldaxis[2]
+                ymax = oldaxis[3]
+                plt.axis([xmin, xmax, ymin, ymax])
+
 
     savefig(tag + 'PDFs.pdf')
 
-def makeSBmap(config, parameters, regioni):
+def makeSBmap(config, paramData, parameters, regioni):
 
     """
 
@@ -72,14 +92,13 @@ def makeSBmap(config, parameters, regioni):
 
     """
 
-    import setuputil
     import lensutil
     from astropy.io import fits
+    import os
 
 
     nlens = config.Nlens[regioni]
     nsource = config.Nsource[regioni]
-    paramData = setuputil.loadParams(config)
     x = paramData['x'][regioni]
     y = paramData['y'][regioni]
     modelheader = paramData['modelheader'][regioni]
@@ -91,6 +110,9 @@ def makeSBmap(config, parameters, regioni):
     sri = str(regioni)
     LensedSBmapLoc = 'LensedSBmap_Region' + sri + '.fits'
     SBmapLoc = 'SBmap_Region' + sri + '.fits'
+    cmd = 'rm -rf ' + LensedSBmapLoc + ' ' + SBmapLoc
+    os.system(cmd)
+
     fits.writeto(LensedSBmapLoc, LensedSBmap, modelheader)
     fits.writeto(SBmapLoc, SBmap, modelheader)
 
@@ -135,14 +157,14 @@ def makeVis(config, regioni):
         SBmapLoc = 'LensedSBmap_Region' + sri + '.fits'
         model = uvmodel.replace(SBmapLoc, ifile)
 
-        modelvisfile = name + '_model.uvfits'
+        modelvisfile = name + '.Region' + sri + '_model.uvfits'
         os.system('rm -rf ' + modelvisfile)
         model.writeto(modelvisfile)
         
         # Python version of UVMODEL's "subtract" subroutine:
-        residual = uvmodel.subtract(SBmapLoc, file)
+        residual = uvmodel.subtract(SBmapLoc, ifile)
 
-        modelvisfile = name + '_residual.uvfits'
+        modelvisfile = name + '.Region' + sri + '_residual.uvfits'
         os.system('rm -rf ' + modelvisfile)
         residual.writeto(modelvisfile)
 
@@ -164,17 +186,18 @@ def makeImage(config, objectname, regioni):
         
     fitsfiles = config.FitsFiles
 
-    for file in fitsfiles:
+    for ifile in fitsfiles:
 
         # read in the observed visibilities
-        obsdata = fits.open(file)
+        obsdata = fits.open(ifile)
 
-        nameindx = file.find('uvfits')
-        name = file[0:nameindx-1]
+        nameindx = ifile.find('uvfits')
+        name = ifile[0:nameindx-1]
 
         # convert simulated visibilities to miriad format
-        modelvisfile = name + '_model.uvfits'
-        miriadmodelvisloc = name + '_model.miriad'
+        sri = str(regioni)
+        modelvisfile = name + '.Region' + sri + '_model.uvfits'
+        miriadmodelvisloc = name + '.Region' + sri + '_model.miriad'
         os.system('rm -rf ' + miriadmodelvisloc)
         command = 'fits in=' + modelvisfile + ' op=uvin out=' + \
             miriadmodelvisloc
@@ -189,8 +212,8 @@ def makeImage(config, objectname, regioni):
 
 
         # convert simulated residual visibilities to miriad format
-        modelvisfile = name + '_residual.uvfits'
-        miriadmodelvisloc = name + '_residual.miriad'
+        modelvisfile = name + '.Region' + sri + '_residual.uvfits'
+        miriadmodelvisloc = name + '.Region' + sri + '_residual.miriad'
         os.system('rm -rf ' + miriadmodelvisloc)
         command = 'fits in=' + modelvisfile + ' op=uvin out=' + \
             miriadmodelvisloc
@@ -207,22 +230,14 @@ def makeImage(config, objectname, regioni):
     # Invert the simulated SMA visibilities and deconvolve 
 
     # the simulated model visibilities
-    command = 'csh image_model.csh'
+    command = 'csh image.csh model ' + sri
     os.system(command + ' > dump')
 
     # the simulated residual visibilities
-    command = 'csh image_residual.csh'
+    command = 'csh image.csh residual ' + sri
     os.system(command + ' > dump')
-
-    # read in the cleaned images
-    sri = str(regioni)
-    simimloc = objectname + '_Region' + sri + '_model.cm1.fits'
-    model = fits.open(simimloc)
-
-    simimloc = objectname + '_Region' + sri + '_residual.cm1.fits'
-    residual = fits.open(simimloc)
     
-    return model, residual
+    return
 
 def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
 
@@ -235,11 +250,12 @@ def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
     """
 
     import numpy
-    from matplotlib.patches import Ellipse
-    import matplotlib.pyplot as plt
     from astropy import wcs
-    import setuputil
+    import matplotlib
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Ellipse
     from pylab import savefig
+    import setuputil
 
     # set font properties
     font = {'family' : 'Arial Narrow',
@@ -248,17 +264,23 @@ def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
     matplotlib.rc('font', **font)
     matplotlib.rcParams['axes.linewidth'] = 1.5
 
+    fig = plt.figure(figsize=(3.0, 3.0))
+    ax = fig.add_subplot(1, 1, 1)
+    plt.subplots_adjust(left=0.08, right=0.97, top=0.97, 
+            bottom=0.08, wspace=0.35)
+
     ra_centroid = config.RACentroid[regioni]
     dec_centroid = config.DecCentroid[regioni]
-    extent = config.RadialExtent[regioni]
+    radialextent = config.RadialExtent[regioni]
     nlens = config.Nlens[regioni]
     nsource = config.Nsource[regioni]
 
     nparlens = 5 * nlens
 
     # get the image centroid in model pixel coordinates
-    headim = data[0].header
+    headim = model[0].header
     im = data[0].data
+    im = im[0, 0, :, :]
 
     # good region is where mask is zero
     mask = setuputil.makeMask(config)
@@ -276,14 +298,15 @@ def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
     cell = numpy.sqrt( abs(cdelt1) * abs(cdelt2) )
 
     im_model = model[0].data
-    nx_model = im_model[0, :].size
-    pixextent = nx_model / 2 #extent / cell
+    im_model = im_model[0, 0, :, :]
+    #nx_model = im_model[0, :].size
+    pixextent = radialextent / cell
     datawcs = wcs.WCS(headim, naxis=2)
     pix = datawcs.wcs_world2pix(ra_centroid, dec_centroid, 1)
-    x0 = pix[0]
-    y0 = pix[1]
-    modrady = pixextent# nymod / 2.
-    modradx = pixextent# nxmod / 2.
+    x0 = numpy.round(pix[0])
+    y0 = numpy.round(pix[1])
+    modrady = radialextent / cell# nymod / 2.
+    modradx = radialextent / cell# nxmod / 2.
 
     # make data cutout
     totdx1 = x0 - modradx
@@ -311,7 +334,7 @@ def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
         e = Ellipse((xxx, yyy), source_bmaj, source_bmin, \
                 angle=source_pa, ec='white', lw=0.5, fc='magenta', \
                 zorder=2, fill=True, alpha=0.5)
-        plt.add_artist(e)
+        ax.add_artist(e)
     for i in range(nlens):
         i5 = i * 5
         xxx = numpy.array([parameters[i5 + 1]])
@@ -325,14 +348,21 @@ def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
         elens = Ellipse((xxx, yyy), lens_bmaj, lens_bmin, \
                 angle=lens_pa, ec='orange', lw=1.0, \
                 zorder=20, fill=False)
-        plt.add_artist(elens)
+        ax.add_artist(elens)
 
     cellp = cell * (2 * pixextent + 1.1) / (2 * pixextent)
-    modx = -(numpy.arange(2 * pixextent) - pixextent) * cellp - cell/2.
-    mody = (numpy.arange(2 * pixextent) - pixextent) * cellp + cell/2.
-    extent = [modx[0], modx[-1], mody[0], mody[-1] ]
+    xlo = -radialextent
+    xhi = radialextent
+    ylo = -radialextent
+    yhi = radialextent
+    ncell = (xhi - xlo) / cell
+    modx = -numpy.linspace(xlo, xhi, ncell)
+    mody = numpy.linspace(ylo, yhi, ncell)
+    #modx = -(numpy.arange(2 * pixextent) - pixextent) * cellp - cell/2.
+    #mody = (numpy.arange(2 * pixextent) - pixextent) * cellp + cell/2.
+    cornerextent = [modx[0], modx[-1], mody[0], mody[-1] ]
     plt.imshow(modelcut, cmap='gray_r', interpolation='nearest', \
-            extent=extent, origin='lower')
+            extent=cornerextent, origin='lower')
 
     plevs = rms * 2**(numpy.arange(10) + 1)
     nlevs = sorted(-rms * 2**(numpy.arange(4) + 1))
@@ -344,10 +374,12 @@ def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
     else:
         pcolor = 'red'
         ncolor = 'red'
-    nx_contour = data[0, :].size
-    ny_contour = data[:, 0].size
-    cmodx = ( numpy.arange(nx_contour) - pixextent ) * (-cellp) - cell/2.
-    cmody = ( numpy.arange(ny_contour) - pixextent ) * cellp + cell/2.
+    nx_contour = datacut[0, :].size
+    ny_contour = datacut[:, 0].size
+    #cmodx = -(numpy.arange(nx_contour) - pixextent) * cellp - cell/2.
+    #cmody = (numpy.arange(ny_contour) - pixextent) * cellp + cell/2.
+    cmodx = -numpy.linspace(xlo, xhi, ncell)
+    cmody = numpy.linspace(ylo, yhi, ncell)
     plt.contour(cmodx, cmody, datacut, colors=pcolor, levels=plevs, \
             linestyles=pcline, linewidths=1.5)
     plt.contour(cmodx, cmody, datacut, colors=ncolor, levels=nlevs, \
@@ -355,41 +387,42 @@ def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
 
     # plot the critical curve
     #plt.contour(cmodx, cmody, dmu, colors='orange', levels=[100])
+    #axisrange = plt.axis()
+    axisrange = [numpy.float(xhi),numpy.float(xlo),numpy.float(ylo),numpy.float(yhi)]
+    plt.axis(axisrange)
 
     plt.minorticks_on()
     plt.tick_params(width=1.5, which='both')
     plt.tick_params(length=2, which='minor')
     plt.tick_params(length=4, which='major')
-    plt.xlabel(r'$\Delta$RA (arcsec)', fontsize='x-large')
-    plt.ylabel(r'$\Delta$Dec (arcsec)', fontsize='x-large')
-
-    axisrange = extent
-    #[numpy.float(xhi),numpy.float(xlo),numpy.float(ylo),numpy.float(yhi)]
-    plt.axis(axisrange)
+    #plt.xlabel(r'$\Delta$RA (arcsec)', fontsize='x-large')
+    #plt.ylabel(r'$\Delta$Dec (arcsec)', fontsize='x-large')
 
     bparad = bpa / 180 * numpy.pi
     beamx = numpy.abs(numpy.sin(bparad) * bmaj) + \
             numpy.abs(numpy.cos(bparad) * bmin)
     beamy = numpy.abs(numpy.cos(bparad) * bmaj) + \
             numpy.abs(numpy.sin(bparad) * bmin)
-    xhi = 2 * pixextent / cell
-    xlo = -2 * pixextent / cell
-    yhi = 2 * pixextent / cell
-    ylo = -2 * pixextent / cell
-    dx = numpy.float(xhi) - numpy.float(xlo)
-    dy = numpy.float(yhi) - numpy.float(ylo)
-    bufferx = 0.03 * dx / 6.0
-    buffery = 0.03 * dx / 6.0
-    xpos = 1 - beamx/dx/2 - bufferx
-    ypos = beamy/dy/2 + buffery
+    beamxhi = 2 * pixextent / cell
+    beamxlo = -2 * pixextent / cell
+    beamyhi = 2 * pixextent / cell
+    beamylo = -2 * pixextent / cell
+    beamdx = numpy.float(beamxhi) - numpy.float(beamxlo)
+    beamdy = numpy.float(beamyhi) - numpy.float(beamylo)
+    bufferx = 0.03 * beamdx / 6.0
+    buffery = 0.03 * beamdx / 6.0
+    xpos = 1 - beamx/beamdx/2 - bufferx
+    ypos = beamy/beamdy/2 + buffery
     #beamx = bmaj * numpy.abs(numpy.cos(bparad))
     #beamy = bmaj * numpy.abs(numpy.sin(bparad))
+
     xpos = 0.95 * axisrange[1] + 0.95 * beamx / 2.
     ypos = 0.95 * axisrange[2] + 0.95 * beamy / 2.
 
     e = Ellipse((xpos,ypos), bmaj, bmin, angle=90 - bpa, ec='black', \
         hatch='///', lw=1.5, fc='None', zorder=10, fill=True)
-    plt.add_artist(e)
+    ax.add_artist(e)
+
     #plt.text(0.08, 0.85, objname, transform=ax.transAxes, fontsize='x-large')
     sri = str(regioni)
     if resid:
@@ -397,7 +430,9 @@ def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
     else:
         tag = '.model.' + tag
 
+
     savefig('LensedSBmap.Region' + sri + tag + '.pdf')
+    plt.clf()
 
 def removeTempFiles():
 
@@ -410,10 +445,10 @@ def removeTempFiles():
     import os
 
 
-    cmd = 'rm -rf *SBmap*fits *pyreplace* *pysubtract* dump'
+    cmd = 'rm -rf *SBmap*fits *_model* *_residual* dump'
     os.system(cmd)    
 
-def plotFit(config, parameters, regioni, tag=''):
+def plotFit(config, paramData, parameters, regioni, tag=''):
 
     """
 
@@ -424,33 +459,37 @@ def plotFit(config, parameters, regioni, tag=''):
     from astropy.io import fits
 
 
-    # read in the data
-    data = fits.open(config.ImageName)
-    headim = data[0].header
-    try:
-        objectname = headim['OBJECT']
-    except KeyError:
-        objectname = 'No objname in header'
-
     # make the lensed image
-    makeSBmap(config, parameters, regioni)
+    makeSBmap(config, paramData, parameters, regioni)
 
     # make the simulated visibilities
     makeVis(config, regioni)
 
     # image the simulated visibilities
-    model, residual = makeImage(config, objectname)
+    objectname = config.ObjectName
+    makeImage(config, objectname, regioni)
+
+    # read in the images of the simulated visibilities
+    sri = str(regioni)
+    simimloc = objectname + '_Region' + sri + '_model.cm1.fits'
+    model = fits.open(simimloc)
+
+    simimloc = objectname + '_Region' + sri + '_residual.cm1.fits'
+    residual = fits.open(simimloc)
+
+    # read in the data
+    data = fits.open(config.ImageName)
 
     # plot the images
     plotImage(model, data, config, parameters, regioni, tag=tag, resid=False)
 
     # plot the residual
-    plotImage(residual, data, config, parameters, regioni, tag=tag, resid=True)
+    plotImage(residual, residual, config, parameters, regioni, tag=tag, resid=True)
 
     # remove the intermediate files
-    removeTempFiles()
+    #removeTempFiles()
 
-def preProcess(config, fitresult, tag=''):
+def preProcess(config, paramData, fitresult, tag=''):
 
     """
 
@@ -466,7 +505,6 @@ def preProcess(config, fitresult, tag=''):
     # Loop over each region
     regionIDs = config.RegionID
     nregions = len(regionIDs)
-    paramData = setuputil.loadParam(config)
     nsource_regions = paramData['nsource_regions']
     npar_previous = 0
     for regioni in range(nregions):
@@ -493,5 +531,5 @@ def preProcess(config, fitresult, tag=''):
         npar = nparlens + nparsource + npar_previous
         parameters = allparameters[npar_previous:npar]
         npar_previous += npar
-        plotFit(config, parameters, regioni, tag=tag)
+        plotFit(config, paramData, parameters, regioni, tag=tag)
 

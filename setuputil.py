@@ -94,6 +94,8 @@ def loadParams(config):
                 values = getattr(config, fullparname)
                 poff.append(values.pop()) 
                 values = numpy.array(values).astype(float)
+                if values.size < 2:
+                    import pdb; pdb.set_trace()
                 p_u.append(values[1]) 
                 p_l.append(values[0]) 
                 pname.append(lensparam + tag)
@@ -102,6 +104,7 @@ def loadParams(config):
                 p2.append(values[1]) 
                 p1.append(values[0]) 
 
+        model_types_source = []
         for isource in range(nsource):
 
             si = str(isource)
@@ -128,7 +131,10 @@ def loadParams(config):
 
             # get the model type
             fullparname = 'ModelMorphology' + tag
-            model_types.append(getattr(config, fullparname))
+            model_types_source.append(getattr(config, fullparname))
+
+        # append the set of model types for this region
+        model_types.append(model_types_source)
 
         # determine the number of free parameters in the model
         nparams = len(p1)
@@ -179,7 +185,7 @@ def fixParams(paramData):
     return fixindx
 
 def getCell(headim):
-    celldata = numpy.abs(headim['CDELT'] * 3600)
+    celldata = numpy.abs(headim['CDELT1'] * 3600)
     return celldata
 
 def makeMask(config):
@@ -189,12 +195,11 @@ def makeMask(config):
     imloc = config.ImageName
     headim = fits.getheader(imloc)
     im = fits.getdata(imloc)
+    im = im[0, 0, :, :]
     celldata = getCell(headim)
     datawcs = wcs.WCS(headim, naxis=2)
     nx = im[0,:].size
     ny = im[:,0].size
-
-    paramData = loadParams(config, im)
 
     # compute rms within central 3/4 of the image
     mask = im.copy()
@@ -204,7 +209,7 @@ def makeMask(config):
     xr0 = nx / 4
     xr1 = 3 * nx / 4
     mask[yr0:yr1, xr0:xr1] = 0
-    nregions = paramData['nregions']
+    nregions = len(config.RACentroid)
     for regioni in range(nregions):
         ra_centroid = config.RACentroid[regioni]
         dec_centroid = config.DecCentroid[regioni]

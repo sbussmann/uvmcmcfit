@@ -1,9 +1,16 @@
 """
+
 Created by Shane Bussmann
 
-Purpose: plot 2 things:
-1. cleaned map of best-fit model vs. SMA data
-2. cleaned map of residual visibilities (model - data)
+A number of visualization tools are included here to aid the user in evaluating
+the:
+
+    convergence of lnprob
+    the posterior PDFs
+    the evolution of the PDFs for each parameter of the model
+    the covariance matrix for the posterior PDFs
+    the best-fit model
+    a number of randomly drawn realizations from the posterior PDFs
 
 """
 
@@ -55,7 +62,7 @@ def convergence(bestfitloc='posteriorpdf.hdf5'):
     outfile = 'convergence'
     savefig(outfile)
 
-def posteriorPDF(bestfitloc):
+def posteriorPDF(bestfitloc='posteriorpdf.hdf5'):
 
     """
 
@@ -67,9 +74,9 @@ def posteriorPDF(bestfitloc):
     print("Reading output from emcee")
     fitresults = hdf5.read_table_hdf5(bestfitloc)
     tag = 'posterior'
-    visualutil.plotPDF(fitresults, tag, Ngood=5000)
+    visualutil.plotPDF(fitresults, tag, Ngood=5000, axes='auto')
 
-def evolvePDF(bestfitloc, stepsize=50000):
+def evolvePDF(bestfitloc='posteriorpdf.hdf5', stepsize=50000):
 
     """
 
@@ -77,19 +84,32 @@ def evolvePDF(bestfitloc, stepsize=50000):
 
     """
 
+    import setuputil
+
+
+    # Get upper and lower limits on the parameters to set the plot limits
+    paramData = setuputil.loadParams(config)
+    p_u = paramData['p_u']
+    p_l = paramData['p_l']
+    limits = [p_l, p_u]
+
     # read posterior PDF
-    print("Reading output from emcee")
     fitresults = hdf5.read_table_hdf5(bestfitloc)
     nresults = len(fitresults)
+    print("Output from emcee has = " + str(nresults) + " iterations.")
+    start = 0
     for iresult in range(0, nresults, stepsize):
 
         strstep = str(stepsize)
-        lenstep = len(strstep)
-        striresult = str(iresult).zfill(lenstep)
+        nchar = len(str(nresults))
+        striresult = str(iresult).zfill(nchar)
         tag = 'evolution' + strstep + '.' + striresult + '.'
-        visualutil.plotPDF(fitresults, tag, Ngood=5000)
+        trimresults = fitresults[start:start + stepsize]
+        start += stepsize
+        visualutil.plotPDF(trimresults, tag, limits=limits, Ngood=1000, 
+                axes='initial')
 
-def convariance(bestfitloc='posteriorpdf.hdf5'):
+def covariance(bestfitloc='posteriorpdf.hdf5'):
 
     """
 
@@ -101,18 +121,23 @@ def convariance(bestfitloc='posteriorpdf.hdf5'):
     import numpy
     from pylab import savefig
     import modifypdf
+    from matplotlib import rc
 
+
+    # plotting parameters
+    rc('font',**{'family':'sans-serif', 'sans-serif':['Arial Narrow'], 
+        'size':'6'})
 
     posteriorpdf = hdf5.read_table_hdf5(bestfitloc)
     posteriorpdf = posteriorpdf[-5000:]
 
     posteriorpdfgood = modifypdf.prune(posteriorpdf)
 
-    headers = posteriorpdf.colnames()
+    headers = posteriorpdf.colnames
     ncol = len(headers)
     k = 0
-    xsize = ncol * 3
-    ysize = ncol * 2.5
+    xsize = ncol * 2
+    ysize = ncol * 1.5
     fig = plt.figure(figsize=(xsize, ysize))
     plt.subplots_adjust(left=0.020, bottom=0.02, right=0.99, top=0.97,
         wspace=0.5, hspace=0.5)
@@ -163,7 +188,7 @@ def convariance(bestfitloc='posteriorpdf.hdf5'):
             k += 1
 
     #plt.suptitle(iau_address, x=0.5, y=0.987, fontsize='xx-large')
-    savefig('covariance.png')
+    savefig('covariance.pdf')
     plt.clf()        
 
 def bestFit(bestfitloc='posteriorpdf.hdf5'):
@@ -176,6 +201,12 @@ def bestFit(bestfitloc='posteriorpdf.hdf5'):
     
     """
 
+    import setuputil
+
+
+    # read the input parameters
+    paramData = setuputil.loadParams(config)
+
     # read the posterior PDFs
     print("Found posterior PDF file: {:s}".format(bestfitloc))
     fitresults = hdf5.read_table_hdf5(bestfitloc)
@@ -185,7 +216,7 @@ def bestFit(bestfitloc='posteriorpdf.hdf5'):
     index = fitresults['lnprob'] == minchi2
     bestfit = fitresults[index][0]
     tag = 'bestfit'
-    visualutil.preProcess(config, bestfit, tag=tag)
+    visualutil.preProcess(config, paramData, bestfit, tag=tag)
 
 def goodFits(bestfitloc='posteriorpdf.hdf5', Nfits=12, Ngood=5000):
 
@@ -200,7 +231,11 @@ def goodFits(bestfitloc='posteriorpdf.hdf5', Nfits=12, Ngood=5000):
 
     import modifypdf
     import numpy
+    import setuputil
 
+
+    # read the input parameters
+    paramData = setuputil.loadParams(config)
 
     # read the posterior PDFs
     print("Found posterior PDF file: {:s}".format(bestfitloc))
@@ -216,4 +251,4 @@ def goodFits(bestfitloc='posteriorpdf.hdf5', Nfits=12, Ngood=5000):
         realid = numpy.int(realids[ifit])
         fitresult = fitresults[realid]
         tag = 'goodfit' + str(realid).zfill(4)
-        visualutil.preProcess(config, fitresult, tag=tag)
+        visualutil.preProcess(config, paramData, fitresult, tag=tag)

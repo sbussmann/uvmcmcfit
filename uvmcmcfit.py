@@ -135,7 +135,6 @@ def lnprob(pzero_regions, real, imag, wgt, uuu, vvv, pcd, lnlikemethod,
     model_real = 0.
     model_imag = 0.
     npar_previous = 0
-    prindx = 0
 
     amp = []  # Will contain the 'blobs' we compute
 
@@ -147,9 +146,7 @@ def lnprob(pzero_regions, real, imag, wgt, uuu, vvv, pcd, lnlikemethod,
         headmod = paramData['modelheader'][regioni]
         nlens = paramData['nlens_regions'][regioni]
         nsource = paramData['nsource_regions'][regioni]
-        model_types = paramData['model_types'][prindx:prindx + nsource]
-        prindx += nsource
-        #model_types_regioni = model_types[regioni]
+        model_types = paramData['model_types'][regioni]
 
         # get pzero, p_u, and p_l for this specific model
         nparlens = 5 * nlens
