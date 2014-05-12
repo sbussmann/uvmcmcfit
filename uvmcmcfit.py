@@ -88,6 +88,7 @@ import emcee
 import sample_vis
 import lensutil
 import uvutil
+import setuputil
 
 
 cwd = os.getcwd()
@@ -96,14 +97,14 @@ import config
 
 
 # the function that computes the ln-probabilities
-def lnprob(pzero_regions, p_u_regions, p_l_regions, fixindx,
-           real, imag, wgt, uuu, vvv, pcd, lnlikemethod, 
-           x_regions, y_regions, headmod_regions, celldata,
-           model_types_regions, nregions, nlens_regions, nsource_regions):
+def lnprob(pzero_regions, real, imag, wgt, uuu, vvv, pcd, lnlikemethod, 
+           fixindx, paramData):
     """ Function that computed the Ln probabilities of the data"""
 
-    # impose constraints on parameters by setting chi^2 to enormously high
-    # value when a walker chooses a parameter outside the constraints
+    # impose constraints on parameters by setting lnprob to -inf 
+    # when a walker chooses a parameter outside the constraints
+    p_l_regions = paramData['p_l_regions']
+    p_u_regions = paramData['p_u_regions']
     if (pzero_regions < p_l_regions).any():
         probln = -numpy.inf
         mu_flux = 0
@@ -141,12 +142,12 @@ def lnprob(pzero_regions, p_u_regions, p_l_regions, fixindx,
     for regioni in range(nregions):
 
         # get the model info for this model
-        x = x_regions[regioni]
-        y = y_regions[regioni]
-        headmod = headmod_regions[regioni]
-        nlens = nlens_regions[regioni]
-        nsource = nsource_regions[regioni]
-        model_types = model_types_regions[prindx:prindx + nsource]
+        x = paramData['x'][regioni]
+        y = paramData['y'][regioni]
+        headmod = paramData['modelheader'][regioni]
+        nlens = paramData['nlens_regions'][regioni]
+        nsource = paramData['nsource_regions'][regioni]
+        model_types = paramData['model_types'][prindx:prindx + nsource]
         prindx += nsource
         #model_types_regioni = model_types[regioni]
 
@@ -270,7 +271,7 @@ im = im[0, 0, :, :].copy()
 headim = fits.getheader(config.ImageName)
 
 # get resolution in ALMA image
-celldata = numpy.abs(headim['CDELT1'] * 3600)
+#celldata = numpy.abs(headim['CDELT1'] * 3600)
 
 #--------------------------------------------------------------------------
 # read in visibilities
@@ -317,141 +318,13 @@ vvv = vvv[positive_definite]
 npos = wgt.size
 
 #----------------------------------------------------------------------------
-# Define the number of walkers
-nwalkers = config.Nwalkers
-
-# determine the number of regions for which we need surface brightness maps
-regionIDs = config.RegionID
-nregions = len(regionIDs)
-
-# instantiate lists that must be carried through to lnprob function
-x = []
-y = []
-modelheader = []
-x_l_off = []
-y_l_off = []
-nlens_regions = []
-nsource_regions = []
-p_u = []
-p_l = []
-poff = []
-pname = []
-pzero = []
-model_types = []
-previousndim_model = 0
-previousnmu = 0
-for i in range(nregions):
-    ri = str(i)
-    ra_centroid = config.RACentroid[i]
-    dec_centroid = config.DecCentroid[i]
-    extent = config.RadialExtent[i]
-    oversample = config.Oversample[i]
-    nlens = config.Nlens[i]
-    nsource = config.Nsource[i]
-
-    # Append the number of lenses and sources for this region
-    nlens_regions.append(nlens)
-    nsource_regions.append(nsource)
-
-    # define number of pixels in lensed surface brightness map
-    dx = 2 * extent
-    nxmod = oversample * int(round(dx / celldata))
-    dy = 2 * extent
-    nymod = oversample * int(round(dy / celldata))
-
-    # make x and y coordinate images for lens model
-    onex = numpy.ones(nxmod)
-    oney = numpy.ones(nymod)
-    linspacex = numpy.linspace(0, 1, nxmod)
-    linspacey = numpy.linspace(0, 1, nymod)
-    x.append(dx * numpy.outer(oney, linspacex) - extent)
-    y.append(dy * numpy.outer(linspacey, onex) - extent)
-
-    # Provide world-coordinate system transformation data in the header of
-    # the lensed surface brightness map
-    headmod = headim.copy()
-    crpix1 = nxmod / 2 + 1
-    crpix2 = nymod / 2 + 1
-    cdelt1 = -1 * celldata / 3600 / oversample
-    cdelt2 = celldata / 3600 / oversample
-    headmod['naxis1'] = nxmod
-    headmod['cdelt1'] = cdelt1
-    headmod['crpix1'] = crpix1
-    headmod['crval1'] = ra_centroid
-    headmod['ctype1'] = 'RA---SIN'
-    headmod['naxis2'] = nymod
-    headmod['cdelt2'] = cdelt2
-    headmod['crpix2'] = crpix2
-    headmod['crval2'] = dec_centroid
-    headmod['ctype2'] = 'DEC--SIN'
-    modelheader.append(headmod)
-
-    # the parameter initialization vectors
-    p1 = []
-    p2 = []
-
-    for ilens in range(nlens):
-
-        li = str(ilens)
-
-        # constraints on the lenses
-        lensparams = ['EinsteinRadius', 'DeltaRA', 'DeltaDec', 'AxialRatio', \
-                'PositionAngle']
-        tag = '_Lens' + li + '_Region' + ri
-        for lensparam in lensparams:
-            fullparname = 'Constraint_' + lensparam + tag
-            values = getattr(config, fullparname)
-            poff.append(values.pop()) 
-            values = numpy.array(values).astype(float)
-            p_u.append(values[1]) 
-            p_l.append(values[0]) 
-            pname.append(lensparam + tag)
-            fullparname = 'Init_' + lensparam + tag
-            values = getattr(config, fullparname)
-            p2.append(values[1]) 
-            p1.append(values[0]) 
-
-    for isource in range(nsource):
-
-        si = str(isource)
-
-        sourceparams = ['IntrinsicFlux', 'Size', 'DeltaRA', 'DeltaDec', \
-                'AxialRatio', 'PositionAngle']
-        tag = '_Source' + si + '_Region' + ri
-        for sourceparam in sourceparams:
-            fullparname = 'Constraint_' + sourceparam + tag
-            values = getattr(config, fullparname)
-            poff.append(values.pop()) 
-            values = numpy.array(values).astype(float)
-            p_u.append(values[1]) 
-            p_l.append(values[0]) 
-            pname.append(sourceparam + tag)
-            fullparname = 'Init_' + sourceparam + tag
-            values = getattr(config, fullparname)
-            p2.append(values[1]) 
-            p1.append(values[0]) 
-
-        # get the model type
-        fullparname = 'ModelMorphology' + tag
-        model_types.append(getattr(config, fullparname))
-
-    # determine the number of free parameters in the model
-    nparams = len(p1)
-
-    # Otherwise, choose an initial set of positions for the walkers.
-    pzero_model = numpy.zeros((nwalkers, nparams))
-    for j in range(nparams):
-        #if p3[j] == 'uniform':
-        pzero_model[:, j] = numpy.random.uniform(p1[j], p2[j], nwalkers)
-        #if p3[j] == 'normal':
-        #    pzero_model[:,j] = (numpy.random.normal(loc=p1[j], 
-        #    scale=p2[j], size=nwalkers))
-        #if p4[j] == 'pos':
-        #    pzero[:, j] = numpy.abs(pzero[:, j])
-    if pzero == []:
-        pzero = pzero_model
-    else:
-        pzero = numpy.append(pzero, pzero_model, axis=1)
+# Load input parameters
+paramData = setuputil.loadParams(config, im)
+nwalkers = paramData['nwalkers']
+nregions = paramData['nregions']
+nparams = paramData['nparams']
+pname = paramData['pname']
+nsource_regions = paramData['nsource_regions']
 
 # Use an intermediate posterior PDF to initialize the walkers if it exists
 posteriorloc = 'posteriorpdf.hdf5'
@@ -465,7 +338,7 @@ if os.path.exists(posteriorloc):
         # assign values to pzero
         nlnprob = 1
         pzero = numpy.zeros((nwalkers, nparams))
-        startindx = nlnprob #+ previousndim_model
+        startindx = nlnprob
         for j in range(nparams):
             namej = posteriordat.colnames[j + startindx]
             pzero[:, j] = posteriordat[namej][-nwalkers:]
@@ -486,7 +359,8 @@ if not realpdf:
     nmu = 0
     for regioni in range(nregions):
         ri = str(regioni)
-        if nlens_regions[regioni] > 0:
+        if paramData['nlens_regions'][regioni] > 0:
+            nsource = nsource_regions[regioni]
             for i in range(nsource):
                 si = '.Source' + str(i) + '.Region' + ri
                 extendedpname.append('mu_tot' + si) 
@@ -498,23 +372,20 @@ if not realpdf:
     posteriordat = Table(names = extendedpname)
 
 # make sure no parts of pzero exceed p_u or p_l
-arrayp_u = numpy.array(p_u)
-arrayp_l = numpy.array(p_l)
-arraypzero = numpy.array(pzero)
-for j in range(nwalkers):
-    exceed = arraypzero[j] >= arrayp_u
-    arraypzero[j, exceed] = 2 * arrayp_u[exceed] - arraypzero[j, exceed]
-    exceed = arraypzero[j] <= arrayp_l
-    arraypzero[j, exceed] = 2 * arrayp_l[exceed] - arraypzero[j, exceed]
-pzero = arraypzero
-p_u = arrayp_u
-p_l = arrayp_l
+#arrayp_u = numpy.array(p_u)
+#arrayp_l = numpy.array(p_l)
+#arraypzero = numpy.array(pzero)
+#for j in range(nwalkers):
+#    exceed = arraypzero[j] >= arrayp_u
+#    arraypzero[j, exceed] = 2 * arrayp_u[exceed] - arraypzero[j, exceed]
+#    exceed = arraypzero[j] <= arrayp_l
+#    arraypzero[j, exceed] = 2 * arrayp_l[exceed] - arraypzero[j, exceed]
+#pzero = arraypzero
+#p_u = arrayp_u
+#p_l = arrayp_l
 
 # determine the indices for fixed parameters
-fixindx = numpy.zeros(nparams) - 1
-for ifix in range(nparams):
-    if pname.count(poff[ifix]) > 0:
-        fixindx[ifix] = pname.index(poff[ifix])
+fixindx = setuputil.fixParams(paramData)
 
 # Determine method of computing lnlike
 lnlikemethod = config.lnLike
@@ -523,15 +394,13 @@ lnlikemethod = config.lnLike
 if mpi != 'MPI':
     # Single processor with Nthreads cores
     sampler = emcee.EnsembleSampler(nwalkers, nparams, lnprob, \
-        args=[p_u, p_l, fixindx, real, imag, wgt, uuu, vvv, pcd, \
-        lnlikemethod, x, y, modelheader, celldata, model_types, nregions, \
-        nlens_regions, nsource_regions], threads=Nthreads)
+        args=[real, imag, wgt, uuu, vvv, pcd, \
+        lnlikemethod, fixindx, paramData], threads=Nthreads)
 else:
     # Multiple processors using MPI
     sampler = emcee.EnsembleSampler(nwalkers, nparams, lnprob, pool=pool, \
-        args=[p_u, p_l, fixindx, real, imag, wgt, uuu, vvv, pcd, \
-        lnlikemethod, x, y, modelheader, celldata, model_types, nregions, \
-        nlens_regions, nsource_regions])
+        args=[real, imag, wgt, uuu, vvv, pcd, \
+        lnlikemethod, fixindx, paramData])
 
 # Sample, outputting to a file
 os.system('date')
