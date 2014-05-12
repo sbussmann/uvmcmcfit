@@ -103,8 +103,8 @@ def lnprob(pzero_regions, real, imag, wgt, uuu, vvv, pcd, lnlikemethod,
 
     # impose constraints on parameters by setting lnprob to -inf 
     # when a walker chooses a parameter outside the constraints
-    p_l_regions = paramData['p_l_regions']
-    p_u_regions = paramData['p_u_regions']
+    p_l_regions = paramData['p_l']
+    p_u_regions = paramData['p_u']
     if (pzero_regions < p_l_regions).any():
         probln = -numpy.inf
         mu_flux = 0
@@ -316,7 +316,7 @@ npos = wgt.size
 
 #----------------------------------------------------------------------------
 # Load input parameters
-paramData = setuputil.loadParams(config, im)
+paramData = setuputil.loadParams(config)
 nwalkers = paramData['nwalkers']
 nregions = paramData['nregions']
 nparams = paramData['nparams']
@@ -371,7 +371,7 @@ if not realpdf:
 # make sure no parts of pzero exceed p_u or p_l
 #arrayp_u = numpy.array(p_u)
 #arrayp_l = numpy.array(p_l)
-#arraypzero = numpy.array(pzero)
+pzero = numpy.array(paramData['pzero'])
 #for j in range(nwalkers):
 #    exceed = arraypzero[j] >= arrayp_u
 #    arraypzero[j, exceed] = 2 * arrayp_u[exceed] - arraypzero[j, exceed]
