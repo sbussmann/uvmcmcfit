@@ -12,6 +12,9 @@ def loadParams(config):
     # Define the number of walkers
     nwalkers = config.Nwalkers
 
+    # Determine method of computing lnlike
+    lnlikemethod = config.lnLike
+
     # determine the number of regions for which we need surface brightness maps
     regionIDs = config.RegionID
     nregions = len(regionIDs)
@@ -154,7 +157,7 @@ def loadParams(config):
         else:
             pzero = numpy.append(pzero, pzero_model, axis=1)
 
-    paramData = {'x': x, 
+    paramSetup = {'x': x, 
             'y': y, 
             'modelheader': modelheader,
             'nlens_regions': nlens_regions, 
@@ -168,16 +171,17 @@ def loadParams(config):
             'nwalkers': nwalkers, 
             'nparams': nparams, 
             'celldata': celldata,
+            'lnlikemethod': lnlikemethod,
             'nregions': nregions}
-    return paramData
+    return paramSetup
 
-def fixParams(paramData):
+def fixParams(paramSetup):
     """
     Determine the indices for fixed parameters.
     """
-    nparams = paramData['nparams']
-    poff = paramData['poff']
-    pname = paramData['pname']
+    nparams = paramSetup['nparams']
+    poff = paramSetup['poff']
+    pname = paramSetup['pname']
     fixindx = numpy.zeros(nparams) - 1
     for ifix in range(nparams):
         if pname.count(poff[ifix]) > 0:

@@ -151,15 +151,17 @@ def getStatWgt(real_raw, imag_raw, wgt_raw):
             rms_real = numpy.std(reali)
             rms_imag = numpy.std(imagi)
             rms_avg = (rms_real + rms_imag) / 2.
-            wgt_scaled[i, gwgt] = 1 / rms_avg ** 2
+            wgt_scaled[i, :] = 1 / rms_avg ** 2
     return wgt_scaled
 
-def statwt(visfile, ExcludeChannels=False):
+def statwt(visfileloc, newvisfileloc, ExcludeChannels=False):
     """
     Replace the weights in 'visfile' with weights computed via getStatWgt.
     """
 
+    visfile = fits.open(visfileloc)
     data_real, data_imag, data_wgt = visload(visfile)
+    wgt_original = data_wgt.copy()
 
     if ExcludeChannels:
         nwindows = len(ExcludeChannels) / 2
@@ -167,9 +169,9 @@ def statwt(visfile, ExcludeChannels=False):
             chan1 = ExcludeChannels[win]
             chan2 = ExcludeChannels[win + 1]
             if data_real.ndim == 4:
-                data_wgt[:, :, chan1:chan2, :, 2] = 0.0
+                data_wgt[:, :, chan1:chan2, :] = 0
             else:
-                data_wgt[:, chan1:chan2, :, 2] = 0.0    
+                data_wgt[:, chan1:chan2, :] = 0
 
     # get the number of visibilities, spws, frequencies, polarizations
     if data_real.ndim == 4:
@@ -195,8 +197,13 @@ def statwt(visfile, ExcludeChannels=False):
                 imag_raw = data_imag[:, ispw, :, ipol]
                 wgt_raw = data_wgt[:, ispw, :, ipol]
 
+                wgt_orig = wgt_original[:, ispw, :, ipol]
+                oktoreplace = wgt_orig > 0
+
                 wgt_scaled = getStatWgt(real_raw, imag_raw, wgt_raw)
-                wgt[:, ispw, :, ipol] = wgt_scaled
+                wgt_temp = wgt[:, ispw, :, ipol]
+                wgt_temp[oktoreplace] = wgt_scaled[oktoreplace]
+                wgt[:, ispw, :, ipol] = wgt_temp
         visfile[0].data['DATA'][:, 0, 0, :, :, :, 2] = wgt
     else:
 
@@ -211,7 +218,9 @@ def statwt(visfile, ExcludeChannels=False):
             wgt[:, :, ipol] = wgt_scaled
         visfile[0].data['DATA'][:, 0, 0, :, :, 2] = wgt
 
-    return visfile
+    visfile.writeto(newvisfileloc)
+
+    return
 
 def scalewt(visdataloc, newvisdataloc):
 

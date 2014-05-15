@@ -81,7 +81,8 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
                 plt.axis([xmin, xmax, ymin, ymax])
 
 
-    savefig(tag + 'PDFs.pdf')
+    savefile = tag + 'PDFs.png'
+    savefig(savefile)
 
 def makeSBmap(config, paramData, parameters, regioni):
 
@@ -432,7 +433,7 @@ def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
 
 
     savefig('LensedSBmap.Region' + sri + tag + '.pdf')
-    plt.clf()
+    #plt.clf()
 
 def removeTempFiles():
 

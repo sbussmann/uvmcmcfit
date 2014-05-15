@@ -95,36 +95,39 @@ cwd = os.getcwd()
 sys.path.append(cwd)
 import config
 
+def lnprior(pzero_regions, paramSetup):
 
-# the function that computes the ln-probabilities
-def lnprob(pzero_regions, real, imag, wgt, uuu, vvv, pcd, lnlikemethod, 
-           fixindx, paramData):
-    """ Function that computed the Ln probabilities of the data"""
+    """
 
+    Function that computes the ln prior probablities of the model parameters.
+
+    """
+
+    # Uniform priors
     # impose constraints on parameters by setting lnprob to -inf 
     # when a walker chooses a parameter outside the constraints
-    p_l_regions = paramData['p_l']
-    p_u_regions = paramData['p_u']
+    p_l_regions = paramSetup['p_l']
+    p_u_regions = paramSetup['p_u']
+    priorln = 0
+    mu = 0
     if (pzero_regions < p_l_regions).any():
-        probln = -numpy.inf
-        mu_flux = 0
-        #print(probln, mu_flux, pzero)
-        #print(probln, ["%0.2f" % i for i in pzero])
-        return probln, mu_flux
+        priorln = -numpy.inf
     if (pzero_regions > p_u_regions).any():
-        probln = -numpy.inf
-        mu_flux = 0
-        #print(probln, ["%0.2f" % i for i in pzero])
-        return probln, mu_flux
+        priorln = -numpy.inf
     if (pzero_regions * 0 != 0).any():
-        probln = -numpy.inf
-        mu_flux = 0
-        #print(probln, ["%0.2f" % i for i in pzero])
-        return probln, mu_flux
+        priorln = -numpy.inf
+
+    return priorln, mu
+
+
+def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd, 
+           fixindx, paramSetup):
+    """ Function that computes the Ln likelihood of the data"""
 
     # search poff_models for parameters fixed relative to other parameters
     fixed = (numpy.where(fixindx >= 0))[0]
     nfixed = fixindx[fixed].size
+    p_u_regions = paramSetup['p_u']
     poff_regions = p_u_regions.copy()
     poff_regions[:] = 0.
     for ifix in range(nfixed):
@@ -141,12 +144,12 @@ def lnprob(pzero_regions, real, imag, wgt, uuu, vvv, pcd, lnlikemethod,
     for regioni in range(nregions):
 
         # get the model info for this model
-        x = paramData['x'][regioni]
-        y = paramData['y'][regioni]
-        headmod = paramData['modelheader'][regioni]
-        nlens = paramData['nlens_regions'][regioni]
-        nsource = paramData['nsource_regions'][regioni]
-        model_types = paramData['model_types'][regioni]
+        x = paramSetup['x'][regioni]
+        y = paramSetup['y'][regioni]
+        headmod = paramSetup['modelheader'][regioni]
+        nlens = paramSetup['nlens_regions'][regioni]
+        nsource = paramSetup['nsource_regions'][regioni]
+        model_types = paramSetup['model_types'][regioni]
 
         # get pzero, p_u, and p_l for this specific model
         nparlens = 5 * nlens
@@ -220,6 +223,7 @@ def lnprob(pzero_regions, real, imag, wgt, uuu, vvv, pcd, lnlikemethod,
     sigmaterm_all = numpy.append(sigmaterm_real, sigmaterm_imag)
 
     # compute the ln likelihood
+    lnlikemethod = paramSetup['lnlikemethod']
     if lnlikemethod == 'chi2':
         lnlike = chi2_all
     else:
@@ -231,11 +235,34 @@ def lnprob(pzero_regions, real, imag, wgt, uuu, vvv, pcd, lnlikemethod,
     #ndof = nmeasure - nparam
 
     # assert that lnprob is equal to -1 * maximum likelihood estimate
-    probln = -0.5 * lnlike[goodvis].sum()
-    if probln * 0 != 0:
-        probln = -numpy.inf
+    likeln = -0.5 * lnlike[goodvis].sum()
+    if likeln * 0 != 0:
+        likeln = -numpy.inf
 
-    return probln, amp
+    return likeln, amp
+
+def lnprob(pzero_regions, real, imag, wgt, uuu, vvv, pcd, 
+           fixindx, paramSetup):
+
+    """
+
+    Computes ln probabilities via ln prior + ln likelihood
+
+    """
+
+    lp, mu = lnprior(pzero_regions, paramSetup)
+
+    if not numpy.isfinite(lp):
+        probln = -numpy.inf
+        mu = 0
+        return probln, mu
+
+    ll, mu = lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd, 
+           fixindx, paramSetup)
+
+    probln = lp + ll
+    
+    return probln, mu
 
 # Determine parallel processing options
 mpi = config.ParallelProcessingMode
@@ -316,12 +343,12 @@ npos = wgt.size
 
 #----------------------------------------------------------------------------
 # Load input parameters
-paramData = setuputil.loadParams(config)
-nwalkers = paramData['nwalkers']
-nregions = paramData['nregions']
-nparams = paramData['nparams']
-pname = paramData['pname']
-nsource_regions = paramData['nsource_regions']
+paramSetup = setuputil.loadParams(config)
+nwalkers = paramSetup['nwalkers']
+nregions = paramSetup['nregions']
+nparams = paramSetup['nparams']
+pname = paramSetup['pname']
+nsource_regions = paramSetup['nsource_regions']
 
 # Use an intermediate posterior PDF to initialize the walkers if it exists
 posteriorloc = 'posteriorpdf.hdf5'
@@ -356,7 +383,7 @@ if not realpdf:
     nmu = 0
     for regioni in range(nregions):
         ri = str(regioni)
-        if paramData['nlens_regions'][regioni] > 0:
+        if paramSetup['nlens_regions'][regioni] > 0:
             nsource = nsource_regions[regioni]
             for i in range(nsource):
                 si = '.Source' + str(i) + '.Region' + ri
@@ -371,7 +398,7 @@ if not realpdf:
 # make sure no parts of pzero exceed p_u or p_l
 #arrayp_u = numpy.array(p_u)
 #arrayp_l = numpy.array(p_l)
-pzero = numpy.array(paramData['pzero'])
+pzero = numpy.array(paramSetup['pzero'])
 #for j in range(nwalkers):
 #    exceed = arraypzero[j] >= arrayp_u
 #    arraypzero[j, exceed] = 2 * arrayp_u[exceed] - arraypzero[j, exceed]
@@ -382,22 +409,19 @@ pzero = numpy.array(paramData['pzero'])
 #p_l = arrayp_l
 
 # determine the indices for fixed parameters
-fixindx = setuputil.fixParams(paramData)
-
-# Determine method of computing lnlike
-lnlikemethod = config.lnLike
+fixindx = setuputil.fixParams(paramSetup)
 
 # Initialize the sampler with the chosen specs.
 if mpi != 'MPI':
     # Single processor with Nthreads cores
     sampler = emcee.EnsembleSampler(nwalkers, nparams, lnprob, \
         args=[real, imag, wgt, uuu, vvv, pcd, \
-        lnlikemethod, fixindx, paramData], threads=Nthreads)
+        fixindx, paramSetup], threads=Nthreads)
 else:
     # Multiple processors using MPI
     sampler = emcee.EnsembleSampler(nwalkers, nparams, lnprob, pool=pool, \
         args=[real, imag, wgt, uuu, vvv, pcd, \
-        lnlikemethod, fixindx, paramData])
+        fixindx, paramSetup])
 
 # Sample, outputting to a file
 os.system('date')
