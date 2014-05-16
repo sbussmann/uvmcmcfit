@@ -27,6 +27,7 @@ def loadParams(config):
     nsource_regions = []
     p_u = []
     p_l = []
+    prior_shape = []
     poff = []
     pname = []
     pzero = []
@@ -93,8 +94,10 @@ def loadParams(config):
                     'PositionAngle']
             tag = '_Lens' + li + '_Region' + ri
             for lensparam in lensparams:
-                fullparname = 'Constraint_' + lensparam + tag
+                fullparname = 'Prior_' + lensparam + tag
                 values = getattr(config, fullparname)
+                prior_shape.append(values.pop()) 
+                #values = getattr(config, fullparname)
                 poff.append(values.pop()) 
                 values = numpy.array(values).astype(float)
                 if values.size < 2:
@@ -120,8 +123,10 @@ def loadParams(config):
                     'PositionAngle']
             tag = '_Source' + si + '_Region' + ri
             for sourceparam in sourceparams:
-                fullparname = 'Constraint_' + sourceparam + tag
+                fullparname = 'Prior_' + sourceparam + tag
                 values = getattr(config, fullparname)
+                prior_shape.append(values.pop()) 
+                #values = getattr(config, fullparname)
                 poff.append(values.pop()) 
                 values = numpy.array(values).astype(float)
                 p_u.append(values[1]) 
@@ -164,6 +169,7 @@ def loadParams(config):
             'nsource_regions': nsource_regions,
             'p_u': numpy.array(p_u), 
             'p_l': numpy.array(p_l), 
+            'prior_shape': numpy.array(prior_shape),
             'poff': poff, 
             'pname': pname, 
             'pzero': pzero, 

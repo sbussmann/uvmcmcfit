@@ -99,23 +99,40 @@ def lnprior(pzero_regions, paramSetup):
 
     """
 
-    Function that computes the ln prior probablities of the model parameters.
+    Function that computes the ln prior probabilities of the model parameters.
 
     """
 
-    # Uniform priors
-    # impose constraints on parameters by setting lnprob to -inf 
-    # when a walker chooses a parameter outside the constraints
-    p_l_regions = paramSetup['p_l']
-    p_u_regions = paramSetup['p_u']
-    priorln = 0
-    mu = 0
-    if (pzero_regions < p_l_regions).any():
-        priorln = -numpy.inf
-    if (pzero_regions > p_u_regions).any():
-        priorln = -numpy.inf
+    # ensure all parameters are finite
     if (pzero_regions * 0 != 0).any():
         priorln = -numpy.inf
+
+    # Uniform priors
+    uniform_regions = paramSetup['prior_shape'] == 'Uniform'
+    if uniform_regions.any():
+        p_l_regions = paramSetup['p_l'][uniform_regions]
+        p_u_regions = paramSetup['p_u'][uniform_regions]
+        pzero_uniform = pzero_regions[uniform_regions]
+        priorln = 0
+        mu = 1
+        if (pzero_uniform < p_l_regions).any():
+            priorln = -numpy.inf
+        if (pzero_uniform > p_u_regions).any():
+            priorln = -numpy.inf
+
+    # Gaussian priors
+    gaussian_regions = paramSetup['prior_shape'] == 'Gaussian'
+    if gaussian_regions.any():
+    #ngaussian = paramSetup['prior_shape'][gaussian_regions].size
+    #for ipar in range(ngaussian):
+        mean_regions = paramSetup['p_l'][gaussian_regions]
+        rms_regions = paramSetup['p_u'][gaussian_regions]
+        part1 = numpy.log(2 * numpy.pi * rms_regions ** 2)
+        parameter = pzero_regions[gaussian_regions]
+        #print(parameter - mean_regions, (parameter - mean_regions)/rms_regions)
+        part2 = (parameter - mean_regions) ** 2 / rms_regions ** 2
+        priorln = -0.5 * (part1 + part2).sum()
+        #priorln += priorln_param
 
     return priorln, mu
 
@@ -141,6 +158,7 @@ def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
 
     amp = []  # Will contain the 'blobs' we compute
 
+    nregions = paramSetup['nregions']
     for regioni in range(nregions):
 
         # get the model info for this model
@@ -234,7 +252,7 @@ def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
     #nparam = (pzero != 0).size
     #ndof = nmeasure - nparam
 
-    # assert that lnprob is equal to -1 * maximum likelihood estimate
+    # assert that lnlike is equal to -1 * maximum likelihood estimate
     likeln = -0.5 * lnlike[goodvis].sum()
     if likeln * 0 != 0:
         likeln = -numpy.inf
@@ -254,13 +272,15 @@ def lnprob(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
 
     if not numpy.isfinite(lp):
         probln = -numpy.inf
-        mu = 0
+        mu = 1
         return probln, mu
 
     ll, mu = lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd, 
            fixindx, paramSetup)
 
-    probln = lp + ll
+    normalization = 2 * real.size
+    probln = lp * normalization + ll
+    #print(probln, lp*normalization, ll)
     
     return probln, mu
 
