@@ -127,11 +127,11 @@ def lnprior(pzero_regions, paramSetup):
     #for ipar in range(ngaussian):
         mean_regions = paramSetup['p_l'][gaussian_regions]
         rms_regions = paramSetup['p_u'][gaussian_regions]
-        part1 = numpy.log(2 * numpy.pi * rms_regions ** 2)
+        #part1 = numpy.log(2 * numpy.pi * rms_regions ** 2)
         parameter = pzero_regions[gaussian_regions]
         #print(parameter - mean_regions, (parameter - mean_regions)/rms_regions)
         part2 = (parameter - mean_regions) ** 2 / rms_regions ** 2
-        priorln = -0.5 * (part1 + part2).sum()
+        priorln = -2.5 * (part2).sum()
         #priorln += priorln_param
 
     return priorln, mu
@@ -278,7 +278,7 @@ def lnprob(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
     ll, mu = lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd, 
            fixindx, paramSetup)
 
-    normalization = 2 * real.size
+    normalization = 1.0#2 * real.size
     probln = lp * normalization + ll
     #print(probln, lp*normalization, ll)
     
