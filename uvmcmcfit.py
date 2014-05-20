@@ -414,11 +414,11 @@ if not realpdf:
             extendedpname.append('mu_aper.Region' + ri) 
             nmu += 2
     posteriordat = Table(names = extendedpname)
+    pzero = numpy.array(paramSetup['pzero'])
 
 # make sure no parts of pzero exceed p_u or p_l
 #arrayp_u = numpy.array(p_u)
 #arrayp_l = numpy.array(p_l)
-pzero = numpy.array(paramSetup['pzero'])
 #for j in range(nwalkers):
 #    exceed = arraypzero[j] >= arrayp_u
 #    arraypzero[j, exceed] = 2 * arrayp_u[exceed] - arraypzero[j, exceed]
