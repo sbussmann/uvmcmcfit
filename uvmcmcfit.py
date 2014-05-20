@@ -131,7 +131,7 @@ def lnprior(pzero_regions, paramSetup):
         parameter = pzero_regions[gaussian_regions]
         #print(parameter - mean_regions, (parameter - mean_regions)/rms_regions)
         part2 = (parameter - mean_regions) ** 2 / rms_regions ** 2
-        priorln = -250. * (part2).sum()
+        priorln = -100. * (part2).sum()
         #priorln += priorln_param
 
     return priorln, mu
