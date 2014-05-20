@@ -12,13 +12,10 @@ from astropy.io import fits
 
 def pcdload(visfile):
 
-    # read in the uvfits data
+    # identify the dimensions of the data in the uvfits file
     visheader = visfile[0].header
 
-    # identify the telescope
-    telescop = visheader['TELESCOP']
-
-    if telescop == 'ALMA':
+    if visheader['NAXIS'] == 7:
 
         # identify the phase center
         pcd_ra = visfile['AIPS SU '].data['RAEPO'][0]
@@ -26,7 +23,7 @@ def pcdload(visfile):
         pcd = [pcd_ra, pcd_dec]
         return pcd
 
-    if telescop == 'PdBI':
+    if visheader['NAXIS'] == 6:
 
        # identify the channel frequency(ies):
         pcd_ra = visfile[0].header['OBSRA']
@@ -37,14 +34,10 @@ def pcdload(visfile):
 def uvload(visfile):
 
     # read in the uvfits data
-    #visfile = fits.open(visdataloc)
     visibilities = visfile[0].data
     visheader = visfile[0].header
 
-    # identify the telescope
-    telescop = visheader['TELESCOP']
-
-    if telescop == 'ALMA':
+    if visheader['NAXIS'] == 7:
 
         # identify the channel frequency(ies):
         visfreq = visfile[1].data
@@ -80,7 +73,7 @@ def uvload(visfile):
                     uu[:, ispw, 0, ipol] = freqif * visibilities['UU']
                     vv[:, ispw, 0, ipol] = freqif * visibilities['VV']
 
-    if telescop == 'PdBI':
+    if visheader['NAXIS'] == 6:
 
         # identify the channel frequency(ies):
         freq0 = visheader['CRVAL4']
@@ -124,7 +117,7 @@ def visload(visfile):
         data_imag = visfile[0].data['DATA'][:,0,0,:,:,1]
         data_wgt = visfile[0].data['DATA'][:,0,0,:,:,2]
 
-    # if we are dealing with ALMA data
+    # if we are dealing with ALMA or PdBI data
     if visheader['NAXIS'] == 7:
         data_real = visfile[0].data['DATA'][:,0,0,:,:,:,0]
         data_imag = visfile[0].data['DATA'][:,0,0,:,:,:,1]
