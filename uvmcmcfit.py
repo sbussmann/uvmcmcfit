@@ -131,7 +131,7 @@ def lnprior(pzero_regions, paramSetup):
         parameter = pzero_regions[gaussian_regions]
         #print(parameter - mean_regions, (parameter - mean_regions)/rms_regions)
         part2 = (parameter - mean_regions) ** 2 / rms_regions ** 2
-        priorln = -100. * (part2).sum()
+        priorln = -2.5 * (part2).sum()
         #priorln += priorln_param
 
     return priorln, mu
@@ -174,7 +174,7 @@ def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
         nparsource = 6 * nsource
         npar = nparlens + nparsource + npar_previous
         parameters = parameters_regions[npar_previous:npar]
-        npar_previous += npar
+        npar_previous = npar
 
         #-----------------------------------------------------------------
         # Create a surface brightness map of lensed emission for the given set

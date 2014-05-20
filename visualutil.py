@@ -488,7 +488,7 @@ def plotFit(config, paramData, parameters, regioni, tag=''):
     plotImage(residual, residual, config, parameters, regioni, tag=tag, resid=True)
 
     # remove the intermediate files
-    #removeTempFiles()
+    removeTempFiles()
 
 def preProcess(config, paramData, fitresult, tag=''):
 
