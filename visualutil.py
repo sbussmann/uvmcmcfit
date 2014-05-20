@@ -16,7 +16,7 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
 
     # plotting parameters
     rc('font',**{'family':'sans-serif', 'sans-serif':['Arial Narrow'], 
-        'size':'6'})
+        'size':'12'})
 
     # grab the last Ngood fits
     fitresults = fitresults[-Ngood:]
@@ -32,7 +32,7 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
     nrow = nparams / ncol + 1
     j = 1
 
-    fig = plt.figure(figsize=(8.0, 1.0 * nrow))
+    fig = plt.figure(figsize=(12.0, 1.5 * nrow))
 
     # set up the plotting window
     plt.subplots_adjust(left=0.08, bottom=0.1, right=0.95, top=0.95,
@@ -506,10 +506,11 @@ def preProcess(config, paramData, fitresult, tag=''):
     # Loop over each region
     regionIDs = config.RegionID
     nregions = len(regionIDs)
-    nsource_regions = paramData['nsource_regions']
+    nlensedsource = paramData['nlensedsource']
+    nlensedregions = paramData['nlensedregions']
     npar_previous = 0
     for regioni in range(nregions):
-        nmu = 2 * (numpy.array(nsource_regions).sum() + nregions)
+        nmu = 2 * (numpy.array(nlensedsource).sum() + nlensedregions)
         allparameters0 = list(fitresult.data)[1:-nmu]
 
         # search poff_models for parameters fixed relative to other parameters

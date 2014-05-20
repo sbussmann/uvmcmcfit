@@ -32,6 +32,9 @@ def loadParams(config):
     pname = []
     pzero = []
     model_types = []
+    nparams_total = 0
+    nlensedsource = 0
+    nlensedregions = 0
     for i in range(nregions):
         ri = str(i)
         ra_centroid = config.RACentroid[i]
@@ -111,6 +114,9 @@ def loadParams(config):
                 p1.append(values[0]) 
 
         model_types_source = []
+        if nlens > 0:
+            nlensedsource += nsource
+            nlensedregions += 1
         for isource in range(nsource):
 
             si = str(isource)
@@ -147,6 +153,10 @@ def loadParams(config):
         # determine the number of free parameters in the model
         nparams = len(p1)
 
+        # add that number to the total number of free parameters considering
+        # all regions so far
+        nparams_total += nparams
+
         # Otherwise, choose an initial set of positions for the walkers.
         pzero_model = numpy.zeros((nwalkers, nparams))
         for j in range(nparams):
@@ -167,6 +177,8 @@ def loadParams(config):
             'modelheader': modelheader,
             'nlens_regions': nlens_regions, 
             'nsource_regions': nsource_regions,
+            'nlensedsource': nlensedsource,
+            'nlensedregions': nlensedregions,
             'p_u': numpy.array(p_u), 
             'p_l': numpy.array(p_l), 
             'prior_shape': numpy.array(prior_shape),
@@ -175,7 +187,7 @@ def loadParams(config):
             'pzero': pzero, 
             'model_types': model_types, 
             'nwalkers': nwalkers, 
-            'nparams': nparams, 
+            'nparams': nparams_total, 
             'celldata': celldata,
             'lnlikemethod': lnlikemethod,
             'nregions': nregions}

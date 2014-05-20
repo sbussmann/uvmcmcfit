@@ -228,12 +228,12 @@ def sbmap(x, y, nlens, nsource, parameters, model_types):
     dx = x.copy()
     dy = y.copy()
     dmu = N.zeros(x.shape)
+    nparlens = 5
 
     # loop over each lens
     for i in range(nlens):
 
         # Set SIE lens-model parameters and pack them into an array:
-        nparlens = 5
         i5 = i * nparlens
         lpar = []
         for ip in range(nparlens):
