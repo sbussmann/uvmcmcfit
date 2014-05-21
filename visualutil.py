@@ -449,7 +449,7 @@ def removeTempFiles():
     cmd = 'rm -rf *SBmap*fits *_model* *_residual* dump'
     os.system(cmd)    
 
-def plotFit(config, paramData, parameters, regioni, tag=''):
+def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True):
 
     """
 
@@ -488,9 +488,10 @@ def plotFit(config, paramData, parameters, regioni, tag=''):
     plotImage(residual, residual, config, parameters, regioni, tag=tag, resid=True)
 
     # remove the intermediate files
-    removeTempFiles()
+    if cleanup:
+        removeTempFiles()
 
-def preProcess(config, paramData, fitresult, tag=''):
+def preProcess(config, paramData, fitresult, tag='', cleanup=True):
 
     """
 
@@ -541,5 +542,6 @@ def preProcess(config, paramData, fitresult, tag=''):
         npar = nparlens + nparsource + npar_previous
         parameters = allparameters[npar_previous:npar]
         npar_previous = npar
-        plotFit(config, paramData, parameters, regioni, tag=tag)
+        plotFit(config, paramData, parameters, regioni, tag=tag,
+                cleanup=cleanup)
 

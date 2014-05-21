@@ -191,7 +191,7 @@ def covariance(bestfitloc='posteriorpdf.hdf5'):
     savefig('covariance.pdf')
     plt.clf()        
 
-def bestFit(bestfitloc='posteriorpdf.hdf5'):
+def bestFit(bestfitloc='posteriorpdf.hdf5', cleanup=True):
 
     """ 
 
@@ -216,9 +216,10 @@ def bestFit(bestfitloc='posteriorpdf.hdf5'):
     index = fitresults['lnprob'] == minchi2
     bestfit = fitresults[index][0]
     tag = 'bestfit'
-    visualutil.preProcess(config, paramData, bestfit, tag=tag)
+    visualutil.preProcess(config, paramData, bestfit, tag=tag, cleanup=cleanup)
 
-def goodFits(bestfitloc='posteriorpdf.hdf5', Nfits=12, Ngood=5000):
+def goodFits(bestfitloc='posteriorpdf.hdf5', Nfits=12, Ngood=5000,
+        cleanup=True):
 
     """ 
 
@@ -251,4 +252,5 @@ def goodFits(bestfitloc='posteriorpdf.hdf5', Nfits=12, Ngood=5000):
         realid = numpy.int(realids[ifit])
         fitresult = fitresults[realid]
         tag = 'goodfit' + str(realid).zfill(4)
-        visualutil.preProcess(config, paramData, fitresult, tag=tag)
+        visualutil.preProcess(config, paramData, fitresult, tag=tag,
+                cleanup=cleanup)
