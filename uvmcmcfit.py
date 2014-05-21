@@ -147,8 +147,15 @@ def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
     p_u_regions = paramSetup['p_u']
     poff_regions = p_u_regions.copy()
     poff_regions[:] = 0.
+    #for ifix in range(nfixed):
+    #    poff_regions[fixed[ifix]] = pzero_regions[fixindx[fixed[ifix]]]
     for ifix in range(nfixed):
-        poff_regions[fixed[ifix]] = pzero_regions[fixindx[fixed[ifix]]]
+        ifixed = fixed[ifix]
+        subindx = fixindx[ifixed]
+        par0 = 0
+        if fixindx[subindx] > 0:
+            par0 = pzero_regions[fixindx[subindx]]
+        poff_regions[ifixed] = pzero_regions[subindx] + par0
 
     parameters_regions = pzero_regions + poff_regions
 

@@ -521,7 +521,12 @@ def preProcess(config, paramData, fitresult, tag=''):
         nfixed = fixindx[fixed].size
         parameters_offset = numpy.zeros(ndim_total)
         for ifix in range(nfixed):
-            parameters_offset[fixed[ifix]] = fitresult[fixindx[fixed[ifix]] + 1]
+            ifixed = fixed[ifix]
+            subindx = fixindx[ifixed]
+            par0 = 0
+            if fixindx[subindx] > 0:
+                par0 = fitresult[fixindx[subindx] + 1]
+            parameters_offset[ifixed] = fitresult[subindx + 1] + par0
 
         allparameters = allparameters0 + parameters_offset
 
@@ -532,6 +537,6 @@ def preProcess(config, paramData, fitresult, tag=''):
         nparsource = 6 * nsource
         npar = nparlens + nparsource + npar_previous
         parameters = allparameters[npar_previous:npar]
-        npar_previous += npar
+        npar_previous = npar
         plotFit(config, paramData, parameters, regioni, tag=tag)
 
