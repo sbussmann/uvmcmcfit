@@ -511,7 +511,10 @@ def preProcess(config, paramData, fitresult, tag=''):
     npar_previous = 0
     for regioni in range(nregions):
         nmu = 2 * (numpy.array(nlensedsource).sum() + nlensedregions)
-        allparameters0 = list(fitresult.data)[1:-nmu]
+        if nmu > 0:
+            allparameters0 = list(fitresult.data)[1:-nmu]
+        else:
+            allparameters0 = list(fitresult.data)[1:]
 
         # search poff_models for parameters fixed relative to other parameters
         fixindx = setuputil.fixParams(paramData)
