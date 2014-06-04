@@ -99,23 +99,40 @@ def lnprior(pzero_regions, paramSetup):
 
     """
 
-    Function that computes the ln prior probablities of the model parameters.
+    Function that computes the ln prior probabilities of the model parameters.
 
     """
 
-    # Uniform priors
-    # impose constraints on parameters by setting lnprob to -inf 
-    # when a walker chooses a parameter outside the constraints
-    p_l_regions = paramSetup['p_l']
-    p_u_regions = paramSetup['p_u']
-    priorln = 0
-    mu = 0
-    if (pzero_regions < p_l_regions).any():
-        priorln = -numpy.inf
-    if (pzero_regions > p_u_regions).any():
-        priorln = -numpy.inf
+    # ensure all parameters are finite
     if (pzero_regions * 0 != 0).any():
         priorln = -numpy.inf
+
+    # Uniform priors
+    uniform_regions = paramSetup['prior_shape'] == 'Uniform'
+    if uniform_regions.any():
+        p_l_regions = paramSetup['p_l'][uniform_regions]
+        p_u_regions = paramSetup['p_u'][uniform_regions]
+        pzero_uniform = pzero_regions[uniform_regions]
+        priorln = 0
+        mu = 1
+        if (pzero_uniform < p_l_regions).any():
+            priorln = -numpy.inf
+        if (pzero_uniform > p_u_regions).any():
+            priorln = -numpy.inf
+
+    # Gaussian priors
+    gaussian_regions = paramSetup['prior_shape'] == 'Gaussian'
+    if gaussian_regions.any():
+    #ngaussian = paramSetup['prior_shape'][gaussian_regions].size
+    #for ipar in range(ngaussian):
+        mean_regions = paramSetup['p_l'][gaussian_regions]
+        rms_regions = paramSetup['p_u'][gaussian_regions]
+        #part1 = numpy.log(2 * numpy.pi * rms_regions ** 2)
+        parameter = pzero_regions[gaussian_regions]
+        #print(parameter - mean_regions, (parameter - mean_regions)/rms_regions)
+        part2 = (parameter - mean_regions) ** 2 / rms_regions ** 2
+        priorln = -2.5 * (part2).sum()
+        #priorln += priorln_param
 
     return priorln, mu
 
@@ -130,8 +147,15 @@ def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
     p_u_regions = paramSetup['p_u']
     poff_regions = p_u_regions.copy()
     poff_regions[:] = 0.
+    #for ifix in range(nfixed):
+    #    poff_regions[fixed[ifix]] = pzero_regions[fixindx[fixed[ifix]]]
     for ifix in range(nfixed):
-        poff_regions[fixed[ifix]] = pzero_regions[fixindx[fixed[ifix]]]
+        ifixed = fixed[ifix]
+        subindx = fixindx[ifixed]
+        par0 = 0
+        if fixindx[subindx] > 0:
+            par0 = pzero_regions[fixindx[subindx]]
+        poff_regions[ifixed] = pzero_regions[subindx] + par0
 
     parameters_regions = pzero_regions + poff_regions
 
@@ -141,6 +165,7 @@ def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
 
     amp = []  # Will contain the 'blobs' we compute
 
+    nregions = paramSetup['nregions']
     for regioni in range(nregions):
 
         # get the model info for this model
@@ -156,7 +181,7 @@ def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
         nparsource = 6 * nsource
         npar = nparlens + nparsource + npar_previous
         parameters = parameters_regions[npar_previous:npar]
-        npar_previous += npar
+        npar_previous = npar
 
         #-----------------------------------------------------------------
         # Create a surface brightness map of lensed emission for the given set
@@ -234,7 +259,7 @@ def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
     #nparam = (pzero != 0).size
     #ndof = nmeasure - nparam
 
-    # assert that lnprob is equal to -1 * maximum likelihood estimate
+    # assert that lnlike is equal to -1 * maximum likelihood estimate
     likeln = -0.5 * lnlike[goodvis].sum()
     if likeln * 0 != 0:
         likeln = -numpy.inf
@@ -254,13 +279,15 @@ def lnprob(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
 
     if not numpy.isfinite(lp):
         probln = -numpy.inf
-        mu = 0
+        mu = 1
         return probln, mu
 
     ll, mu = lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd, 
            fixindx, paramSetup)
 
-    probln = lp + ll
+    normalization = 1.0#2 * real.size
+    probln = lp * normalization + ll
+    #print(probln, lp*normalization, ll)
     
     return probln, mu
 
@@ -394,11 +421,11 @@ if not realpdf:
             extendedpname.append('mu_aper.Region' + ri) 
             nmu += 2
     posteriordat = Table(names = extendedpname)
+    pzero = numpy.array(paramSetup['pzero'])
 
 # make sure no parts of pzero exceed p_u or p_l
 #arrayp_u = numpy.array(p_u)
 #arrayp_l = numpy.array(p_l)
-pzero = numpy.array(paramSetup['pzero'])
 #for j in range(nwalkers):
 #    exceed = arraypzero[j] >= arrayp_u
 #    arraypzero[j, exceed] = 2 * arrayp_u[exceed] - arraypzero[j, exceed]

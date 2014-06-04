@@ -16,7 +16,7 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
 
     # plotting parameters
     rc('font',**{'family':'sans-serif', 'sans-serif':['Arial Narrow'], 
-        'size':'6'})
+        'size':'12'})
 
     # grab the last Ngood fits
     fitresults = fitresults[-Ngood:]
@@ -32,7 +32,7 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
     nrow = nparams / ncol + 1
     j = 1
 
-    fig = plt.figure(figsize=(8.0, 1.0 * nrow))
+    fig = plt.figure(figsize=(12.0, 1.5 * nrow))
 
     # set up the plotting window
     plt.subplots_adjust(left=0.08, bottom=0.1, right=0.95, top=0.95,
@@ -449,7 +449,7 @@ def removeTempFiles():
     cmd = 'rm -rf *SBmap*fits *_model* *_residual* dump'
     os.system(cmd)    
 
-def plotFit(config, paramData, parameters, regioni, tag=''):
+def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True):
 
     """
 
@@ -488,9 +488,10 @@ def plotFit(config, paramData, parameters, regioni, tag=''):
     plotImage(residual, residual, config, parameters, regioni, tag=tag, resid=True)
 
     # remove the intermediate files
-    #removeTempFiles()
+    if cleanup:
+        removeTempFiles()
 
-def preProcess(config, paramData, fitresult, tag=''):
+def preProcess(config, paramData, fitresult, tag='', cleanup=True):
 
     """
 
@@ -506,11 +507,15 @@ def preProcess(config, paramData, fitresult, tag=''):
     # Loop over each region
     regionIDs = config.RegionID
     nregions = len(regionIDs)
-    nsource_regions = paramData['nsource_regions']
+    nlensedsource = paramData['nlensedsource']
+    nlensedregions = paramData['nlensedregions']
     npar_previous = 0
     for regioni in range(nregions):
-        nmu = 2 * (numpy.array(nsource_regions).sum() + nregions)
-        allparameters0 = list(fitresult.data)[1:-nmu]
+        nmu = 2 * (numpy.array(nlensedsource).sum() + nlensedregions)
+        if nmu > 0:
+            allparameters0 = list(fitresult.data)[1:-nmu]
+        else:
+            allparameters0 = list(fitresult.data)[1:]
 
         # search poff_models for parameters fixed relative to other parameters
         fixindx = setuputil.fixParams(paramData)
@@ -520,7 +525,12 @@ def preProcess(config, paramData, fitresult, tag=''):
         nfixed = fixindx[fixed].size
         parameters_offset = numpy.zeros(ndim_total)
         for ifix in range(nfixed):
-            parameters_offset[fixed[ifix]] = fitresult[fixindx[fixed[ifix]] + 1]
+            ifixed = fixed[ifix]
+            subindx = fixindx[ifixed]
+            par0 = 0
+            if fixindx[subindx] > 0:
+                par0 = fitresult[fixindx[subindx] + 1]
+            parameters_offset[ifixed] = fitresult[subindx + 1] + par0
 
         allparameters = allparameters0 + parameters_offset
 
@@ -531,6 +541,7 @@ def preProcess(config, paramData, fitresult, tag=''):
         nparsource = 6 * nsource
         npar = nparlens + nparsource + npar_previous
         parameters = allparameters[npar_previous:npar]
-        npar_previous += npar
-        plotFit(config, paramData, parameters, regioni, tag=tag)
+        npar_previous = npar
+        plotFit(config, paramData, parameters, regioni, tag=tag,
+                cleanup=cleanup)
 

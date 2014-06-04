@@ -2,6 +2,136 @@ import numpy
 from astropy.io import fits
 
 
+def loadSandboxParams(config):
+    headim = fits.getheader(config.ImageName)
+
+    # get resolution in ALMA image
+    celldata = numpy.abs(headim['CDELT1'] * 3600)
+
+    # determine the number of regions for which we need surface brightness maps
+    regionIDs = config.RegionID
+    nregions = len(regionIDs)
+
+    # instantiate lists that must be carried through to lnprob function
+    x = []
+    y = []
+    modelheader = []
+    nlens_regions = []
+    nsource_regions = []
+    model_types = []
+    poff = []
+    pname = []
+    parameters = []
+    nparams_total = 0
+    for i in range(nregions):
+        ri = str(i)
+        ra_centroid = config.RACentroid[i]
+        dec_centroid = config.DecCentroid[i]
+        extent = config.RadialExtent[i]
+        oversample = config.Oversample[i]
+        nlens = config.Nlens[i]
+        nsource = config.Nsource[i]
+
+        # Append the number of lenses and sources for this region
+        nlens_regions.append(nlens)
+        nsource_regions.append(nsource)
+
+        # define number of pixels in lensed surface brightness map
+        dx = 2 * extent
+        nxmod = oversample * int(round(dx / celldata))
+        dy = 2 * extent
+        nymod = oversample * int(round(dy / celldata))
+
+        # make x and y coordinate images for lens model
+        onex = numpy.ones(nxmod)
+        oney = numpy.ones(nymod)
+        linspacex = numpy.linspace(0, 1, nxmod)
+        linspacey = numpy.linspace(0, 1, nymod)
+        x.append(dx * numpy.outer(oney, linspacex) - extent)
+        y.append(dy * numpy.outer(linspacey, onex) - extent)
+
+        # Provide world-coordinate system transformation data in the header of
+        # the lensed surface brightness map
+        headmod = headim.copy()
+        crpix1 = nxmod / 2 + 1
+        crpix2 = nymod / 2 + 1
+        cdelt1 = -1 * celldata / 3600 / oversample
+        cdelt2 = celldata / 3600 / oversample
+        headmod['naxis1'] = nxmod
+        headmod['cdelt1'] = cdelt1
+        headmod['crpix1'] = crpix1
+        headmod['crval1'] = ra_centroid
+        headmod['ctype1'] = 'RA---SIN'
+        headmod['naxis2'] = nymod
+        headmod['cdelt2'] = cdelt2
+        headmod['crpix2'] = crpix2
+        headmod['crval2'] = dec_centroid
+        headmod['ctype2'] = 'DEC--SIN'
+        modelheader.append(headmod)
+
+        for ilens in range(nlens):
+
+            li = str(ilens)
+
+            # constraints on the lenses
+            lensparams = ['EinsteinRadius', 
+                    'DeltaRA', 
+                    'DeltaDec', 
+                    'AxialRatio',
+                    'PositionAngle']
+            tag = '_Lens' + li + '_Region' + ri
+            for lensparam in lensparams:
+                fullparname = lensparam + tag
+                values = getattr(config, fullparname)
+                poff.append(values[-1]) 
+                parameters.append(values[0]) 
+                pname.append(fullparname)
+
+        model_types_source = []
+        for isource in range(nsource):
+
+            si = str(isource)
+
+            sourceparams = ['IntrinsicFlux', 
+                    'Size', 
+                    'DeltaRA', 
+                    'DeltaDec',
+                    'AxialRatio', 
+                    'PositionAngle']
+            tag = '_Source' + si + '_Region' + ri
+            for sourceparam in sourceparams:
+                fullparname = sourceparam + tag
+                values = getattr(config, fullparname)
+                poff.append(values[-1]) 
+                parameters.append(values[0]) 
+                pname.append(fullparname)
+
+            # get the model type
+            fullparname = 'ModelMorphology' + tag
+            model_types_source.append(getattr(config, fullparname))
+
+        # determine the number of free parameters in the model
+        nparams = len(poff)
+
+        # add that number to the total number of free parameters considering
+        # all regions so far
+        nparams_total += nparams
+
+        # append the set of model types for this region
+        model_types.append(model_types_source)
+
+    paramSetup = {'x': x, 
+            'y': y, 
+            'modelheader': modelheader,
+            'poff': poff, 
+            'pname': pname, 
+            'parameters': parameters, 
+            'nparams': nparams_total, 
+            'model_types': model_types, 
+            'celldata': celldata,
+            'nregions': nregions}
+    return paramSetup
+
 def loadParams(config):
     headim = fits.getheader(config.ImageName)
 
@@ -27,10 +157,14 @@ def loadParams(config):
     nsource_regions = []
     p_u = []
     p_l = []
+    prior_shape = []
     poff = []
     pname = []
     pzero = []
     model_types = []
+    nparams_total = 0
+    nlensedsource = 0
+    nlensedregions = 0
     for i in range(nregions):
         ri = str(i)
         ra_centroid = config.RACentroid[i]
@@ -93,10 +227,12 @@ def loadParams(config):
                     'PositionAngle']
             tag = '_Lens' + li + '_Region' + ri
             for lensparam in lensparams:
-                fullparname = 'Constraint_' + lensparam + tag
+                fullparname = 'Prior_' + lensparam + tag
                 values = getattr(config, fullparname)
-                poff.append(values.pop()) 
-                values = numpy.array(values).astype(float)
+                prior_shape.append(values[-1]) 
+                #values = getattr(config, fullparname)
+                poff.append(values[-2]) 
+                values = numpy.array(values[0:1]).astype(float)
                 if values.size < 2:
                     import pdb; pdb.set_trace()
                 p_u.append(values[1]) 
@@ -108,6 +244,9 @@ def loadParams(config):
                 p1.append(values[0]) 
 
         model_types_source = []
+        if nlens > 0:
+            nlensedsource += nsource
+            nlensedregions += 1
         for isource in range(nsource):
 
             si = str(isource)
@@ -120,10 +259,12 @@ def loadParams(config):
                     'PositionAngle']
             tag = '_Source' + si + '_Region' + ri
             for sourceparam in sourceparams:
-                fullparname = 'Constraint_' + sourceparam + tag
+                fullparname = 'Prior_' + sourceparam + tag
                 values = getattr(config, fullparname)
-                poff.append(values.pop()) 
-                values = numpy.array(values).astype(float)
+                prior_shape.append(values[-1]) 
+                #values = getattr(config, fullparname)
+                poff.append(values[-2]) 
+                values = numpy.array(values[0:1]).astype(float)
                 p_u.append(values[1]) 
                 p_l.append(values[0]) 
                 pname.append(sourceparam + tag)
@@ -141,6 +282,10 @@ def loadParams(config):
 
         # determine the number of free parameters in the model
         nparams = len(p1)
+
+        # add that number to the total number of free parameters considering
+        # all regions so far
+        nparams_total += nparams
 
         # Otherwise, choose an initial set of positions for the walkers.
         pzero_model = numpy.zeros((nwalkers, nparams))
@@ -162,14 +307,17 @@ def loadParams(config):
             'modelheader': modelheader,
             'nlens_regions': nlens_regions, 
             'nsource_regions': nsource_regions,
+            'nlensedsource': nlensedsource,
+            'nlensedregions': nlensedregions,
             'p_u': numpy.array(p_u), 
             'p_l': numpy.array(p_l), 
+            'prior_shape': numpy.array(prior_shape),
             'poff': poff, 
             'pname': pname, 
             'pzero': pzero, 
             'model_types': model_types, 
             'nwalkers': nwalkers, 
-            'nparams': nparams, 
+            'nparams': nparams_total, 
             'celldata': celldata,
             'lnlikemethod': lnlikemethod,
             'nregions': nregions}
