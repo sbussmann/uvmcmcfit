@@ -232,9 +232,10 @@ def loadParams(config):
                 prior_shape.append(values[-1]) 
                 #values = getattr(config, fullparname)
                 poff.append(values[-2]) 
-                values = numpy.array(values[0:1]).astype(float)
-                if values.size < 2:
-                    import pdb; pdb.set_trace()
+                #if len(values) < 2:
+                #    print("Something is wrong with the config.py file")
+                #    import pdb; pdb.set_trace()
+                values = numpy.array(values[0:2]).astype(float)
                 p_u.append(values[1]) 
                 p_l.append(values[0]) 
                 pname.append(lensparam + tag)
@@ -264,7 +265,7 @@ def loadParams(config):
                 prior_shape.append(values[-1]) 
                 #values = getattr(config, fullparname)
                 poff.append(values[-2]) 
-                values = numpy.array(values[0:1]).astype(float)
+                values = numpy.array(values[0:2]).astype(float)
                 p_u.append(values[1]) 
                 p_l.append(values[0]) 
                 pname.append(sourceparam + tag)
