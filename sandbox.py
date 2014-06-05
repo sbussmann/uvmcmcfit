@@ -17,7 +17,7 @@ import setuputil
 import numpy
 
 
-def plot():
+def plot(cleanup=True):
 
     # read the input parameters
     paramData = setuputil.loadSandboxParams(config_sandbox)
@@ -55,4 +55,4 @@ def plot():
         npar_previous = npar
 
         visualutil.plotFit(config_sandbox, paramData, parameters, regioni, 
-                tag='sandbox', cleanup=True)
+                tag='sandbox', cleanup=cleanup)
