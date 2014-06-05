@@ -149,6 +149,9 @@ def loadParams(config):
     regionIDs = config.RegionID
     nregions = len(regionIDs)
 
+    # determine the number of temperatures to use in PTMCMC
+    ntemps = config.Ntemps
+
     # instantiate lists that must be carried through to lnprob function
     x = []
     y = []
@@ -289,10 +292,12 @@ def loadParams(config):
         nparams_total += nparams
 
         # Otherwise, choose an initial set of positions for the walkers.
-        pzero_model = numpy.zeros((nwalkers, nparams))
+        pzero_model = numpy.zeros((ntemps, nwalkers, nparams))
         for j in range(nparams):
             #if p3[j] == 'uniform':
-            pzero_model[:, j] = numpy.random.uniform(p1[j], p2[j], nwalkers)
+            sz = (ntemps, nwalkers)
+            pzero_model[:, :, j] = numpy.random.uniform(low=p1[j], high=p2[j], 
+                    size=sz)
             #if p3[j] == 'normal':
             #    pzero_model[:,j] = (numpy.random.normal(loc=p1[j], 
             #    scale=p2[j], size=nwalkers))
@@ -301,7 +306,7 @@ def loadParams(config):
         if pzero == []:
             pzero = pzero_model
         else:
-            pzero = numpy.append(pzero, pzero_model, axis=1)
+            pzero = numpy.append(pzero, pzero_model, axis=2)
 
     paramSetup = {'x': x, 
             'y': y, 

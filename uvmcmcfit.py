@@ -82,7 +82,9 @@ from astropy.io import fits
 from astropy.io.misc import hdf5
 import numpy
 from astropy.table import Table
-import emcee
+#import emcee
+from emcee import PTSampler
+from emcee import EnsembleSampler
 #import pyximport
 #pyximport.install(setup_args={"include_dirs":numpy.get_include()})
 import sample_vis
@@ -95,11 +97,11 @@ cwd = os.getcwd()
 sys.path.append(cwd)
 import config
 
-def lnprior(pzero_regions, paramSetup):
+def logp(pzero_regions):
 
     """
 
-    Function that computes the ln prior probabilities of the model parameters.
+    Function that computes the log prior probabilities of the model parameters.
 
     """
 
@@ -134,12 +136,16 @@ def lnprior(pzero_regions, paramSetup):
         priorln = -2.5 * (part2).sum()
         #priorln += priorln_param
 
-    return priorln, mu
+    return priorln#, mu
 
 
-def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd, 
-           fixindx, paramSetup):
-    """ Function that computes the Ln likelihood of the data"""
+def logl(pzero_regions):
+
+    """ 
+    
+    Function that computes the log likelihood of the data.
+    
+    """
 
     # search poff_models for parameters fixed relative to other parameters
     fixed = (numpy.where(fixindx >= 0))[0]
@@ -264,32 +270,30 @@ def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
     if likeln * 0 != 0:
         likeln = -numpy.inf
 
-    return likeln, amp
+    return likeln#, amp
 
-def lnprob(pzero_regions, real, imag, wgt, uuu, vvv, pcd, 
-           fixindx, paramSetup):
-
-    """
-
-    Computes ln probabilities via ln prior + ln likelihood
-
-    """
-
-    lp, mu = lnprior(pzero_regions, paramSetup)
-
-    if not numpy.isfinite(lp):
-        probln = -numpy.inf
-        mu = 1
-        return probln, mu
-
-    ll, mu = lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd, 
-           fixindx, paramSetup)
-
-    normalization = 1.0#2 * real.size
-    probln = lp * normalization + ll
-    #print(probln, lp*normalization, ll)
-    
-    return probln, mu
+#def lnprob(pzero_regions):
+#
+#    """
+#
+#    Computes ln probabilities via ln prior + ln likelihood
+#
+#    """
+#
+#    lp, mu = lnprior(pzero_regions)
+#
+#    if not numpy.isfinite(lp):
+#        probln = -numpy.inf
+#        mu = 1
+#        return probln, mu
+#
+#    ll, mu = lnlike(pzero_regions)
+#
+#    normalization = 1.0#2 * real.size
+#    probln = lp * normalization + ll
+#    #print(probln, lp*normalization, ll)
+#    
+#    return probln, mu
 
 # Determine parallel processing options
 mpi = config.ParallelProcessingMode
@@ -376,6 +380,7 @@ nregions = paramSetup['nregions']
 nparams = paramSetup['nparams']
 pname = paramSetup['pname']
 nsource_regions = paramSetup['nsource_regions']
+ntemps = 20
 
 # Use an intermediate posterior PDF to initialize the walkers if it exists
 posteriorloc = 'posteriorpdf.hdf5'
@@ -441,14 +446,13 @@ fixindx = setuputil.fixParams(paramSetup)
 # Initialize the sampler with the chosen specs.
 if mpi != 'MPI':
     # Single processor with Nthreads cores
-    sampler = emcee.EnsembleSampler(nwalkers, nparams, lnprob, \
-        args=[real, imag, wgt, uuu, vvv, pcd, \
-        fixindx, paramSetup], threads=Nthreads)
+    sampler = PTSampler(ntemps, nwalkers, nparams, logl, logp, threads=Nthreads)
+    #sampler = EnsembleSampler(nwalkers, nparams, lnprob, 
+    #        threads=Nthreads)
 else:
     # Multiple processors using MPI
-    sampler = emcee.EnsembleSampler(nwalkers, nparams, lnprob, pool=pool, \
-        args=[real, imag, wgt, uuu, vvv, pcd, \
-        fixindx, paramSetup])
+    sampler = PTSampler(ntemps, nwalkers, nparams, logl, logp, pool=pool)
+    #sampler = EnsembleSampler(nwalkers, nparams, lnprob, pool=pool)
 
 # Sample, outputting to a file
 os.system('date')
@@ -457,18 +461,20 @@ os.system('date')
 # prob the Ln probability
 # state the random number generator state
 # amp the metadata 'blobs' associated with the current positoni
-for pos, prob, state, amp in sampler.sample(pzero, iterations=10000):
+#for pos, prob, state, amp in sampler.sample(pzero, iterations=10000):
+for pos, prob, like in sampler.sample(pzero, iterations=10000):
 
     print("Mean acceptance fraction: {:f}".
           format(numpy.mean(sampler.acceptance_fraction)))
     os.system('date')
     #ff.write(str(prob))
-    superpos = numpy.zeros(1 + nparams + nmu)
+    #superpos = numpy.zeros(1 + nparams + nmu)
+    superpos = numpy.zeros(1 + nparams)
 
     for wi in range(nwalkers):
         superpos[0] = prob[wi]
         superpos[1:nparams + 1] = pos[wi]
-        superpos[nparams + 1:nparams + nmu + 1] = amp[wi]
+        #superpos[nparams + 1:nparams + nmu + 1] = amp[wi]
         posteriordat.add_row(superpos)
     posteriordat.write('posteriorpdf.hdf5', 
             path = '/posteriorpdf', overwrite=True, compression=True)
