@@ -84,7 +84,7 @@ import numpy
 from astropy.table import Table
 #import emcee
 from emcee import PTSampler
-from emcee import EnsembleSampler
+#from emcee import EnsembleSampler
 #import pyximport
 #pyximport.install(setup_args={"include_dirs":numpy.get_include()})
 import sample_vis
@@ -116,7 +116,7 @@ def logp(pzero_regions):
         p_u_regions = paramSetup['p_u'][uniform_regions]
         pzero_uniform = pzero_regions[uniform_regions]
         priorln = 0
-        mu = 1
+        #mu = 1
         if (pzero_uniform < p_l_regions).any():
             priorln = -numpy.inf
         if (pzero_uniform > p_u_regions).any():
@@ -375,12 +375,12 @@ npos = wgt.size
 #----------------------------------------------------------------------------
 # Load input parameters
 paramSetup = setuputil.loadParams(config)
-nwalkers = paramSetup['nwalkers']
+Nwalkers = paramSetup['Nwalkers']
+Ntemps = paramSetup['Ntemps']
 nregions = paramSetup['nregions']
 nparams = paramSetup['nparams']
 pname = paramSetup['pname']
 nsource_regions = paramSetup['nsource_regions']
-ntemps = 20
 
 # Use an intermediate posterior PDF to initialize the walkers if it exists
 posteriorloc = 'posteriorpdf.hdf5'
@@ -393,14 +393,14 @@ if os.path.exists(posteriorloc):
 
         # assign values to pzero
         nlnprob = 1
-        pzero = numpy.zeros((nwalkers, nparams))
+        pzero = numpy.zeros((Nwalkers, nparams))
         startindx = nlnprob
         for j in range(nparams):
             namej = posteriordat.colnames[j + startindx]
-            pzero[:, j] = posteriordat[namej][-nwalkers:]
+            pzero[:, j] = posteriordat[namej][-Nwalkers:]
 
         # number of mu measurements
-        nmu = len(posteriordat.colnames) - nparams - nlnprob
+        #nmu = len(posteriordat.colnames) - nparams - nlnprob
 
         # output name is based on most recent burnin file name
         realpdf = True
@@ -412,26 +412,26 @@ else:
 if not realpdf:
     extendedpname = ['lnprob']
     extendedpname.extend(pname)
-    nmu = 0
-    for regioni in range(nregions):
-        ri = str(regioni)
-        if paramSetup['nlens_regions'][regioni] > 0:
-            nsource = nsource_regions[regioni]
-            for i in range(nsource):
-                si = '.Source' + str(i) + '.Region' + ri
-                extendedpname.append('mu_tot' + si) 
-                extendedpname.append('mu_aper' + si) 
-                nmu += 2
-            extendedpname.append('mu_tot.Region' + ri)
-            extendedpname.append('mu_aper.Region' + ri) 
-            nmu += 2
+    #nmu = 0
+    #for regioni in range(nregions):
+    #    ri = str(regioni)
+    #    if paramSetup['nlens_regions'][regioni] > 0:
+    #        nsource = nsource_regions[regioni]
+    #        for i in range(nsource):
+    #            si = '.Source' + str(i) + '.Region' + ri
+    #            extendedpname.append('mu_tot' + si) 
+    #            extendedpname.append('mu_aper' + si) 
+    #            nmu += 2
+    #        extendedpname.append('mu_tot.Region' + ri)
+    #        extendedpname.append('mu_aper.Region' + ri) 
+    #        nmu += 2
     posteriordat = Table(names = extendedpname)
     pzero = numpy.array(paramSetup['pzero'])
 
 # make sure no parts of pzero exceed p_u or p_l
 #arrayp_u = numpy.array(p_u)
 #arrayp_l = numpy.array(p_l)
-#for j in range(nwalkers):
+#for j in range(Nwalkers):
 #    exceed = arraypzero[j] >= arrayp_u
 #    arraypzero[j, exceed] = 2 * arrayp_u[exceed] - arraypzero[j, exceed]
 #    exceed = arraypzero[j] <= arrayp_l
@@ -446,13 +446,13 @@ fixindx = setuputil.fixParams(paramSetup)
 # Initialize the sampler with the chosen specs.
 if mpi != 'MPI':
     # Single processor with Nthreads cores
-    sampler = PTSampler(ntemps, nwalkers, nparams, logl, logp, threads=Nthreads)
-    #sampler = EnsembleSampler(nwalkers, nparams, lnprob, 
+    sampler = PTSampler(Ntemps, Nwalkers, nparams, logl, logp, threads=Nthreads)
+    #sampler = EnsembleSampler(Nwalkers, nparams, lnprob, 
     #        threads=Nthreads)
 else:
     # Multiple processors using MPI
-    sampler = PTSampler(ntemps, nwalkers, nparams, logl, logp, pool=pool)
-    #sampler = EnsembleSampler(nwalkers, nparams, lnprob, pool=pool)
+    sampler = PTSampler(Ntemps, Nwalkers, nparams, logl, logp, pool=pool)
+    #sampler = EnsembleSampler(Nwalkers, nparams, lnprob, pool=pool)
 
 # Sample, outputting to a file
 os.system('date')
@@ -471,11 +471,12 @@ for pos, prob, like in sampler.sample(pzero, iterations=10000):
     #superpos = numpy.zeros(1 + nparams + nmu)
     superpos = numpy.zeros(1 + nparams)
 
-    for wi in range(nwalkers):
-        superpos[0] = prob[wi]
-        superpos[1:nparams + 1] = pos[wi]
-        #superpos[nparams + 1:nparams + nmu + 1] = amp[wi]
-        posteriordat.add_row(superpos)
+    for ti in range(Ntemps):
+        for wi in range(Nwalkers):
+            superpos[0] = prob[ti, wi]
+            superpos[1:nparams + 1] = pos[ti, wi]
+            #superpos[nparams + 1:nparams + nmu + 1] = amp[ti, wi]
+            posteriordat.add_row(superpos)
     posteriordat.write('posteriorpdf.hdf5', 
             path = '/posteriorpdf', overwrite=True, compression=True)
     #posteriordat.write('posteriorpdf.txt', format='ascii')

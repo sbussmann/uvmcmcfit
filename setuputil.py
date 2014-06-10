@@ -138,9 +138,8 @@ def loadParams(config):
     # get resolution in ALMA image
     celldata = numpy.abs(headim['CDELT1'] * 3600)
 
-    #--------------------------------------------------------------------------
     # Define the number of walkers
-    nwalkers = config.Nwalkers
+    Nwalkers = config.Nwalkers
 
     # Determine method of computing lnlike
     lnlikemethod = config.lnLike
@@ -150,7 +149,7 @@ def loadParams(config):
     nregions = len(regionIDs)
 
     # determine the number of temperatures to use in PTMCMC
-    ntemps = config.Ntemps
+    Ntemps = config.Ntemps
 
     # instantiate lists that must be carried through to lnprob function
     x = []
@@ -292,15 +291,15 @@ def loadParams(config):
         nparams_total += nparams
 
         # Otherwise, choose an initial set of positions for the walkers.
-        pzero_model = numpy.zeros((ntemps, nwalkers, nparams))
+        pzero_model = numpy.zeros((Ntemps, Nwalkers, nparams))
         for j in range(nparams):
             #if p3[j] == 'uniform':
-            sz = (ntemps, nwalkers)
+            sz = (Ntemps, Nwalkers)
             pzero_model[:, :, j] = numpy.random.uniform(low=p1[j], high=p2[j], 
                     size=sz)
             #if p3[j] == 'normal':
             #    pzero_model[:,j] = (numpy.random.normal(loc=p1[j], 
-            #    scale=p2[j], size=nwalkers))
+            #    scale=p2[j], size=Nwalkers))
             #if p4[j] == 'pos':
             #    pzero[:, j] = numpy.abs(pzero[:, j])
         if pzero == []:
@@ -322,7 +321,8 @@ def loadParams(config):
             'pname': pname, 
             'pzero': pzero, 
             'model_types': model_types, 
-            'nwalkers': nwalkers, 
+            'Nwalkers': Nwalkers, 
+            'Ntemps': Ntemps, 
             'nparams': nparams_total, 
             'celldata': celldata,
             'lnlikemethod': lnlikemethod,
