@@ -511,7 +511,7 @@ def preProcess(config, paramData, fitresult, tag='', cleanup=True):
     nlensedregions = paramData['nlensedregions']
     npar_previous = 0
     for regioni in range(nregions):
-        nmu = 2 * (numpy.array(nlensedsource).sum() + nlensedregions)
+        nmu = 0#2 * (numpy.array(nlensedsource).sum() + nlensedregions)
         if nmu > 0:
             allparameters0 = list(fitresult.data)[1:-nmu]
         else:
