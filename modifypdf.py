@@ -27,6 +27,8 @@ def prune(PDFdata, scaler=5.0):
 
     # get the last niters iterations
     #PDFdata = Table.read(oldpdfloc, format='ascii')
+    okok = PDFdata['lnprob'] * 0 == 0
+    PDFdata = PDFdata[okok]
 
     print("prior to pruning, <Lnprob>: {:f}".format(PDFdata['lnprob'].mean()))
     #import pdb; pdb.set_trace()

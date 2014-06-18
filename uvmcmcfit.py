@@ -228,7 +228,6 @@ def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
         #plt.imshow(g_image, origin='lower')
         #plt.colorbar()
         #plt.show()
-        #import pdb; pdb.set_trace()
 
     # use all visibilities
     goodvis = (real * 0 == 0)

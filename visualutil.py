@@ -21,7 +21,7 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
     # grab the last Ngood fits
     fitresults = fitresults[-Ngood:]
     lnprobstring = "prior to pruning <Ln Prob>: {:f}"
-    print(lnprobstring.format(fitresults['lnprob'].mean()))
+    #print(lnprobstring.format(fitresults['lnprob'].mean()))
 
     # identify the good fits
     fitresultsgood = modifypdf.prune(fitresults)
