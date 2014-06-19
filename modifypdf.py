@@ -23,6 +23,19 @@ def trim(oldpdfloc, newpdfloc, niters=5000):
     # write the trimmed list
     PDFdata.write(newpdfloc, format='ascii')
 
+def cleanColumns(PDFdata):
+
+    # get the last niters iterations
+    PDFkeys = PDFdata.keys()
+    for key in PDFkeys:
+        rms = numpy.std(PDFdata[key])
+        import pdb; pdb.set_trace()
+        if rms == 0:
+            PDFdata.remove_column(key)
+
+    # write the trimmed list
+    return PDFdata
+
 def prune(PDFdata, scaler=5.0):
 
     # get the last niters iterations

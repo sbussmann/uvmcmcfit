@@ -131,7 +131,10 @@ def covariance(bestfitloc='posteriorpdf.hdf5'):
     posteriorpdf = hdf5.read_table_hdf5(bestfitloc)
     posteriorpdf = posteriorpdf[-5000:]
 
-    posteriorpdfgood = modifypdf.prune(posteriorpdf)
+    # remove columns where the values are not changing
+    posteriorpdfclean = modifypdf.cleanColumns(posteriorpdf)
+
+    posteriorpdfgood = modifypdf.prune(posteriorpdfclean)
 
     headers = posteriorpdf.colnames
     ncol = len(headers)
