@@ -395,11 +395,16 @@ if os.path.exists(posteriorloc):
         nlnprob = 1
         pzero = numpy.zeros((Ntemps, Nwalkers, nparams))
         startindx = nlnprob
-        import pdb; pdb.set_trace()
+        rewindindx = Ntemps * Nwalkers
         for itemp in range(Ntemps):
+            it1 = rewindindx - itemp * Nwalkers
+            it2 = rewindindx - (itemp + 1) * Nwalkers
             for j in range(nparams):
                 namej = posteriordat.colnames[j + startindx]
-                pzero[itemp, :, j] = posteriordat[namej][itemp, -Nwalkers:]
+                if it2 != 0:
+                    pzero[itemp, :, j] = posteriordat[namej][-it1:-it2]
+                else:
+                    pzero[itemp, :, j] = posteriordat[namej][-it1:]
 
         # number of mu measurements
         #nmu = len(posteriordat.colnames) - nparams - nlnprob
