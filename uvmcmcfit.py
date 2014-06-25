@@ -377,6 +377,7 @@ npos = wgt.size
 paramSetup = setuputil.loadParams(config)
 Nwalkers = paramSetup['Nwalkers']
 Ntemps = paramSetup['Ntemps']
+betaladder = paramSetup['betaladder']
 nregions = paramSetup['nregions']
 nparams = paramSetup['nparams']
 pname = paramSetup['pname']
@@ -453,12 +454,14 @@ fixindx = setuputil.fixParams(paramSetup)
 # Initialize the sampler with the chosen specs.
 if mpi != 'MPI':
     # Single processor with Nthreads cores
-    sampler = PTSampler(Ntemps, Nwalkers, nparams, logl, logp, threads=Nthreads)
+    sampler = PTSampler(Ntemps, Nwalkers, nparams, logl, logp,
+            threads=Nthreads, betas=betaladder)
     #sampler = EnsembleSampler(Nwalkers, nparams, lnprob, 
     #        threads=Nthreads)
 else:
     # Multiple processors using MPI
-    sampler = PTSampler(Ntemps, Nwalkers, nparams, logl, logp, pool=pool)
+    sampler = PTSampler(Ntemps, Nwalkers, nparams, logl, logp, pool=pool,
+            betas=betaladder)
     #sampler = EnsembleSampler(Nwalkers, nparams, lnprob, pool=pool)
 
 # Sample, outputting to a file

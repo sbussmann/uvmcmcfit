@@ -150,6 +150,7 @@ def loadParams(config):
 
     # determine the number of temperatures to use in PTMCMC
     Ntemps = config.Ntemps
+    betaladder = numpy.array(config.betaladder)
 
     # instantiate lists that must be carried through to lnprob function
     x = []
@@ -323,6 +324,7 @@ def loadParams(config):
             'model_types': model_types, 
             'Nwalkers': Nwalkers, 
             'Ntemps': Ntemps, 
+            'betaladder': betaladder,
             'nparams': nparams_total, 
             'celldata': celldata,
             'lnlikemethod': lnlikemethod,
