@@ -240,7 +240,7 @@ def makeImage(config, objectname, regioni):
     
     return
 
-def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
+def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
 
     """
 
@@ -279,7 +279,8 @@ def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
     nparlens = 5 * nlens
 
     # get the image centroid in model pixel coordinates
-    headim = model[0].header
+    headim = data[0].header
+    headmod = model[0].header
     im = data[0].data
     im = im[0, 0, :, :]
 
@@ -299,24 +300,56 @@ def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
     cell = numpy.sqrt( abs(cdelt1) * abs(cdelt2) )
 
     im_model = model[0].data
-    im_model = im_model[0, 0, :, :]
+    if im_model.ndim == 4:
+        im_model = im_model[0, 0, :, :]
     #nx_model = im_model[0, :].size
     pixextent = radialextent / cell
     datawcs = wcs.WCS(headim, naxis=2)
     pix = datawcs.wcs_world2pix(ra_centroid, dec_centroid, 1)
     x0 = numpy.round(pix[0])
     y0 = numpy.round(pix[1])
-    modrady = radialextent / cell# nymod / 2.
-    modradx = radialextent / cell# nxmod / 2.
+    imrady = radialextent / cell# nymod / 2.
+    imradx = radialextent / cell# nxmod / 2.
 
     # make data cutout
+    totdx1 = x0 - imradx
+    totdx2 = x0 + imradx
+    totdy1 = y0 - imrady
+    totdy2 = y0 + imrady
+    datacut = im[totdy1:totdy2,totdx1:totdx2]
+
+    # make cleaned model cutout
+    headerkeys = headmod.keys()
+    cd1_1 = headerkeys.count('CD1_1')
+    if cd1_1 == 0:
+        cdelt1_model = numpy.abs(headmod['CDELT1'] * 3600)
+        cdelt2_model = numpy.abs(headmod['CDELT2'] * 3600)
+    else:
+        cdelt1_model = numpy.abs(headmod['CD1_1'] * 3600)
+        cdelt2_model = numpy.abs(headmod['CD2_2'] * 3600)
+        cd11 = headmod['CD1_1']
+        cd12 = headmod['CD1_2']
+        cd21 = headmod['CD2_1']
+        cd22 = headmod['CD2_2']
+        cdelt1_model = numpy.sqrt(cd11 ** 2 + cd12 ** 2) * 3600
+        cdelt2_model = numpy.sqrt(cd21 ** 2 + cd22 ** 2) * 3600
+        if cd12 == 0:
+            cd12 = cd11 / 1e8
+        cdratio = numpy.abs(cd11 / cd12)
+        if cdratio < 1:
+            cdratio = 1 / cdratio
+    cellmod = numpy.sqrt( abs(cdelt1_model) * abs(cdelt2_model) )
+
+    modelwcs = wcs.WCS(headmod, naxis=2)
+    pix = modelwcs.wcs_world2pix(ra_centroid, dec_centroid, 1)
+    x0 = numpy.round(pix[0])
+    y0 = numpy.round(pix[1])
+    modrady = radialextent / cellmod
+    modradx = radialextent / cellmod
     totdx1 = x0 - modradx
     totdx2 = x0 + modradx
     totdy1 = y0 - modrady
     totdy2 = y0 + modrady
-    datacut = im[totdy1:totdy2,totdx1:totdx2]
-
-    # make cleaned model cutout
     modelcut = im_model[totdy1:totdy2,totdx1:totdx2]
 
     for i in range(nsource):
@@ -351,7 +384,7 @@ def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
                 zorder=20, fill=False)
         ax.add_artist(elens)
 
-    cellp = cell * (2 * pixextent + 1.1) / (2 * pixextent)
+    #cellp = cell * (2 * pixextent + 1.1) / (2 * pixextent)
     xlo = -radialextent
     xhi = radialextent
     ylo = -radialextent
@@ -365,18 +398,18 @@ def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
     plt.imshow(modelcut, cmap='gray_r', interpolation='nearest', \
             extent=cornerextent, origin='lower')
 
-    plevs = rms * 2**(numpy.arange(10) + 1)
-    nlevs = sorted(-rms * 2**(numpy.arange(4) + 1))
+    plevs = 3*rms * 2**(numpy.arange(10))
+    nlevs = sorted(-3 * rms * 2**(numpy.arange(4)))
     pcline = 'solid'
     ncline = 'dashed'
-    if resid:
+    if modeltype == 'residual':
         pcolor = 'white'
         ncolor = 'black'
     else:
         pcolor = 'red'
         ncolor = 'red'
-    nx_contour = datacut[0, :].size
-    ny_contour = datacut[:, 0].size
+    #nx_contour = datacut[0, :].size
+    #ny_contour = datacut[:, 0].size
     #cmodx = -(numpy.arange(nx_contour) - pixextent) * cellp - cell/2.
     #cmody = (numpy.arange(ny_contour) - pixextent) * cellp + cell/2.
     cmodx = -numpy.linspace(xlo, xhi, ncell)
@@ -421,18 +454,24 @@ def plotImage(model, data, config, parameters, regioni, tag='', resid=False):
     ypos = 0.95 * axisrange[2] + 0.95 * beamy / 2.
 
     e = Ellipse((xpos,ypos), bmaj, bmin, angle=90 - bpa, ec='black', \
-        hatch='///', lw=1.5, fc='None', zorder=10, fill=True)
+        hatch='//////', lw=1.0, fc='None', zorder=10, fill=True)
     ax.add_artist(e)
 
-    #plt.text(0.08, 0.85, objname, transform=ax.transAxes, fontsize='x-large')
+    if modeltype == 'optical':
+        grayscalename = config.OpticalTag
+    if modeltype == 'model':
+        grayscalename = 'Lens Model'
+    if modeltype == 'residual':
+        grayscalename = 'Residual'
+    plt.text(0.92, 0.88, grayscalename, transform=ax.transAxes,
+            fontsize='xx-large', ha='right')
+    objname = config.ObjectName
+    plt.text(0.08, 0.88, objname, transform=ax.transAxes,
+            fontsize='xx-large')
     sri = str(regioni)
-    if resid:
-        tag = '.residual.' + tag
-    else:
-        tag = '.model.' + tag
+    bigtag = '.' + modeltype + '.' + tag
 
-
-    savefig('LensedSBmap.Region' + sri + tag + '.pdf')
+    savefig('LensedSBmap.Region' + sri + bigtag + '.pdf')
     #plt.clf()
 
 def removeTempFiles():
@@ -449,7 +488,8 @@ def removeTempFiles():
     cmd = 'rm -rf *SBmap*fits *_model* *_residual* dump'
     os.system(cmd)    
 
-def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True):
+def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True,
+        showOptical=False):
 
     """
 
@@ -481,17 +521,27 @@ def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True):
     # read in the data
     data = fits.open(config.ImageName)
 
+    if showOptical:
+        # read in the data
+        optical = fits.open(config.OpticalImage)
+
+        # plot the images
+        plotImage(optical, data, config, parameters, regioni, 'optical', 
+                tag=tag)
+
     # plot the images
-    plotImage(model, data, config, parameters, regioni, tag=tag, resid=False)
+    plotImage(model, data, config, parameters, regioni, 'model', tag=tag)
 
     # plot the residual
-    plotImage(residual, residual, config, parameters, regioni, tag=tag, resid=True)
+    plotImage(residual, residual, config, parameters, regioni, 'residual', 
+            tag=tag)
 
     # remove the intermediate files
     if cleanup:
         removeTempFiles()
 
-def preProcess(config, paramData, fitresult, tag='', cleanup=True):
+def preProcess(config, paramData, fitresult, tag='', cleanup=True,
+        showOptical=False):
 
     """
 
@@ -543,5 +593,5 @@ def preProcess(config, paramData, fitresult, tag='', cleanup=True):
         parameters = allparameters[npar_previous:npar]
         npar_previous = npar
         plotFit(config, paramData, parameters, regioni, tag=tag,
-                cleanup=cleanup)
+                cleanup=cleanup, showOptical=showOptical)
 

@@ -194,13 +194,14 @@ def covariance(bestfitloc='posteriorpdf.hdf5'):
     savefig('covariance.pdf')
     plt.clf()        
 
-def bestFit(bestfitloc='posteriorpdf.hdf5', cleanup=True):
+def bestFit(bestfitloc='posteriorpdf.hdf5', showOptical=False, cleanup=True):
 
     """ 
 
     Read posterior PDF and identify best-fit parameters.  Plot the best-fit
     model and compare to the data.  Also plot the residuals obtained after
-    subtracting the best-fit model from the data and compare to the data.  
+    subtracting the best-fit model from the data and compare to the data.
+    Optionally plot the best available optical image and compare to the data.
     
     """
 
@@ -219,7 +220,8 @@ def bestFit(bestfitloc='posteriorpdf.hdf5', cleanup=True):
     index = fitresults['lnprob'] == minchi2
     bestfit = fitresults[index][0]
     tag = 'bestfit'
-    visualutil.preProcess(config, paramData, bestfit, tag=tag, cleanup=cleanup)
+    visualutil.preProcess(config, paramData, bestfit, tag=tag, cleanup=cleanup,
+            showOptical=showOptical)
 
 def goodFits(bestfitloc='posteriorpdf.hdf5', Nfits=12, Ngood=5000,
         cleanup=True):
