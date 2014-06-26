@@ -213,29 +213,37 @@ def makeImage(config, objectname, regioni):
 
 
         # convert simulated residual visibilities to miriad format
-        modelvisfile = name + '.Region' + sri + '_residual.uvfits'
-        miriadmodelvisloc = name + '.Region' + sri + '_residual.miriad'
-        os.system('rm -rf ' + miriadmodelvisloc)
-        command = 'fits in=' + modelvisfile + ' op=uvin out=' + \
-            miriadmodelvisloc
+        residvisfile = name + '.Region' + sri + '_residual.uvfits'
+        miriadresidvisloc = name + '.Region' + sri + '_residual.miriad'
+        os.system('rm -rf ' + miriadresidvisloc)
+        command = 'fits in=' + residvisfile + ' op=uvin out=' + \
+            miriadresidvisloc
         os.system(command + ' > dump')
 
         # insert fake system temperatures and jy/k values for PdBI data
         if obsdata[0].header['TELESCOP'] == 'PdBI':
-            command = 'puthd in=' + miriadmodelvisloc + '/systemp value=40.'
+            command = 'puthd in=' + miriadresidvisloc + '/systemp value=40.'
             os.system(command + ' > dump')
-            command = 'puthd in=' + miriadmodelvisloc + '/jyperk value=10.'
+            command = 'puthd in=' + miriadresidvisloc + '/jyperk value=10.'
             os.system(command + ' > dump')
 
     #--------------------------------------------------------------------------
     # Invert the simulated SMA visibilities and deconvolve 
 
     # the simulated model visibilities
-    command = 'csh image.csh model ' + sri
+    target = config.ObjectName
+    fitsim = config.ImageName
+    fitshead = fits.getheader(fitsim)
+    imsize = str(fitshead['NAXIS1'])
+    cell = str(fitshead['CDELT2'] * 3600)
+    imloc = target + '_Region' + sri + '_model'
+    miriadinputs = miriadmodelvisloc + ' ' + imloc + ' ' + imsize + ' ' + cell
+    command = 'csh image.csh ' + miriadinputs
     os.system(command + ' > dump')
 
     # the simulated residual visibilities
-    command = 'csh image.csh residual ' + sri
+    miriadinputs = miriadresidvisloc + ' ' + imloc + ' ' + imsize + ' ' + cell
+    command = 'csh image.csh ' + miriadinputs
     os.system(command + ' > dump')
     
     return
@@ -395,19 +403,23 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
     #modx = -(numpy.arange(2 * pixextent) - pixextent) * cellp - cell/2.
     #mody = (numpy.arange(2 * pixextent) - pixextent) * cellp + cell/2.
     cornerextent = [modx[0], modx[-1], mody[0], mody[-1] ]
+    if modeltype == 'residual':
+        pcolor = 'white'
+        ncolor = 'black'
+        vmax = 5 * rms
+        vmin = -5 * rms
+    else:
+        pcolor = 'red'
+        ncolor = 'red'
+        vmax = modelcut.max()
+        vmin = -3 * rms
     plt.imshow(modelcut, cmap='gray_r', interpolation='nearest', \
-            extent=cornerextent, origin='lower')
+            extent=cornerextent, origin='lower', vmax=vmax, vmin=vmin)
 
     plevs = 3*rms * 2**(numpy.arange(10))
     nlevs = sorted(-3 * rms * 2**(numpy.arange(4)))
     pcline = 'solid'
     ncline = 'dashed'
-    if modeltype == 'residual':
-        pcolor = 'white'
-        ncolor = 'black'
-    else:
-        pcolor = 'red'
-        ncolor = 'red'
     #nx_contour = datacut[0, :].size
     #ny_contour = datacut[:, 0].size
     #cmodx = -(numpy.arange(nx_contour) - pixextent) * cellp - cell/2.
@@ -460,7 +472,7 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
     if modeltype == 'optical':
         grayscalename = config.OpticalTag
     if modeltype == 'model':
-        grayscalename = 'Lens Model'
+        grayscalename = 'Model'
     if modeltype == 'residual':
         grayscalename = 'Residual'
     plt.text(0.92, 0.88, grayscalename, transform=ax.transAxes,
