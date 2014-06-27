@@ -22,115 +22,83 @@ import numpy
 #pyximport.install(setup_args={"include_dirs":numpy.get_include()})
 import sample_vis
 import uvutil
+from taskinit import tb
+import os
 #import time
 
 
-def replace(sbmodelloc, visdataloc):
+def replace(sbmodelloc, visdataloc, modelvisloc):
 
     # read in the surface brightness map of the model
     modelimage = fits.getdata(sbmodelloc)
     modelheader = fits.getheader(sbmodelloc)
-
-    # read in the uvfits data
-    visfile = fits.open(visdataloc)
      
     # load the uv data, including the phase center of the data
-    uu, vv = uvutil.uvload(visfile)
+    uu, vv = uvutil.uvload(visdataloc)
      
     # load the uv data, including the phase center of the data
-    pcd = uvutil.pcdload(visfile)
-
-    # get the number of visfile[0].data, spws, frequencies, polarizations
-    if uu.ndim == 4:
-        nvis = uu[:, 0, 0, 0].size
-        nspw = uu[0, :, 0, 0].size
-        nfreq = uu[0, 0, :, 0].size
-        npol = uu[0, 0, 0, :].size
-    if uu.ndim == 3:
-        nvis = uu[:, 0, 0].size
-        nspw = 0
-        nfreq = uu[0, :, 0].size
-        npol = uu[0, 0, :].size
+    pcd = uvutil.pcdload(visdataloc)
 
     # sample the uv visfile[0].data using the model
+    npol = uu[:,0].size
+    nrow = uu[0, :].size
     uu = uu.flatten()
     vv = vv.flatten()
     model_complex = sample_vis.uvmodel(modelimage, modelheader, \
             uu, vv, pcd)
 
-    if nspw > 0:
-        # deflatten the real and imaginary components
-        real = numpy.real(model_complex).reshape(nvis, nspw, nfreq, npol)
-        imag = numpy.imag(model_complex).reshape(nvis, nspw, nfreq, npol)
-        # replace data visfile[0].data with model visfile[0].data
-        visfile[0].data['DATA'][:, 0, 0, :, :, :, 0] = real
-        visfile[0].data['DATA'][:, 0, 0, :, :, :, 1] = imag
-    else:
-        # deflatten the real and imaginary components
-        real = numpy.real(model_complex).reshape(nvis, nfreq, npol)
-        imag = numpy.imag(model_complex).reshape(nvis, nfreq, npol)
-        # replace data visfile[0].data with model visfile[0].data
-        visfile[0].data['DATA'][:, 0, 0, :, :, 0] = real
-        visfile[0].data['DATA'][:, 0, 0, :, :, 1] = imag
+    model_complex = model_complex.reshape(npol, 1, nrow)
+
+    tb.open(visdataloc)
+    os.system('rm -rf ' + modelvisloc)
+    tb.copy(modelvisloc)
+    tb.close()
+    tb.open(modelvisloc, nomodify=False)
+    tb.putcol('DATA', model_complex)
 
     print("Exiting replace")
 
-    #visfile[0].data = vismodel
+    return
 
-    return visfile
-
-def subtract(sbmodelloc, visdataloc):
+def subtract(sbmodelloc, visdataloc, modelvisloc):
 
     # read in the surface brightness map of the model
     modelimage = fits.getdata(sbmodelloc)
     modelheader = fits.getheader(sbmodelloc)
-
-    # read in the uvfits data
-    visfile = fits.open(visdataloc)
      
-    # load the uv data
-    uu, vv = uvutil.uvload(visfile)
+    # load the uv values
+    uu, vv = uvutil.uvload(visdataloc)
      
-    # load the uv data
-    pcd = uvutil.pcdload(visfile)
-
-    # get the number of visfile[0].data, spws, frequencies, polarizations
-    if uu.ndim == 4:
-        nvis = uu[:, 0, 0, 0].size
-        nspw = uu[0, :, 0, 0].size
-        nfreq = uu[0, 0, :, 0].size
-        npol = uu[0, 0, 0, :].size
-    if uu.ndim == 3:
-        nvis = uu[:, 0, 0].size
-        nspw = 0
-        nfreq = uu[0, :, 0].size
-        npol = uu[0, 0, :].size
+    # load the phase center of the data
+    pcd = uvutil.pcdload(visdataloc)
+     
+    # load the visibilities
+    vis_complex, vis_weight = uvutil.visload(visdataloc)
 
     # sample the uv visfile[0].data using the model
+    npol = uu[:, 0].size
+    nrow = uu[0, :].size
     uu = uu.flatten()
     vv = vv.flatten()
     model_complex = sample_vis.uvmodel(modelimage, modelheader, \
             uu, vv, pcd)
 
-    if nspw > 0:
-        # deflatten the real and imaginary components
-        real = numpy.real(model_complex).reshape(nvis, nspw, nfreq, npol)
-        imag = numpy.imag(model_complex).reshape(nvis, nspw, nfreq, npol)
-        # replace data visfile[0].data with model visfile[0].data
-        visfile[0].data['DATA'][:, 0, 0, :, :, :, 0] -= real
-        visfile[0].data['DATA'][:, 0, 0, :, :, :, 1] -= imag
-    else:
-        # deflatten the real and imaginary components
-        real = numpy.real(model_complex).reshape(nvis, nfreq, npol)
-        imag = numpy.imag(model_complex).reshape(nvis, nfreq, npol)
-        # replace data visfile[0].data with model visfile[0].data
-        visfile[0].data['DATA'][:, 0, 0, :, :, 0] -= real
-        visfile[0].data['DATA'][:, 0, 0, :, :, 1] -= imag
+    model_complex = model_complex.reshape(npol, nrow)
 
-    #visfile[0].data = vismodel
+    vis_complex -= model_complex
+
+    vis_complex = vis_complex.reshape(npol, 1, nrow)
+
+    tb.open(visdataloc)
+    os.system('rm -rf ' + modelvisloc)
+    tb.copy(modelvisloc)
+    tb.close()
+    tb.open(modelvisloc, nomodify=False)
+    tb.putcol('DATA', vis_complex)
+
     print("Exiting subtract")
 
-    return visfile
+    return
 
 def add(sbmodelloc, visdataloc, WeightByRMS=True, ExcludeChannels='none'):
 

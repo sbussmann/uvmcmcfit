@@ -17,7 +17,7 @@ the:
 from __future__ import print_function
 
 import os
-from astropy.io.misc import hdf5
+from astropy.io import fits
 import visualutil
 import sys
 cwd = os.getcwd()
@@ -25,7 +25,7 @@ sys.path.append(cwd)
 import config
 
 
-def convergence(bestfitloc='posteriorpdf.hdf5'):
+def convergence(bestfitloc='posteriorpdf.fits'):
 
     """
 
@@ -40,7 +40,7 @@ def convergence(bestfitloc='posteriorpdf.hdf5'):
 
 
     print("Reading burnin results from {0:s}".format(bestfitloc))
-    pdf = hdf5.read_table_hdf5(bestfitloc)
+    pdf = fits.getdata(bestfitloc)
     keyname = 'lnprob'
     lnprob = pdf[keyname]
 
@@ -62,7 +62,7 @@ def convergence(bestfitloc='posteriorpdf.hdf5'):
     outfile = 'convergence'
     savefig(outfile)
 
-def posteriorPDF(bestfitloc='posteriorpdf.hdf5'):
+def posteriorPDF(bestfitloc='posteriorpdf.fits'):
 
     """
 
@@ -72,11 +72,11 @@ def posteriorPDF(bestfitloc='posteriorpdf.hdf5'):
 
     # read posterior PDF
     print("Reading output from emcee")
-    fitresults = hdf5.read_table_hdf5(bestfitloc)
+    fitresults = fits.getdata(bestfitloc)
     tag = 'posterior'
     visualutil.plotPDF(fitresults, tag, Ngood=5000, axes='auto')
 
-def evolvePDF(bestfitloc='posteriorpdf.hdf5', stepsize=50000):
+def evolvePDF(bestfitloc='posteriorpdf.fits', stepsize=50000):
 
     """
 
@@ -94,7 +94,7 @@ def evolvePDF(bestfitloc='posteriorpdf.hdf5', stepsize=50000):
     limits = [p_l, p_u]
 
     # read posterior PDF
-    fitresults = hdf5.read_table_hdf5(bestfitloc)
+    fitresults = fits.getdata(bestfitloc)
     nresults = len(fitresults)
     print("Output from emcee has = " + str(nresults) + " iterations.")
     start = 0
@@ -109,7 +109,7 @@ def evolvePDF(bestfitloc='posteriorpdf.hdf5', stepsize=50000):
         visualutil.plotPDF(trimresults, tag, limits=limits, Ngood=1000, 
                 axes='initial')
 
-def covariance(bestfitloc='posteriorpdf.hdf5'):
+def covariance(bestfitloc='posteriorpdf.fits'):
 
     """
 
@@ -128,7 +128,7 @@ def covariance(bestfitloc='posteriorpdf.hdf5'):
     rc('font',**{'family':'sans-serif', 'sans-serif':['Arial Narrow'], 
         'size':'6'})
 
-    posteriorpdf = hdf5.read_table_hdf5(bestfitloc)
+    posteriorpdf = fits.getdata(bestfitloc)
     posteriorpdf = posteriorpdf[-5000:]
 
     # remove columns where the values are not changing
@@ -194,7 +194,7 @@ def covariance(bestfitloc='posteriorpdf.hdf5'):
     savefig('covariance.pdf')
     plt.clf()        
 
-def bestFit(bestfitloc='posteriorpdf.hdf5', showOptical=False, cleanup=True):
+def bestFit(bestfitloc='posteriorpdf.fits', showOptical=False, cleanup=True):
 
     """ 
 
@@ -213,7 +213,7 @@ def bestFit(bestfitloc='posteriorpdf.hdf5', showOptical=False, cleanup=True):
 
     # read the posterior PDFs
     print("Found posterior PDF file: {:s}".format(bestfitloc))
-    fitresults = hdf5.read_table_hdf5(bestfitloc)
+    fitresults = fits.getdata(bestfitloc)
 
     # identify best-fit model
     minchi2 = fitresults['lnprob'].max()
@@ -223,7 +223,7 @@ def bestFit(bestfitloc='posteriorpdf.hdf5', showOptical=False, cleanup=True):
     visualutil.preProcess(config, paramData, bestfit, tag=tag, cleanup=cleanup,
             showOptical=showOptical)
 
-def goodFits(bestfitloc='posteriorpdf.hdf5', Nfits=12, Ngood=5000,
+def goodFits(bestfitloc='posteriorpdf.fits', Nfits=12, Ngood=5000,
         cleanup=True):
 
     """ 
@@ -245,7 +245,7 @@ def goodFits(bestfitloc='posteriorpdf.hdf5', Nfits=12, Ngood=5000,
 
     # read the posterior PDFs
     print("Found posterior PDF file: {:s}".format(bestfitloc))
-    fitresults = hdf5.read_table_hdf5(bestfitloc)
+    fitresults = fits.getdata(bestfitloc)
     fitresults = fitresults[-Ngood:]
     fitresults = modifypdf.prune(fitresults)
 

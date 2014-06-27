@@ -66,9 +66,8 @@
 --------
  OUTPUTS
 
- "posteriorpdf.hdf5": model parameters for every MCMC iteration, in hdf5
- format.  Google search for hdf5 view if you want a tool to inspect the hdf5
- files directly.
+ "posteriorpdf.fits": model parameters for every MCMC iteration, in fits
+ format.
 
 """
 
@@ -79,7 +78,6 @@ import os
 import os.path
 import sys
 from astropy.io import fits
-from astropy.io.misc import hdf5
 import numpy
 from astropy.table import Table
 import emcee
@@ -137,7 +135,7 @@ def lnprior(pzero_regions, paramSetup):
     return priorln, mu
 
 
-def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd, 
+def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd, 
            fixindx, paramSetup):
     """ Function that computes the Ln likelihood of the data"""
 
@@ -159,8 +157,6 @@ def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
 
     parameters_regions = pzero_regions + poff_regions
 
-    model_real = 0.
-    model_imag = 0.
     npar_previous = 0
 
     amp = []  # Will contain the 'blobs' we compute
@@ -216,8 +212,8 @@ def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
             amp.extend([amp_mask])
 
         model_complex = sample_vis.uvmodel(g_lensimage, headmod, uuu, vvv, pcd)
-        model_real += numpy.real(model_complex)
-        model_imag += numpy.imag(model_complex)
+        #model_real += numpy.real(model_complex)
+        #model_imag += numpy.imag(model_complex)
 
         #fits.writeto('g_lensimage.fits', g_lensimage, headmod, clobber=True)
         #import matplotlib.pyplot as plt
@@ -230,21 +226,22 @@ def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
         #plt.show()
 
     # use all visibilities
-    goodvis = (real * 0 == 0)
+    #goodvis = (vis_complex * 0 == 0)
 
     # calculate chi^2 assuming natural weighting
     #fnuisance = 0.0
-    modvariance_real = 1 / wgt #+ fnuisance ** 2 * model_real ** 2
-    modvariance_imag = 1 / wgt #+ fnuisance ** 2 * model_imag ** 2
+    #modvariance_real = 1 / wgt #+ fnuisance ** 2 * model_real ** 2
+    #modvariance_imag = 1 / wgt #+ fnuisance ** 2 * model_imag ** 2
     #wgt = wgt / 4.
-    chi2_real_all = (real - model_real) ** 2. / modvariance_real
-    chi2_imag_all = (imag - model_imag) ** 2. / modvariance_imag
-    chi2_all = numpy.append(chi2_real_all, chi2_imag_all)
+    #chi2_real_all = (real - model_real) ** 2. / modvariance_real
+    #chi2_imag_all = (imag - model_imag) ** 2. / modvariance_imag
+    #chi2_all = numpy.append(chi2_real_all, chi2_imag_all)
+    chi2_all = numpy.abs(vis_complex - model_complex) ** 2
 
     # compute the sigma term
-    sigmaterm_real = numpy.log(2 * numpy.pi * modvariance_real)
-    sigmaterm_imag = numpy.log(2 * numpy.pi * modvariance_imag)
-    sigmaterm_all = numpy.append(sigmaterm_real, sigmaterm_imag)
+    #sigmaterm_real = numpy.log(2 * numpy.pi / wgt)
+    #sigmaterm_imag = numpy.log(2 * numpy.pi * modvariance_imag)
+    sigmaterm_all = 2 * numpy.log(2 * numpy.pi / wgt)
 
     # compute the ln likelihood
     lnlikemethod = paramSetup['lnlikemethod']
@@ -259,13 +256,14 @@ def lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
     #ndof = nmeasure - nparam
 
     # assert that lnlike is equal to -1 * maximum likelihood estimate
-    likeln = -0.5 * lnlike[goodvis].sum()
+    #likeln = -0.5 * lnlike[goodvis].sum()
+    likeln = -0.5 * lnlike.sum()
     if likeln * 0 != 0:
         likeln = -numpy.inf
 
     return likeln, amp
 
-def lnprob(pzero_regions, real, imag, wgt, uuu, vvv, pcd, 
+def lnprob(pzero_regions, vis_complex, wgt, uuu, vvv, pcd, 
            fixindx, paramSetup):
 
     """
@@ -281,7 +279,7 @@ def lnprob(pzero_regions, real, imag, wgt, uuu, vvv, pcd,
         mu = 1
         return probln, mu
 
-    ll, mu = lnlike(pzero_regions, real, imag, wgt, uuu, vvv, pcd, 
+    ll, mu = lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd, 
            fixindx, paramSetup)
 
     normalization = 1.0#2 * real.size
@@ -324,42 +322,15 @@ headim = fits.getheader(config.ImageName)
 #celldata = numpy.abs(headim['CDELT1'] * 3600)
 
 #--------------------------------------------------------------------------
-# read in visibilities
-fitsfiles = config.FitsFiles
-nfiles = len(fitsfiles)
-nvis = []
-
-# read in the observed visibilities
-uuu = []
-vvv = []
-real = []
-imag = []
-wgt = []
-for file in fitsfiles:
-    print("Doing file {:s}".format(file))
-    vis_data = fits.open(file)
-
-    uu, vv = uvutil.uvload(vis_data)
-    pcd = uvutil.pcdload(vis_data)
-    real_raw, imag_raw, wgt_raw = uvutil.visload(vis_data)
-    uuu.extend(uu)
-    vvv.extend(vv)
-    real.extend(real_raw)
-    imag.extend(imag_raw)
-    wgt.extend(wgt_raw)
-
-# convert the list to an array
-real = numpy.array(real)
-imag = numpy.array(imag)
-wgt = numpy.array(wgt)
-uuu = numpy.array(uuu)
-vvv = numpy.array(vvv)
-#www = numpy.array(www)
+# read in visibility data
+visfile = config.VisFile
+uuu, vvv = uvutil.uvload(visfile)
+pcd = uvutil.pcdload(visfile)
+vis_complex, wgt = uvutil.visload(visfile)
 
 # remove the data points with zero or negative weight
 positive_definite = wgt > 0
-real = real[positive_definite]
-imag = imag[positive_definite]
+vis_complex = vis_complex[positive_definite]
 wgt = wgt[positive_definite]
 uuu = uuu[positive_definite]
 vvv = vvv[positive_definite]
@@ -377,12 +348,12 @@ pname = paramSetup['pname']
 nsource_regions = paramSetup['nsource_regions']
 
 # Use an intermediate posterior PDF to initialize the walkers if it exists
-posteriorloc = 'posteriorpdf.hdf5'
+posteriorloc = 'posteriorpdf.fits'
 if os.path.exists(posteriorloc):
 
     # read the latest posterior PDFs
     print("Found existing posterior PDF file: {:s}".format(posteriorloc))
-    posteriordat = hdf5.read_table_hdf5(posteriorloc)
+    posteriordat = fits.getdata(posteriorloc)
     if len(posteriordat) > 1:
 
         # assign values to pzero
@@ -441,12 +412,12 @@ fixindx = setuputil.fixParams(paramSetup)
 if mpi != 'MPI':
     # Single processor with Nthreads cores
     sampler = emcee.EnsembleSampler(nwalkers, nparams, lnprob, \
-        args=[real, imag, wgt, uuu, vvv, pcd, \
+        args=[vis_complex, wgt, uuu, vvv, pcd, \
         fixindx, paramSetup], threads=Nthreads)
 else:
     # Multiple processors using MPI
     sampler = emcee.EnsembleSampler(nwalkers, nparams, lnprob, pool=pool, \
-        args=[real, imag, wgt, uuu, vvv, pcd, \
+        args=[vis_complex, wgt, uuu, vvv, pcd, \
         fixindx, paramSetup])
 
 # Sample, outputting to a file
@@ -469,6 +440,5 @@ for pos, prob, state, amp in sampler.sample(pzero, iterations=10000):
         superpos[1:nparams + 1] = pos[wi]
         superpos[nparams + 1:nparams + nmu + 1] = amp[wi]
         posteriordat.add_row(superpos)
-    posteriordat.write('posteriorpdf.hdf5', 
-            path = '/posteriorpdf', overwrite=True, compression=True)
+    posteriordat.write('posteriorpdf.fits', overwrite=True)
     #posteriordat.write('posteriorpdf.txt', format='ascii')
