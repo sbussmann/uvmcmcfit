@@ -1,5 +1,6 @@
 import numpy
 from astropy.io import fits
+import uvutil
 
 
 def loadSandboxParams(config):
@@ -313,8 +314,38 @@ def loadParams(config):
         if pname.count(poff[ifix]) > 0:
             fixindx[ifix] = pname.index(poff[ifix])
 
+    visfile = config.VisFile
+    vis_data = fits.open(visfile)
+
+    uu, vv = uvutil.uvload(vis_data)
+    pcd = uvutil.pcdload(vis_data)
+    real, imag, wgt = uvutil.visload(vis_data)
+
+    # convert the list to an array
+    real = numpy.array(real)
+    imag = numpy.array(imag)
+    wgt = numpy.array(wgt)
+    uu = numpy.array(uu)
+    vv = numpy.array(vv)
+    #www = numpy.array(www)
+
+    # remove the data points with zero or negative weight
+    positive_definite = wgt > 0
+    real = real[positive_definite]
+    imag = imag[positive_definite]
+    wgt = wgt[positive_definite]
+    uu = uu[positive_definite]
+    vv = vv[positive_definite]
+            
+
     paramSetup = {'x': x, 
             'y': y, 
+            'real': real,
+            'imag': imag,
+            'wgt': wgt,
+            'uu': uu,
+            'vv': vv,
+            'pcd': pcd,
             'modelheader': modelheader,
             'nlens_regions': nlens_regions, 
             'nsource_regions': nsource_regions,

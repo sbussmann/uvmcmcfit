@@ -135,39 +135,36 @@ def makeVis(config, regioni):
 
 
     # get the list of uvfits files
-    fitsfiles = config.FitsFiles
+    ifile = config.VisFile
 
     # read in the observed visibilities
-    for ifile in fitsfiles:
+    obsdata = fits.open(ifile)
 
-        # read in the observed visibilities
-        obsdata = fits.open(ifile)
+    # get the real and imaginary components
+    data_real, data_imag, data_wgt = uvutil.visload(obsdata)
+    
+    #----------------------------------------------------------------------
+    # Python version of UVMODEL
+    # "Observe" the lensed emission with the SMA and write to a new file
+    #----------------------------------------------------------------------
+    # Python version of UVMODEL's "replace" subroutine:
+    nameindx = ifile.find('uvfits')
+    name = ifile[0:nameindx-1]
 
-        # get the real and imaginary components
-        data_real, data_imag, data_wgt = uvutil.visload(obsdata)
-        
-        #----------------------------------------------------------------------
-        # Python version of UVMODEL
-        # "Observe" the lensed emission with the SMA and write to a new file
-        #----------------------------------------------------------------------
-        # Python version of UVMODEL's "replace" subroutine:
-        nameindx = ifile.find('uvfits')
-        name = ifile[0:nameindx-1]
+    sri = str(regioni)
+    SBmapLoc = 'LensedSBmap_Region' + sri + '.fits'
+    model = uvmodel.replace(SBmapLoc, ifile)
 
-        sri = str(regioni)
-        SBmapLoc = 'LensedSBmap_Region' + sri + '.fits'
-        model = uvmodel.replace(SBmapLoc, ifile)
+    modelvisfile = name + '.Region' + sri + '_model.uvfits'
+    os.system('rm -rf ' + modelvisfile)
+    model.writeto(modelvisfile)
+    
+    # Python version of UVMODEL's "subtract" subroutine:
+    residual = uvmodel.subtract(SBmapLoc, ifile)
 
-        modelvisfile = name + '.Region' + sri + '_model.uvfits'
-        os.system('rm -rf ' + modelvisfile)
-        model.writeto(modelvisfile)
-        
-        # Python version of UVMODEL's "subtract" subroutine:
-        residual = uvmodel.subtract(SBmapLoc, ifile)
-
-        modelvisfile = name + '.Region' + sri + '_residual.uvfits'
-        os.system('rm -rf ' + modelvisfile)
-        residual.writeto(modelvisfile)
+    modelvisfile = name + '.Region' + sri + '_residual.uvfits'
+    os.system('rm -rf ' + modelvisfile)
+    residual.writeto(modelvisfile)
 
 def makeImage(config, objectname, regioni):
 
@@ -185,47 +182,45 @@ def makeImage(config, objectname, regioni):
     #--------------------------------------------------------------------------
     # read in Python visibilities
         
-    fitsfiles = config.FitsFiles
+    ifile = config.VisFile
+    # read in the observed visibilities
 
-    for ifile in fitsfiles:
+    obsdata = fits.open(ifile)
 
-        # read in the observed visibilities
-        obsdata = fits.open(ifile)
+    nameindx = ifile.find('uvfits')
+    name = ifile[0:nameindx-1]
 
-        nameindx = ifile.find('uvfits')
-        name = ifile[0:nameindx-1]
+    # convert simulated visibilities to miriad format
+    sri = str(regioni)
+    modelvisfile = name + '.Region' + sri + '_model.uvfits'
+    miriadmodelvisloc = name + '.Region' + sri + '_model.miriad'
+    os.system('rm -rf ' + miriadmodelvisloc)
+    command = 'fits in=' + modelvisfile + ' op=uvin out=' + \
+        miriadmodelvisloc
+    os.system(command + ' > dump')
 
-        # convert simulated visibilities to miriad format
-        sri = str(regioni)
-        modelvisfile = name + '.Region' + sri + '_model.uvfits'
-        miriadmodelvisloc = name + '.Region' + sri + '_model.miriad'
-        os.system('rm -rf ' + miriadmodelvisloc)
-        command = 'fits in=' + modelvisfile + ' op=uvin out=' + \
-            miriadmodelvisloc
+    # insert fake system temperatures and jy/k values for PdBI data
+    if obsdata[0].header['TELESCOP'] == 'PdBI':
+        command = 'puthd in=' + miriadmodelvisloc + '/systemp value=40.'
+        os.system(command + ' > dump')
+        command = 'puthd in=' + miriadmodelvisloc + '/jyperk value=10.'
         os.system(command + ' > dump')
 
-        # insert fake system temperatures and jy/k values for PdBI data
-        if obsdata[0].header['TELESCOP'] == 'PdBI':
-            command = 'puthd in=' + miriadmodelvisloc + '/systemp value=40.'
-            os.system(command + ' > dump')
-            command = 'puthd in=' + miriadmodelvisloc + '/jyperk value=10.'
-            os.system(command + ' > dump')
 
+    # convert simulated residual visibilities to miriad format
+    modelvisfile = name + '.Region' + sri + '_residual.uvfits'
+    miriadmodelvisloc = name + '.Region' + sri + '_residual.miriad'
+    os.system('rm -rf ' + miriadmodelvisloc)
+    command = 'fits in=' + modelvisfile + ' op=uvin out=' + \
+        miriadmodelvisloc
+    os.system(command + ' > dump')
 
-        # convert simulated residual visibilities to miriad format
-        modelvisfile = name + '.Region' + sri + '_residual.uvfits'
-        miriadmodelvisloc = name + '.Region' + sri + '_residual.miriad'
-        os.system('rm -rf ' + miriadmodelvisloc)
-        command = 'fits in=' + modelvisfile + ' op=uvin out=' + \
-            miriadmodelvisloc
+    # insert fake system temperatures and jy/k values for PdBI data
+    if obsdata[0].header['TELESCOP'] == 'PdBI':
+        command = 'puthd in=' + miriadmodelvisloc + '/systemp value=40.'
         os.system(command + ' > dump')
-
-        # insert fake system temperatures and jy/k values for PdBI data
-        if obsdata[0].header['TELESCOP'] == 'PdBI':
-            command = 'puthd in=' + miriadmodelvisloc + '/systemp value=40.'
-            os.system(command + ' > dump')
-            command = 'puthd in=' + miriadmodelvisloc + '/jyperk value=10.'
-            os.system(command + ' > dump')
+        command = 'puthd in=' + miriadmodelvisloc + '/jyperk value=10.'
+        os.system(command + ' > dump')
 
     #--------------------------------------------------------------------------
     # Invert the simulated SMA visibilities and deconvolve 
@@ -518,7 +513,7 @@ def preProcess(config, paramData, fitresult, tag='', cleanup=True):
             allparameters0 = list(fitresult.data)[1:]
 
         # search poff_models for parameters fixed relative to other parameters
-        fixindx = setuputil.fixParams(paramData)
+        fixindx = paramData['fixindx']
         poff = paramData['poff']
         ndim_total = len(poff)
         fixed = (numpy.where(fixindx >= 0))[0]

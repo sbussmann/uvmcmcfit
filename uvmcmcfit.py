@@ -105,6 +105,9 @@ def logp(pzero_regions):
 
     """
 
+    import config
+
+
     paramSetup = setuputil.loadParams(config)
 
     # ensure all parameters are finite
@@ -149,7 +152,18 @@ def logl(pzero_regions):
     
     """
 
+    import config
+
+
     paramSetup = setuputil.loadParams(config)
+
+    real = paramSetup['real']
+    imag = paramSetup['imag']
+    wgt = paramSetup['wgt']
+    uuu = paramSetup['uu']
+    vvv = paramSetup['vv']
+    pcd = paramSetup['pcd']
+    
     fixindx = paramSetup['fixindx']
     # search poff_models for parameters fixed relative to other parameters
     fixed = (numpy.where(fixindx >= 0))[0]
@@ -328,53 +342,6 @@ else:
 im = fits.getdata(config.ImageName)
 im = im[0, 0, :, :].copy()
 headim = fits.getheader(config.ImageName)
-
-# get resolution in ALMA image
-#celldata = numpy.abs(headim['CDELT1'] * 3600)
-
-#--------------------------------------------------------------------------
-# read in visibilities
-fitsfiles = config.FitsFiles
-nfiles = len(fitsfiles)
-nvis = []
-
-# read in the observed visibilities
-uuu = []
-vvv = []
-real = []
-imag = []
-wgt = []
-for file in fitsfiles:
-    print("Doing file {:s}".format(file))
-    vis_data = fits.open(file)
-
-    uu, vv = uvutil.uvload(vis_data)
-    pcd = uvutil.pcdload(vis_data)
-    real_raw, imag_raw, wgt_raw = uvutil.visload(vis_data)
-    uuu.extend(uu)
-    vvv.extend(vv)
-    real.extend(real_raw)
-    imag.extend(imag_raw)
-    wgt.extend(wgt_raw)
-
-# convert the list to an array
-real = numpy.array(real)
-imag = numpy.array(imag)
-wgt = numpy.array(wgt)
-uuu = numpy.array(uuu)
-vvv = numpy.array(vvv)
-#www = numpy.array(www)
-
-# remove the data points with zero or negative weight
-positive_definite = wgt > 0
-real = real[positive_definite]
-imag = imag[positive_definite]
-wgt = wgt[positive_definite]
-uuu = uuu[positive_definite]
-vvv = vvv[positive_definite]
-#www = www[positive_definite]
-
-npos = wgt.size
 
 #----------------------------------------------------------------------------
 # Load input parameters
