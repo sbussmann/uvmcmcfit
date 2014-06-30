@@ -308,6 +308,11 @@ def loadParams(config):
         else:
             pzero = numpy.append(pzero, pzero_model, axis=2)
 
+    fixindx = numpy.zeros(nparams_total) - 1
+    for ifix in range(nparams_total):
+        if pname.count(poff[ifix]) > 0:
+            fixindx[ifix] = pname.index(poff[ifix])
+
     paramSetup = {'x': x, 
             'y': y, 
             'modelheader': modelheader,
@@ -328,21 +333,9 @@ def loadParams(config):
             'nparams': nparams_total, 
             'celldata': celldata,
             'lnlikemethod': lnlikemethod,
+            'fixindx': fixindx,
             'nregions': nregions}
     return paramSetup
-
-def fixParams(paramSetup):
-    """
-    Determine the indices for fixed parameters.
-    """
-    nparams = paramSetup['nparams']
-    poff = paramSetup['poff']
-    pname = paramSetup['pname']
-    fixindx = numpy.zeros(nparams) - 1
-    for ifix in range(nparams):
-        if pname.count(poff[ifix]) > 0:
-            fixindx[ifix] = pname.index(poff[ifix])
-    return fixindx
 
 def getCell(headim):
     celldata = numpy.abs(headim['CDELT1'] * 3600)

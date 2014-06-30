@@ -105,6 +105,8 @@ def logp(pzero_regions):
 
     """
 
+    paramSetup = setuputil.loadParams(config)
+
     # ensure all parameters are finite
     if (pzero_regions * 0 != 0).any():
         priorln = -numpy.inf
@@ -147,6 +149,8 @@ def logl(pzero_regions):
     
     """
 
+    paramSetup = setuputil.loadParams(config)
+    fixindx = paramSetup['fixindx']
     # search poff_models for parameters fixed relative to other parameters
     fixed = (numpy.where(fixindx >= 0))[0]
     nfixed = fixindx[fixed].size
@@ -449,7 +453,7 @@ if not realpdf:
 #p_l = arrayp_l
 
 # determine the indices for fixed parameters
-fixindx = setuputil.fixParams(paramSetup)
+fixindx = paramSetup['fixindx']
 
 # Initialize the sampler with the chosen specs.
 if mpi != 'MPI':
