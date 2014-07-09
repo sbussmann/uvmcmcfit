@@ -194,7 +194,8 @@ def covariance(bestfitloc='posteriorpdf.fits'):
     savefig('covariance.pdf')
     plt.clf()        
 
-def bestFit(bestfitloc='posteriorpdf.fits', showOptical=False, cleanup=True):
+def bestFit(bestfitloc='posteriorpdf.fits', showOptical=False, cleanup=True,
+        interactive=True):
 
     """ 
 
@@ -221,10 +222,10 @@ def bestFit(bestfitloc='posteriorpdf.fits', showOptical=False, cleanup=True):
     bestfit = fitresults[index][0]
     tag = 'bestfit'
     visualutil.preProcess(config, paramData, bestfit, tag=tag, cleanup=cleanup,
-            showOptical=showOptical)
+            showOptical=showOptical, interactive=interactive)
 
 def goodFits(bestfitloc='posteriorpdf.fits', Nfits=12, Ngood=5000,
-        cleanup=True):
+        cleanup=True, interactive=True):
 
     """ 
 
@@ -258,4 +259,4 @@ def goodFits(bestfitloc='posteriorpdf.fits', Nfits=12, Ngood=5000,
         fitresult = fitresults[realid]
         tag = 'goodfit' + str(realid).zfill(4)
         visualutil.preProcess(config, paramData, fitresult, tag=tag,
-                cleanup=cleanup)
+                cleanup=cleanup, interactive=interactive)

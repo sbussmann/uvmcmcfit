@@ -38,7 +38,7 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
     plt.subplots_adjust(left=0.08, bottom=0.1, right=0.95, top=0.95,
         wspace=0.4, hspace=0.65)
 
-    pnames = fitresultsgood.keys()
+    pnames = fitresultsgood.names
 
     counter = 0
     for pname in pnames:
@@ -154,7 +154,7 @@ def makeVis(config, regioni):
     os.system('rm -rf ' + modelvisfile)
     uvmodel.subtract(SBmapLoc, visfile, modelvisfile)
 
-def makeImage(config, objectname, regioni):
+def makeImage(config, objectname, regioni, interactive=True):
 
     """
 
@@ -181,9 +181,13 @@ def makeImage(config, objectname, regioni):
     index = fitsim.find('.fits')
     maskname = fitsim[0:index] + '.mask'
     try:
-        maskdata = open(maskname, 'r')
-        mask = maskname
+        maskcheck = os.path.exists(maskname)
     except:
+        maskcheck = False
+
+    if maskcheck:
+        mask = maskname
+    else:
         mask = ''
 
     # invert and clean the simulated model visibilities
@@ -193,7 +197,7 @@ def makeImage(config, objectname, regioni):
     miriadmodelvisloc = name + '.Region' + sri + '_model.ms'
     os.system('rm -rf ' + imloc + '*')
     clean(vis=miriadmodelvisloc, imagename=imloc, mode='mfs', niter=10000,
-        threshold='0.2mJy', interactive=True, mask=mask, imsize=imsize, 
+        threshold='0.2mJy', interactive=interactive, mask=mask, imsize=imsize, 
         cell=cell, weighting='briggs', robust=0.5)
 
     # export the cleaned image to a fits file
@@ -205,7 +209,7 @@ def makeImage(config, objectname, regioni):
     miriadmodelvisloc = name + '.Region' + sri + '_residual.ms'
     os.system('rm -rf ' + imloc + '*')
     clean(vis=miriadmodelvisloc, imagename=imloc, mode='mfs', niter=10000,
-        threshold='0.2mJy', interactive=True, mask=mask, imsize=imsize, 
+        threshold='0.2mJy', interactive=interactive, mask=mask, imsize=imsize, 
         cell=cell, weighting='briggs', robust=0.5)
 
     # export the cleaned image to a fits file
@@ -295,6 +299,7 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
     # make cleaned model cutout
     headerkeys = headmod.keys()
     cd1_1 = headerkeys.count('CD1_1')
+    cd1_2 = headerkeys.count('CD1_2')
     if cd1_1 == 0:
         cdelt1_model = numpy.abs(headmod['CDELT1'] * 3600)
         cdelt2_model = numpy.abs(headmod['CDELT2'] * 3600)
@@ -302,8 +307,12 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
         cdelt1_model = numpy.abs(headmod['CD1_1'] * 3600)
         cdelt2_model = numpy.abs(headmod['CD2_2'] * 3600)
         cd11 = headmod['CD1_1']
-        cd12 = headmod['CD1_2']
-        cd21 = headmod['CD2_1']
+        if cd1_2 == 0:
+            cd12 = 0
+            cd21 = 0
+        else:
+            cd12 = headmod['CD1_2']
+            cd21 = headmod['CD2_1']
         cd22 = headmod['CD2_2']
         cdelt1_model = numpy.sqrt(cd11 ** 2 + cd12 ** 2) * 3600
         cdelt2_model = numpy.sqrt(cd21 ** 2 + cd22 ** 2) * 3600
@@ -370,15 +379,27 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
     #mody = (numpy.arange(2 * pixextent) - pixextent) * cellp + cell/2.
     cornerextent = [modx[0], modx[-1], mody[0], mody[-1] ]
     if modeltype == 'residual':
+        grayscalename = 'Residual'
         pcolor = 'white'
         ncolor = 'black'
         vmax = 5 * rms
         vmin = -5 * rms
-    else:
+    elif modeltype == 'model':
+        grayscalename = 'Model'
         pcolor = 'red'
         ncolor = 'red'
         vmax = modelcut.max()
         vmin = -3 * rms
+    else:
+        grayscalename = config.OpticalTag
+        filtindx = grayscalename.find(' ')
+        filtname = grayscalename[filtindx + 1:]
+        if filtname == 'F110W':
+            modelcut = numpy.log10(modelcut - modelcut.min() + 1)
+        pcolor = 'red'
+        ncolor = 'red'
+        vmax = modelcut.max()
+        vmin = modelcut.min()
     plt.imshow(modelcut, cmap='gray_r', interpolation='nearest', \
             extent=cornerextent, origin='lower', vmax=vmax, vmin=vmin)
 
@@ -435,12 +456,6 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
         hatch='//////', lw=1.0, fc='None', zorder=10, fill=True)
     ax.add_artist(e)
 
-    if modeltype == 'optical':
-        grayscalename = config.OpticalTag
-    if modeltype == 'model':
-        grayscalename = 'Model'
-    if modeltype == 'residual':
-        grayscalename = 'Residual'
     plt.text(0.92, 0.88, grayscalename, transform=ax.transAxes,
             fontsize='xx-large', ha='right')
     objname = config.ObjectName
@@ -467,7 +482,7 @@ def removeTempFiles():
     os.system(cmd)    
 
 def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True,
-        showOptical=False):
+        showOptical=False, interactive=True):
 
     """
 
@@ -486,7 +501,7 @@ def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True,
 
     # image the simulated visibilities
     objectname = config.ObjectName
-    makeImage(config, objectname, regioni)
+    makeImage(config, objectname, regioni, interactive=interactive)
 
     # read in the images of the simulated visibilities
     sri = str(regioni)
@@ -519,7 +534,7 @@ def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True,
         removeTempFiles()
 
 def preProcess(config, paramData, fitresult, tag='', cleanup=True,
-        showOptical=False):
+        showOptical=False, interactive=True):
 
     """
 
@@ -571,5 +586,6 @@ def preProcess(config, paramData, fitresult, tag='', cleanup=True,
         parameters = allparameters[npar_previous:npar]
         npar_previous = npar
         plotFit(config, paramData, parameters, regioni, tag=tag,
-                cleanup=cleanup, showOptical=showOptical)
+                cleanup=cleanup, showOptical=showOptical,
+                interactive=interactive)
 
