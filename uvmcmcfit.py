@@ -210,7 +210,6 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
             amp.extend([amp_tot])
             amp.extend([amp_mask])
 
-        import pdb; pdb.set_trace()
         model_complex = sample_vis.uvmodel(g_lensimage, headmod, uuu, vvv, pcd)
         #model_real += numpy.real(model_complex)
         #model_imag += numpy.imag(model_complex)
@@ -237,7 +236,7 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
     #chi2_imag_all = (imag - model_imag) ** 2. / modvariance_imag
     #chi2_all = numpy.append(chi2_real_all, chi2_imag_all)
     chi2_all = numpy.abs(vis_complex - model_complex) ** 2
-
+    
     # compute the sigma term
     #sigmaterm_real = numpy.log(2 * numpy.pi / wgt)
     #sigmaterm_imag = numpy.log(2 * numpy.pi * modvariance_imag)
@@ -260,6 +259,7 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
     likeln = -0.5 * lnlike.sum()
     if likeln * 0 != 0:
         likeln = -numpy.inf
+
 
     return likeln, amp
 
@@ -346,6 +346,7 @@ wgt = wgt[positive_definite]
 uuu = uuu[positive_definite]
 vvv = vvv[positive_definite]
 #www = www[positive_definite]
+print(vis_complex)
 
 npos = wgt.size
 
