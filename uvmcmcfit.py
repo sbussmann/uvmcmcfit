@@ -362,7 +362,7 @@ if os.path.exists(posteriorloc):
 
     # read the latest posterior PDFs
     print("Found existing posterior PDF file: {:s}".format(posteriorloc))
-    posteriordat = fits.getdata(posteriorloc)
+    posteriordat = Table.read(posteriorloc)
     if len(posteriordat) > 1:
 
         # assign values to pzero
@@ -370,11 +370,11 @@ if os.path.exists(posteriorloc):
         pzero = numpy.zeros((nwalkers, nparams))
         startindx = nlnprob
         for j in range(nparams):
-            namej = posteriordat.columns.names[j + startindx]
+            namej = posteriordat.colnames[j + startindx]
             pzero[:, j] = posteriordat[namej][-nwalkers:]
 
         # number of mu measurements
-        nmu = len(posteriordat.columns.names) - nparams - nlnprob
+        nmu = len(posteriordat.colnames) - nparams - nlnprob
 
         # output name is based on most recent burnin file name
         realpdf = True
