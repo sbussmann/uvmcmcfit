@@ -68,19 +68,19 @@ def uvload(visfile, uvfits=False):
                     freqif = freq0 + visfreq['IF FREQ'][0][ispw]
                 else:
                     freqif = freq0
-            #uu[:, ispw] = freqif * visibilities['UU']
-            #vv[:, ispw] = freqif * visibilities['VV']
-            for ipol in range(npol):
-               # then compute the spatial frequencies:
-                if nfreq > 1:
-                    freq = (numpy.arange(nfreq) - cfreq + 1) * dfreq + freqif
-                    freqvis = numpy.meshgrid(freq, visibilities['UU'])
-                    uu[:, ispw, :, ipol] = freqvis[0] * freqvis[1]
-                    freqvis = numpy.meshgrid(freq, visibilities['VV'])
-                    vv[:, ispw, :, ipol] = freqvis[0] * freqvis[1]
-                else:
-                    uu[:, ispw, 0, ipol] = freqif * visibilities['UU']
-                    vv[:, ispw, 0, ipol] = freqif * visibilities['VV']
+                #uu[:, ispw] = freqif * visibilities['UU']
+                #vv[:, ispw] = freqif * visibilities['VV']
+                for ipol in range(npol):
+                   # then compute the spatial frequencies:
+                    if nfreq > 1:
+                        freq = (numpy.arange(nfreq) - cfreq + 1) * dfreq + freqif
+                        freqvis = numpy.meshgrid(freq, visibilities['UU'])
+                        uu[:, ispw, :, ipol] = freqvis[0] * freqvis[1]
+                        freqvis = numpy.meshgrid(freq, visibilities['VV'])
+                        vv[:, ispw, :, ipol] = freqvis[0] * freqvis[1]
+                    else:
+                        uu[:, ispw, 0, ipol] = freqif * visibilities['UU']
+                        vv[:, ispw, 0, ipol] = freqif * visibilities['VV']
 
         if visheader['NAXIS'] == 6:
 

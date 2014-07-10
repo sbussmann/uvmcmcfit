@@ -263,7 +263,7 @@ def loadParams(config):
                 priorshapelist = re.findall('PriorShape', configkeystring)
                 npriorshape = len(priorshapelist)
                 if npriorshape == 1:
-                    prior_shape.append(priorshapelist[0])
+                    prior_shape.append(cfdrlp[priorshapelist[0]])
                 else:
                     prior_shape.append('Uniform')
 
@@ -271,7 +271,7 @@ def loadParams(config):
                 fixedtolist = re.findall('FixedTo', configkeystring)
                 nfixedto = len(fixedtolist)
                 if nfixedto == 1:
-                    poff.append(fixedtolist[0])
+                    poff.append(cfdrlp[fixedtolist[0]])
                 else:
                     poff.append('Free')
                 nametag = region + ' ' + lens + ' ' + param
@@ -316,7 +316,7 @@ def loadParams(config):
                 priorshapelist = re.findall('PriorShape', configkeystring)
                 npriorshape = len(priorshapelist)
                 if npriorshape == 1:
-                    prior_shape.append(priorshapelist[0])
+                    prior_shape.append(cfdrsp[priorshapelist[0]])
                 else:
                     prior_shape.append('Uniform')
 
@@ -324,7 +324,7 @@ def loadParams(config):
                 fixedtolist = re.findall('FixedTo', configkeystring)
                 nfixedto = len(fixedtolist)
                 if nfixedto == 1:
-                    poff.append(fixedtolist[0])
+                    poff.append(cfdrsp[fixedtolist[0]])
                 else:
                     poff.append('Free')
                 nametag = region + ' ' + source + ' ' + param
@@ -367,7 +367,7 @@ def loadParams(config):
             'nlensedregions': nlensedregions,
             'p_u': numpy.array(p_u), 
             'p_l': numpy.array(p_l), 
-            'prior_shape': numpy.array(prior_shape),
+            'PriorShape': numpy.array(prior_shape),
             'poff': poff, 
             'pname': pname, 
             'pzero': pzero, 

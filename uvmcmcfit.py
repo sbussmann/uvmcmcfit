@@ -104,7 +104,7 @@ def lnprior(pzero_regions, paramSetup):
         priorln = -numpy.inf
 
     # Uniform priors
-    uniform_regions = paramSetup['prior_shape'] == 'Uniform'
+    uniform_regions = paramSetup['PriorShape'] == 'Uniform'
     if uniform_regions.any():
         p_l_regions = paramSetup['p_l'][uniform_regions]
         p_u_regions = paramSetup['p_u'][uniform_regions]
@@ -117,7 +117,7 @@ def lnprior(pzero_regions, paramSetup):
             priorln = -numpy.inf
 
     # Gaussian priors
-    gaussian_regions = paramSetup['prior_shape'] == 'Gaussian'
+    gaussian_regions = paramSetup['PriorShape'] == 'Gaussian'
     if gaussian_regions.any():
     #ngaussian = paramSetup['prior_shape'][gaussian_regions].size
     #for ipar in range(ngaussian):
@@ -187,6 +187,7 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
         amp.extend(amp_tot)
         amp.extend(amp_mask)
 
+
         #----------------------------------------------------------------------
         # Python version of UVMODEL:
         # "Observe" the lensed emission with the interferometer
@@ -209,6 +210,7 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
             amp.extend([amp_tot])
             amp.extend([amp_mask])
 
+        import pdb; pdb.set_trace()
         model_complex = sample_vis.uvmodel(g_lensimage, headmod, uuu, vvv, pcd)
         #model_real += numpy.real(model_complex)
         #model_imag += numpy.imag(model_complex)
