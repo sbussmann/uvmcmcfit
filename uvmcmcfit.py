@@ -255,7 +255,6 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
 
     # assert that lnlike is equal to -1 * maximum likelihood estimate
     #likeln = -0.5 * lnlike[goodvis].sum()
-    import pdb; pdb.set_trace()
     likeln = -0.5 * lnlike.sum()
     if likeln * 0 != 0:
         likeln = -numpy.inf
@@ -293,16 +292,11 @@ config = yaml.load(configfile)
 
 
 # Determine parallel processing options
-mpi = config['ParallelProcessingMode']
-
-# Single processor with Nthreads cores
-if mpi != 'MPI':
-
-    # set the number of threads to use for parallel processing
-    Nthreads = config['Nthreads']
+mpi = config['MPI']
 
 # multiple processors on a cluster using MPI
-else:
+if mpi:
+
     from emcee.utils import MPIPool
 
     # One thread per slot
@@ -316,6 +310,12 @@ else:
         pool.wait()
         sys.exit(0)
 
+# Single processor with Nthreads cores
+else:
+
+    # set the number of threads to use for parallel processing
+    Nthreads = config['Nthreads']
+
 #--------------------------------------------------------------------------
 # Read in ALMA image and beam
 im = fits.getdata(config['ImageName'])
@@ -327,7 +327,7 @@ headim = fits.getheader(config['ImageName'])
 
 #--------------------------------------------------------------------------
 # read in visibility data
-visfile = config['VisFile']
+visfile = config['UVData']
 uuu, vvv = uvutil.uvload(visfile)
 pcd = uvutil.pcdload(visfile)
 vis_complex, wgt = uvutil.visload(visfile)

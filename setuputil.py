@@ -136,7 +136,7 @@ def loadSandboxParams(config):
 
 def loadParams(config):
 
-    headim = fits.getheader(config['ImageFits'])
+    headim = fits.getheader(config['ImageName'])
 
     # get resolution in ALMA image
     celldata = numpy.abs(headim['CDELT1'] * 3600)
@@ -151,7 +151,7 @@ def loadParams(config):
     # determine the number of regions for which we need surface brightness maps
     configkeys = config.keys()
     configkeystring = " ".join(configkeys)
-    regionlist = re.findall('Region*', configkeystring)
+    regionlist = re.findall('Region.', configkeystring)
     nregions = len(regionlist)
 
     # instantiate lists that must be carried through to lnprob function
@@ -170,8 +170,9 @@ def loadParams(config):
     nparams_total = 0
     nlensedsource = 0
     nlensedregions = 0
-    for region in range(regionlist):
+    for region in regionlist:
         #ri = str(i)
+        
         cfdr = config[region]
         ra_centroid = cfdr['RACentroid']
         dec_centroid = cfdr['DecCentroid']
@@ -181,11 +182,11 @@ def loadParams(config):
         # count the number of lenses
         configkeys = cfdr.keys()
         configkeystring = " ".join(configkeys)
-        lenslist = re.findall('Lens*', configkeystring)
+        lenslist = re.findall('Lens.', configkeystring)
         nlens = len(lenslist)
 
         # count the number of sources
-        sourcelist = re.findall('Source*', configkeystring)
+        sourcelist = re.findall('Source.', configkeystring)
         nsource = len(sourcelist)
 
         # Append the number of lenses and sources for this region
@@ -287,7 +288,7 @@ def loadParams(config):
             #si = str(isource)
 
             sourceparams = ['IntrinsicFlux', 
-                    'Size', 
+                    'EffectiveRadius', 
                     'DeltaRA', 
                     'DeltaDec',
                     'AxialRatio', 
