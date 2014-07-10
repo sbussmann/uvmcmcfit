@@ -1,5 +1,7 @@
 import numpy
 from astropy.io import fits
+import yaml
+import re
 
 
 def loadSandboxParams(config):
@@ -133,21 +135,24 @@ def loadSandboxParams(config):
     return paramSetup
 
 def loadParams(config):
-    headim = fits.getheader(config.ImageName)
+
+    headim = fits.getheader(config['ImageName'])
 
     # get resolution in ALMA image
     celldata = numpy.abs(headim['CDELT1'] * 3600)
 
     #--------------------------------------------------------------------------
     # Define the number of walkers
-    nwalkers = config.Nwalkers
+    nwalkers = config['Nwalkers']
 
     # Determine method of computing lnlike
-    lnlikemethod = config.lnLike
+    lnlikemethod = config['LogLike']
 
     # determine the number of regions for which we need surface brightness maps
-    regionIDs = config.RegionID
-    nregions = len(regionIDs)
+    configkeys = config.keys()
+    configkeystring = " ".join(configkeys)
+    regionlist = re.findall('Region.', configkeystring)
+    nregions = len(regionlist)
 
     # instantiate lists that must be carried through to lnprob function
     x = []
@@ -165,14 +170,24 @@ def loadParams(config):
     nparams_total = 0
     nlensedsource = 0
     nlensedregions = 0
-    for i in range(nregions):
-        ri = str(i)
-        ra_centroid = config.RACentroid[i]
-        dec_centroid = config.DecCentroid[i]
-        extent = config.RadialExtent[i]
-        oversample = config.Oversample[i]
-        nlens = config.Nlens[i]
-        nsource = config.Nsource[i]
+    for region in regionlist:
+        #ri = str(i)
+        
+        cfdr = config[region]
+        ra_centroid = cfdr['RACentroid']
+        dec_centroid = cfdr['DecCentroid']
+        extent = cfdr['RadialExtent']
+        oversample = cfdr['Oversample']
+
+        # count the number of lenses
+        configkeys = cfdr.keys()
+        configkeystring = " ".join(configkeys)
+        lenslist = re.findall('Lens.', configkeystring)
+        nlens = len(lenslist)
+
+        # count the number of sources
+        sourcelist = re.findall('Source.', configkeystring)
+        nsource = len(sourcelist)
 
         # Append the number of lenses and sources for this region
         nlens_regions.append(nlens)
@@ -215,9 +230,10 @@ def loadParams(config):
         p1 = []
         p2 = []
 
-        for ilens in range(nlens):
+        for lens in lenslist:
 
-            li = str(ilens)
+            #li = str(ilens)
+            cfdrl = cfdr[lens]
 
             # constraints on the lenses
             lensparams = ['EinsteinRadius', 
@@ -225,58 +241,98 @@ def loadParams(config):
                     'DeltaDec', 
                     'AxialRatio',
                     'PositionAngle']
-            tag = '_Lens' + li + '_Region' + ri
-            for lensparam in lensparams:
-                fullparname = 'Prior_' + lensparam + tag
-                values = getattr(config, fullparname)
-                prior_shape.append(values[-1]) 
-                #values = getattr(config, fullparname)
-                poff.append(values[-2]) 
-                #if len(values) < 2:
-                #    print("Something is wrong with the config.py file")
-                #    import pdb; pdb.set_trace()
-                values = numpy.array(values[0:2]).astype(float)
-                p_u.append(values[1]) 
-                p_l.append(values[0]) 
-                pname.append(lensparam + tag)
-                fullparname = 'Init_' + lensparam + tag
-                values = getattr(config, fullparname)
-                p2.append(values[1]) 
-                p1.append(values[0]) 
+            for param in lensparams:
+                cfdrlp = cfdrl[param]
+
+                limits = cfdrlp['Limits']
+
+                # upper limits
+                p_u.append(limits[3]) 
+
+                # lower limits
+                p_l.append(limits[0]) 
+
+                # upper bound on walker initialization
+                p2.append(limits[2]) 
+
+                # lower bound on walker initialization
+                p1.append(limits[1]) 
+
+                # store the shape of the priors
+                configkeys = cfdrlp.keys()
+                configkeystring = " ".join(configkeys)
+                priorshapelist = re.findall('PriorShape', configkeystring)
+                npriorshape = len(priorshapelist)
+                if npriorshape == 1:
+                    prior_shape.append(priorshapelist[0])
+                else:
+                    prior_shape.append('Uniform')
+
+                # store the parameter to which this parameter is fixed
+                fixedtolist = re.findall('FixedTo', configkeystring)
+                nfixedto = len(fixedtolist)
+                if nfixedto == 1:
+                    poff.append(fixedtolist[0])
+                else:
+                    poff.append('Free')
+                nametag = region + ' ' + lens + ' ' + param
+                pname.append(nametag)
 
         model_types_source = []
         if nlens > 0:
             nlensedsource += nsource
             nlensedregions += 1
-        for isource in range(nsource):
+        for source in sourcelist:
 
-            si = str(isource)
+            cfdrs = cfdr[source]
+            #si = str(isource)
 
             sourceparams = ['IntrinsicFlux', 
-                    'Size', 
+                    'EffectiveRadius', 
                     'DeltaRA', 
                     'DeltaDec',
                     'AxialRatio', 
                     'PositionAngle']
-            tag = '_Source' + si + '_Region' + ri
-            for sourceparam in sourceparams:
-                fullparname = 'Prior_' + sourceparam + tag
-                values = getattr(config, fullparname)
-                prior_shape.append(values[-1]) 
-                #values = getattr(config, fullparname)
-                poff.append(values[-2]) 
-                values = numpy.array(values[0:2]).astype(float)
-                p_u.append(values[1]) 
-                p_l.append(values[0]) 
-                pname.append(sourceparam + tag)
-                fullparname = 'Init_' + sourceparam + tag
-                values = getattr(config, fullparname)
-                p2.append(values[1]) 
-                p1.append(values[0]) 
+            #tag = '_Source' + si + '_Region' + ri
+            for param in sourceparams:
+                cfdrsp = cfdrs[param]
+
+                limits = cfdrsp['Limits']
+
+                # upper limits
+                p_u.append(limits[3]) 
+
+                # lower limits
+                p_l.append(limits[0]) 
+
+                # upper bound on walker initialization
+                p2.append(limits[2]) 
+
+                # lower bound on walker initialization
+                p1.append(limits[1]) 
+
+                # store the shape of the priors
+                configkeys = cfdrsp.keys()
+                configkeystring = " ".join(configkeys)
+                priorshapelist = re.findall('PriorShape', configkeystring)
+                npriorshape = len(priorshapelist)
+                if npriorshape == 1:
+                    prior_shape.append(priorshapelist[0])
+                else:
+                    prior_shape.append('Uniform')
+
+                # store the parameter to which this parameter is fixed
+                fixedtolist = re.findall('FixedTo', configkeystring)
+                nfixedto = len(fixedtolist)
+                if nfixedto == 1:
+                    poff.append(fixedtolist[0])
+                else:
+                    poff.append('Free')
+                nametag = region + ' ' + source + ' ' + param
+                pname.append(nametag)
 
             # get the model type
-            fullparname = 'ModelMorphology' + tag
-            model_types_source.append(getattr(config, fullparname))
+            model_types_source.append(cfdrs['LightProfile'])
 
         # append the set of model types for this region
         model_types.append(model_types_source)

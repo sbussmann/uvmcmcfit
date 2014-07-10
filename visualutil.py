@@ -38,7 +38,7 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
     plt.subplots_adjust(left=0.08, bottom=0.1, right=0.95, top=0.95,
         wspace=0.4, hspace=0.65)
 
-    pnames = fitresultsgood.keys()
+    pnames = fitresultsgood.names
 
     counter = 0
     for pname in pnames:
@@ -128,124 +128,111 @@ def makeVis(config, regioni):
 
     """
 
-    from astropy.io import fits
-    import uvutil
     import uvmodel
     import os
 
 
     # get the list of uvfits files
-    fitsfiles = config.FitsFiles
+    visfile = config.VisFile
+    
+    #----------------------------------------------------------------------
+    # Python version of UVMODEL
+    # "Observe" the lensed emission with the SMA and write to a new file
+    #----------------------------------------------------------------------
+    # Python version of UVMODEL's "replace" subroutine:
+    nameindx = visfile.find('ms')
+    name = visfile[0:nameindx-1]
 
-    # read in the observed visibilities
-    for ifile in fitsfiles:
+    sri = str(regioni)
+    SBmapLoc = 'LensedSBmap_Region' + sri + '.fits'
+    modelvisfile = name + '.Region' + sri + '_model.ms'
+    os.system('rm -rf ' + modelvisfile)
+    uvmodel.replace(SBmapLoc, visfile, modelvisfile)
+    
+    # Python version of UVMODEL's "subtract" subroutine:
+    modelvisfile = name + '.Region' + sri + '_residual.ms'
+    os.system('rm -rf ' + modelvisfile)
+    uvmodel.subtract(SBmapLoc, visfile, modelvisfile)
 
-        # read in the observed visibilities
-        obsdata = fits.open(ifile)
-
-        # get the real and imaginary components
-        data_real, data_imag, data_wgt = uvutil.visload(obsdata)
-        
-        #----------------------------------------------------------------------
-        # Python version of UVMODEL
-        # "Observe" the lensed emission with the SMA and write to a new file
-        #----------------------------------------------------------------------
-        # Python version of UVMODEL's "replace" subroutine:
-        nameindx = ifile.find('uvfits')
-        name = ifile[0:nameindx-1]
-
-        sri = str(regioni)
-        SBmapLoc = 'LensedSBmap_Region' + sri + '.fits'
-        model = uvmodel.replace(SBmapLoc, ifile)
-
-        modelvisfile = name + '.Region' + sri + '_model.uvfits'
-        os.system('rm -rf ' + modelvisfile)
-        model.writeto(modelvisfile)
-        
-        # Python version of UVMODEL's "subtract" subroutine:
-        residual = uvmodel.subtract(SBmapLoc, ifile)
-
-        modelvisfile = name + '.Region' + sri + '_residual.uvfits'
-        os.system('rm -rf ' + modelvisfile)
-        residual.writeto(modelvisfile)
-
-def makeImage(config, objectname, regioni):
+def makeImage(config, objectname, regioni, interactive=True, miriad=False):
 
     """
 
     Make an image of the model and the residual from simulated model
-    visibilities.  Requires MIRIAD.
+    visibilities.  Requires CASA or miriad.
 
     """
 
     import os
     from astropy.io import fits
 
-
-    #--------------------------------------------------------------------------
-    # read in Python visibilities
         
-    fitsfiles = config.FitsFiles
-
-    for ifile in fitsfiles:
-
-        # read in the observed visibilities
-        obsdata = fits.open(ifile)
-
-        nameindx = ifile.find('uvfits')
-        name = ifile[0:nameindx-1]
-
-        # convert simulated visibilities to miriad format
-        sri = str(regioni)
-        modelvisfile = name + '.Region' + sri + '_model.uvfits'
-        miriadmodelvisloc = name + '.Region' + sri + '_model.miriad'
-        os.system('rm -rf ' + miriadmodelvisloc)
-        command = 'fits in=' + modelvisfile + ' op=uvin out=' + \
-            miriadmodelvisloc
-        os.system(command + ' > dump')
-
-        # insert fake system temperatures and jy/k values for PdBI data
-        if obsdata[0].header['TELESCOP'] == 'PdBI':
-            command = 'puthd in=' + miriadmodelvisloc + '/systemp value=40.'
-            os.system(command + ' > dump')
-            command = 'puthd in=' + miriadmodelvisloc + '/jyperk value=10.'
-            os.system(command + ' > dump')
-
-
-        # convert simulated residual visibilities to miriad format
-        residvisfile = name + '.Region' + sri + '_residual.uvfits'
-        miriadresidvisloc = name + '.Region' + sri + '_residual.miriad'
-        os.system('rm -rf ' + miriadresidvisloc)
-        command = 'fits in=' + residvisfile + ' op=uvin out=' + \
-            miriadresidvisloc
-        os.system(command + ' > dump')
-
-        # insert fake system temperatures and jy/k values for PdBI data
-        if obsdata[0].header['TELESCOP'] == 'PdBI':
-            command = 'puthd in=' + miriadresidvisloc + '/systemp value=40.'
-            os.system(command + ' > dump')
-            command = 'puthd in=' + miriadresidvisloc + '/jyperk value=10.'
-            os.system(command + ' > dump')
-
-    #--------------------------------------------------------------------------
-    # Invert the simulated SMA visibilities and deconvolve 
-
-    # the simulated model visibilities
+    visfile = config.VisFile
     target = config.ObjectName
+    sri = str(regioni)
     fitsim = config.ImageName
     fitshead = fits.getheader(fitsim)
-    imsize = str(fitshead['NAXIS1'])
-    cell = str(fitshead['CDELT2'] * 3600)
-    imloc = target + '_Region' + sri + '_model'
-    miriadinputs = miriadmodelvisloc + ' ' + imloc + ' ' + imsize + ' ' + cell
-    command = 'csh image.csh ' + miriadinputs
-    os.system(command + ' > dump')
+    imsize = [fitshead['NAXIS1'], fitshead['NAXIS2']]
+    cell = str(fitshead['CDELT2'] * 3600) + 'arcsec'
 
-    # the simulated residual visibilities
-    imloc = target + '_Region' + sri + '_residual'
-    miriadinputs = miriadresidvisloc + ' ' + imloc + ' ' + imsize + ' ' + cell
-    command = 'csh image.csh ' + miriadinputs
-    os.system(command + ' > dump')
+    # search for an existing mask
+    index = fitsim.find('.fits')
+    maskname = fitsim[0:index] + '.mask'
+    try:
+        maskcheck = os.path.exists(maskname)
+    except:
+        maskcheck = False
+
+    if maskcheck:
+        mask = maskname
+    else:
+        mask = ''
+
+    # invert and clean the simulated model visibilities
+    imloc = target + '_Region' + sri + '_model'
+
+    if miriad:
+        # use miriad for imaging
+        index = visfile.find('.uvfits')
+        name = visfile[0:index]
+        miriadmodelvisloc = name + '.Region' + sri + '_model.miriad'
+        miriadin = miriadmodelvisloc + ' ' + imloc + ' ' + imsize + ' ' + cell
+        command = 'csh image.csh ' + miriadin
+        os.system(command + ' > dump')
+
+        # the simulated residual visibilities
+        imloc = target + '_Region' + sri + '_residual'
+        miriadresidvisloc = name + '.Region' + sri + '_residual.miriad'
+        miriadin = miriadresidvisloc + ' ' + imloc + ' ' + imsize + ' ' + cell
+        command = 'csh image.csh ' + miriadin
+        os.system(command + ' > dump')
+    else:
+        # use CASA for imaging
+        from clean import clean
+        from casa import exportfits
+        index = visfile.find('.ms')
+        name = visfile[0:index]
+        miriadmodelvisloc = name + '.Region' + sri + '_model.ms'
+        os.system('rm -rf ' + imloc + '*')
+        clean(vis=miriadmodelvisloc, imagename=imloc, mode='mfs', niter=10000,
+            threshold='0.2mJy', interactive=interactive, mask=mask, 
+            imsize=imsize, cell=cell, weighting='briggs', robust=0.5)
+
+        # export the cleaned image to a fits file
+        os.system('rm -rf ' + imloc + '.fits')
+        exportfits(imagename=imloc + '.image', fitsimage=imloc + '.fits')
+
+        # invert and clean the residual visibilities
+        imloc = target + '_Region' + sri + '_residual'
+        miriadmodelvisloc = name + '.Region' + sri + '_residual.ms'
+        os.system('rm -rf ' + imloc + '*')
+        clean(vis=miriadmodelvisloc, imagename=imloc, mode='mfs', niter=10000,
+            threshold='0.2mJy', interactive=interactive, mask=mask, 
+            imsize=imsize, cell=cell, weighting='briggs', robust=0.5)
+
+        # export the cleaned image to a fits file
+        os.system('rm -rf ' + imloc + '.fits')
+        exportfits(imagename=imloc + '.image', fitsimage=imloc + '.fits')
     
     return
 
@@ -330,6 +317,7 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
     # make cleaned model cutout
     headerkeys = headmod.keys()
     cd1_1 = headerkeys.count('CD1_1')
+    cd1_2 = headerkeys.count('CD1_2')
     if cd1_1 == 0:
         cdelt1_model = numpy.abs(headmod['CDELT1'] * 3600)
         cdelt2_model = numpy.abs(headmod['CDELT2'] * 3600)
@@ -337,8 +325,12 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
         cdelt1_model = numpy.abs(headmod['CD1_1'] * 3600)
         cdelt2_model = numpy.abs(headmod['CD2_2'] * 3600)
         cd11 = headmod['CD1_1']
-        cd12 = headmod['CD1_2']
-        cd21 = headmod['CD2_1']
+        if cd1_2 == 0:
+            cd12 = 0
+            cd21 = 0
+        else:
+            cd12 = headmod['CD1_2']
+            cd21 = headmod['CD2_1']
         cd22 = headmod['CD2_2']
         cdelt1_model = numpy.sqrt(cd11 ** 2 + cd12 ** 2) * 3600
         cdelt2_model = numpy.sqrt(cd21 ** 2 + cd22 ** 2) * 3600
@@ -405,15 +397,27 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
     #mody = (numpy.arange(2 * pixextent) - pixextent) * cellp + cell/2.
     cornerextent = [modx[0], modx[-1], mody[0], mody[-1] ]
     if modeltype == 'residual':
+        grayscalename = 'Residual'
         pcolor = 'white'
         ncolor = 'black'
         vmax = 5 * rms
         vmin = -5 * rms
-    else:
+    elif modeltype == 'model':
+        grayscalename = 'Model'
         pcolor = 'red'
         ncolor = 'red'
         vmax = modelcut.max()
         vmin = -3 * rms
+    else:
+        grayscalename = config.OpticalTag
+        filtindx = grayscalename.find(' ')
+        filtname = grayscalename[filtindx + 1:]
+        if filtname == 'F110W':
+            modelcut = numpy.log10(modelcut - modelcut.min() + 1)
+        pcolor = 'red'
+        ncolor = 'red'
+        vmax = modelcut.max()
+        vmin = modelcut.min()
     plt.imshow(modelcut, cmap='gray_r', interpolation='nearest', \
             extent=cornerextent, origin='lower', vmax=vmax, vmin=vmin)
 
@@ -470,12 +474,6 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
         hatch='//////', lw=1.0, fc='None', zorder=10, fill=True)
     ax.add_artist(e)
 
-    if modeltype == 'optical':
-        grayscalename = config.OpticalTag
-    if modeltype == 'model':
-        grayscalename = 'Model'
-    if modeltype == 'residual':
-        grayscalename = 'Residual'
     plt.text(0.92, 0.88, grayscalename, transform=ax.transAxes,
             fontsize='xx-large', ha='right')
     objname = config.ObjectName
@@ -502,7 +500,7 @@ def removeTempFiles():
     os.system(cmd)    
 
 def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True,
-        showOptical=False):
+        showOptical=False, interactive=True):
 
     """
 
@@ -521,14 +519,14 @@ def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True,
 
     # image the simulated visibilities
     objectname = config.ObjectName
-    makeImage(config, objectname, regioni)
+    makeImage(config, objectname, regioni, interactive=interactive)
 
     # read in the images of the simulated visibilities
     sri = str(regioni)
-    simimloc = objectname + '_Region' + sri + '_model.cm1.fits'
+    simimloc = objectname + '_Region' + sri + '_model.fits'
     model = fits.open(simimloc)
 
-    simimloc = objectname + '_Region' + sri + '_residual.cm1.fits'
+    simimloc = objectname + '_Region' + sri + '_residual.fits'
     residual = fits.open(simimloc)
 
     # read in the data
@@ -554,7 +552,7 @@ def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True,
         removeTempFiles()
 
 def preProcess(config, paramData, fitresult, tag='', cleanup=True,
-        showOptical=False):
+        showOptical=False, interactive=True):
 
     """
 
@@ -576,9 +574,9 @@ def preProcess(config, paramData, fitresult, tag='', cleanup=True,
     for regioni in range(nregions):
         nmu = 2 * (numpy.array(nlensedsource).sum() + nlensedregions)
         if nmu > 0:
-            allparameters0 = list(fitresult.data)[1:-nmu]
+            allparameters0 = list(fitresult)[1:-nmu]
         else:
-            allparameters0 = list(fitresult.data)[1:]
+            allparameters0 = list(fitresult)[1:]
 
         # search poff_models for parameters fixed relative to other parameters
         fixindx = setuputil.fixParams(paramData)
@@ -606,5 +604,6 @@ def preProcess(config, paramData, fitresult, tag='', cleanup=True,
         parameters = allparameters[npar_previous:npar]
         npar_previous = npar
         plotFit(config, paramData, parameters, regioni, tag=tag,
-                cleanup=cleanup, showOptical=showOptical)
+                cleanup=cleanup, showOptical=showOptical,
+                interactive=interactive)
 

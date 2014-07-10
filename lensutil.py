@@ -269,9 +269,9 @@ def sbmap(x, y, nlens, nsource, parameters, model_types):
             gpar.append(parameters[i6 + interindx + ip])
         gpar = N.asarray(gpar)
 
-        # compute the peak flux of the unlensed gaussian
+        # compute the peak flux of the unlensed Elliptical Gaussian
         model_type = model_types[i]
-        if model_type == 'gaussian':
+        if model_type == 'Elliptical Gaussian':
             g_image = gauss_2d(x, y, gpar)
         if model_type == 'cylinder':
             g_image = ellipse_2d(x, y, gpar)
@@ -282,21 +282,21 @@ def sbmap(x, y, nlens, nsource, parameters, model_types):
         gpar[0] *= normflux * 1e-3
 
         # re-evaluate unlensed image with normalized flux
-        if model_type == 'gaussian':
+        if model_type == 'Elliptical Gaussian':
             g_image = gauss_2d(x, y, gpar)
         if model_type == 'cylinder':
             g_image = ellipse_2d(x, y, gpar)
 
         if nlens > 0:
             # Evaluate lensed Gaussian image:
-            if model_type == 'gaussian':
+            if model_type == 'Elliptical Gaussian':
                 tmplens = gauss_2d(dx, dy, gpar)
             if model_type == 'cylinder':
                 tmplens = ellipse_2d(dx, dy, gpar)
             g_lensimage += tmplens
         else:
             # Use the unlensed (but normalized) Gaussian image
-            if model_type == 'gaussian':
+            if model_type == 'Elliptical Gaussian':
                 tmplens = gauss_2d(x, y, gpar)
             if model_type == 'cylinder':
                 tmplens = ellipse_2d(x, y, gpar)
