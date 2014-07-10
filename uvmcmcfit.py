@@ -370,11 +370,11 @@ if os.path.exists(posteriorloc):
         pzero = numpy.zeros((nwalkers, nparams))
         startindx = nlnprob
         for j in range(nparams):
-            namej = posteriordat.colnames[j + startindx]
+            namej = posteriordat.columns.names[j + startindx]
             pzero[:, j] = posteriordat[namej][-nwalkers:]
 
         # number of mu measurements
-        nmu = len(posteriordat.colnames) - nparams - nlnprob
+        nmu = len(posteriordat.columns.names) - nparams - nlnprob
 
         # output name is based on most recent burnin file name
         realpdf = True
