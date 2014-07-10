@@ -242,6 +242,7 @@ def makeImage(config, objectname, regioni):
     os.system(command + ' > dump')
 
     # the simulated residual visibilities
+    imloc = target + '_Region' + sri + '_residual'
     miriadinputs = miriadresidvisloc + ' ' + imloc + ' ' + imsize + ' ' + cell
     command = 'csh image.csh ' + miriadinputs
     os.system(command + ' > dump')
