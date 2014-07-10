@@ -39,11 +39,11 @@
 
  2. Inside this directory, you must ensure the following files are present:
 
- - "config.py": This is the configuration file that describes where the source
+ - "config.yaml": This is the configuration file that describes where the source
  of interest is located, what type of model to use for the lens and source, the
  name of the image of the target from your interferometric data, the name of
  the uvfits files containing the interferometric visibilities, and a few
- important processing options as well.  Syntax is python.
+ important processing options as well.  Syntax is yaml.
 
  - Image of the target from your interferometric data.  The spatial resolution
  of this image (arcseconds per pixel), modified by an optional oversampling
@@ -58,10 +58,7 @@
  - Lenses: The lenses are assumed to have singular isothermal ellipsoid
  profiles.  
 
- - Sources: Sources are represented by Gaussian profiles.  Source positions are
- always defined relative to the primary lens, unless there is no lens, in which
- case they are defined relative to the emission centroid defined in
- "config.py."
+ - Sources: Sources are represented by Gaussian profiles.
 
 --------
  OUTPUTS
@@ -87,11 +84,12 @@ import sample_vis
 import lensutil
 import uvutil
 import setuputil
+import yaml
 
 
-cwd = os.getcwd()
-sys.path.append(cwd)
-import config
+#cwd = os.getcwd()
+#sys.path.append(cwd)
+#import config
 
 def lnprior(pzero_regions, paramSetup):
 
@@ -257,6 +255,7 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
 
     # assert that lnlike is equal to -1 * maximum likelihood estimate
     #likeln = -0.5 * lnlike[goodvis].sum()
+    import pdb; pdb.set_trace()
     likeln = -0.5 * lnlike.sum()
     if likeln * 0 != 0:
         likeln = -numpy.inf
@@ -288,14 +287,19 @@ def lnprob(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
     
     return probln, mu
 
+configloc = 'config.yaml'
+configfile = open(configloc, 'r')
+config = yaml.load(configfile)
+
+
 # Determine parallel processing options
-mpi = config.ParallelProcessingMode
+mpi = config['ParallelProcessingMode']
 
 # Single processor with Nthreads cores
 if mpi != 'MPI':
 
     # set the number of threads to use for parallel processing
-    Nthreads = config.Nthreads
+    Nthreads = config['Nthreads']
 
 # multiple processors on a cluster using MPI
 else:
@@ -314,16 +318,16 @@ else:
 
 #--------------------------------------------------------------------------
 # Read in ALMA image and beam
-im = fits.getdata(config.ImageName)
+im = fits.getdata(config['ImageName'])
 im = im[0, 0, :, :].copy()
-headim = fits.getheader(config.ImageName)
+headim = fits.getheader(config['ImageName'])
 
 # get resolution in ALMA image
 #celldata = numpy.abs(headim['CDELT1'] * 3600)
 
 #--------------------------------------------------------------------------
 # read in visibility data
-visfile = config.VisFile
+visfile = config['VisFile']
 uuu, vvv = uvutil.uvload(visfile)
 pcd = uvutil.pcdload(visfile)
 vis_complex, wgt = uvutil.visload(visfile)
