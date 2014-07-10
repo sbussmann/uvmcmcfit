@@ -1,6 +1,5 @@
 import numpy
 from astropy.io import fits
-import yaml
 import re
 
 
@@ -401,7 +400,7 @@ def makeMask(config):
 
     from astropy import wcs
 
-    imloc = config.ImageName
+    imloc = config['ImageName']
     headim = fits.getheader(imloc)
     im = fits.getdata(imloc)
     im = im[0, 0, :, :]
@@ -418,11 +417,15 @@ def makeMask(config):
     xr0 = nx / 4
     xr1 = 3 * nx / 4
     mask[yr0:yr1, xr0:xr1] = 0
-    nregions = len(config.RACentroid)
-    for regioni in range(nregions):
-        ra_centroid = config.RACentroid[regioni]
-        dec_centroid = config.DecCentroid[regioni]
-        extent = config.RadialExtent[regioni]
+
+    # determine the number of regions for which we need surface brightness maps
+    configkeys = config.keys()
+    configkeystring = " ".join(configkeys)
+    regionlist = re.findall('Region.', configkeystring)
+    for region in regionlist:
+        ra_centroid = config[region]['RACentroid']
+        dec_centroid = config[region]['DecCentroid']
+        extent = config[region]['RadialExtent']
 
         # mask regions containing significant emission
         skyxy = datawcs.wcs_world2pix(ra_centroid, dec_centroid, 1)

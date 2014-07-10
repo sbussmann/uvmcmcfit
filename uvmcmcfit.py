@@ -318,8 +318,8 @@ else:
 
 #--------------------------------------------------------------------------
 # Read in ALMA image and beam
-im = fits.getdata(config['ImageName'])
-im = im[0, 0, :, :].copy()
+#im = fits.getdata(config['ImageName'])
+#im = im[0, 0, :, :].copy()
 headim = fits.getheader(config['ImageName'])
 
 # get resolution in ALMA image
@@ -328,9 +328,14 @@ headim = fits.getheader(config['ImageName'])
 #--------------------------------------------------------------------------
 # read in visibility data
 visfile = config['UVData']
-uuu, vvv = uvutil.uvload(visfile)
-pcd = uvutil.pcdload(visfile)
-vis_complex, wgt = uvutil.visload(visfile)
+filetype = visfile[-6:]
+if filetype == 'uvfits':
+    uvfits = True
+else:
+    uvfits = False
+uuu, vvv = uvutil.uvload(visfile, uvfits=uvfits)
+pcd = uvutil.pcdload(visfile, uvfits=uvfits)
+vis_complex, wgt = uvutil.visload(visfile, uvfits=uvfits)
 
 # remove the data points with zero or negative weight
 positive_definite = wgt > 0

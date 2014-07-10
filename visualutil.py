@@ -84,7 +84,7 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
     savefile = tag + 'PDFs.png'
     savefig(savefile)
 
-def makeSBmap(config, paramData, parameters, regioni):
+def makeSBmap(paramData, parameters, regioni):
 
     """
 
@@ -98,8 +98,8 @@ def makeSBmap(config, paramData, parameters, regioni):
     import os
 
 
-    nlens = config.Nlens[regioni]
-    nsource = config.Nsource[regioni]
+    nlens = paramData['nlens_regions'][regioni]
+    nsource = paramData['nsource_regions'][regioni]
     x = paramData['x'][regioni]
     y = paramData['y'][regioni]
     modelheader = paramData['modelheader'][regioni]
@@ -133,7 +133,7 @@ def makeVis(config, regioni):
 
 
     # get the list of uvfits files
-    visfile = config.VisFile
+    visfile = config['UVData']
     
     #----------------------------------------------------------------------
     # Python version of UVMODEL
@@ -167,10 +167,10 @@ def makeImage(config, objectname, regioni, interactive=True, miriad=False):
     from astropy.io import fits
 
         
-    visfile = config.VisFile
-    target = config.ObjectName
+    visfile = config['UVData']
+    target = config['ObjectName']
     sri = str(regioni)
-    fitsim = config.ImageName
+    fitsim = config['ImageName']
     fitshead = fits.getheader(fitsim)
     imsize = [fitshead['NAXIS1'], fitshead['NAXIS2']]
     cell = str(fitshead['CDELT2'] * 3600) + 'arcsec'
@@ -253,6 +253,7 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
     from matplotlib.patches import Ellipse
     from pylab import savefig
     import setuputil
+    import re
 
     # set font properties
     font = {'family' : 'Arial Narrow',
@@ -266,11 +267,25 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
     plt.subplots_adjust(left=0.08, right=0.97, top=0.97, 
             bottom=0.08, wspace=0.35)
 
-    ra_centroid = config.RACentroid[regioni]
-    dec_centroid = config.DecCentroid[regioni]
-    radialextent = config.RadialExtent[regioni]
-    nlens = config.Nlens[regioni]
-    nsource = config.Nsource[regioni]
+    configkeys = config.keys()
+    configkeystring = " ".join(configkeys)
+    regionlist = re.findall('Region.', configkeystring)
+    region = regionlist[regioni]
+    cr = config[region]
+
+    ra_centroid = cr['RACentroid']
+    dec_centroid = cr['DecCentroid']
+    radialextent = cr['RadialExtent']
+
+    # count the number of lenses
+    configkeys = cr.keys()
+    configkeystring = " ".join(configkeys)
+    lenslist = re.findall('Lens.', configkeystring)
+    nlens = len(lenslist)
+
+    # count the number of sources
+    sourcelist = re.findall('Source.', configkeystring)
+    nsource = len(sourcelist)
 
     nparlens = 5 * nlens
 
@@ -409,7 +424,7 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
         vmax = modelcut.max()
         vmin = -3 * rms
     else:
-        grayscalename = config.OpticalTag
+        grayscalename = config['OpticalTag']
         filtindx = grayscalename.find(' ')
         filtname = grayscalename[filtindx + 1:]
         if filtname == 'F110W':
@@ -476,7 +491,7 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
 
     plt.text(0.92, 0.88, grayscalename, transform=ax.transAxes,
             fontsize='xx-large', ha='right')
-    objname = config.ObjectName
+    objname = config['ObjectName']
     plt.text(0.08, 0.88, objname, transform=ax.transAxes,
             fontsize='xx-large')
     sri = str(regioni)
@@ -512,13 +527,13 @@ def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True,
 
 
     # make the lensed image
-    makeSBmap(config, paramData, parameters, regioni)
+    makeSBmap(paramData, parameters, regioni)
 
     # make the simulated visibilities
     makeVis(config, regioni)
 
     # image the simulated visibilities
-    objectname = config.ObjectName
+    objectname = config['ObjectName']
     makeImage(config, objectname, regioni, interactive=interactive)
 
     # read in the images of the simulated visibilities
@@ -530,11 +545,11 @@ def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True,
     residual = fits.open(simimloc)
 
     # read in the data
-    data = fits.open(config.ImageName)
+    data = fits.open(config['ImageName'])
 
     if showOptical:
         # read in the data
-        optical = fits.open(config.OpticalImage)
+        optical = fits.open(config['OpticalImage'])
 
         # plot the images
         plotImage(optical, data, config, parameters, regioni, 'optical', 
@@ -563,15 +578,20 @@ def preProcess(config, paramData, fitresult, tag='', cleanup=True,
 
     import setuputil
     import numpy
+    import re
 
 
     # Loop over each region
-    regionIDs = config.RegionID
-    nregions = len(regionIDs)
     nlensedsource = paramData['nlensedsource']
     nlensedregions = paramData['nlensedregions']
     npar_previous = 0
-    for regioni in range(nregions):
+
+    configkeys = config.keys()
+    configkeystring = " ".join(configkeys)
+    regionlist = re.findall('Region.', configkeystring)
+    for regioni, region in enumerate(regionlist):
+        cr = config[region]
+
         nmu = 2 * (numpy.array(nlensedsource).sum() + nlensedregions)
         if nmu > 0:
             allparameters0 = list(fitresult)[1:-nmu]
@@ -595,8 +615,15 @@ def preProcess(config, paramData, fitresult, tag='', cleanup=True,
 
         allparameters = allparameters0 + parameters_offset
 
-        nlens = config.Nlens[regioni]
-        nsource = config.Nsource[regioni]
+        # count the number of lenses
+        configkeys = cr.keys()
+        configkeystring = " ".join(configkeys)
+        lenslist = re.findall('Lens.', configkeystring)
+        nlens = len(lenslist)
+
+        # count the number of sources
+        sourcelist = re.findall('Source.', configkeystring)
+        nsource = len(sourcelist)
 
         nparlens = 5 * nlens
         nparsource = 6 * nsource
@@ -606,4 +633,3 @@ def preProcess(config, paramData, fitresult, tag='', cleanup=True,
         plotFit(config, paramData, parameters, regioni, tag=tag,
                 cleanup=cleanup, showOptical=showOptical,
                 interactive=interactive)
-

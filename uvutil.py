@@ -9,66 +9,182 @@ from __future__ import print_function
 
 import numpy
 from astropy.io import fits
-from taskinit import tb
 
-def pcdload(visfile):
+def pcdload(visfile, uvfits=False):
 
-    # identify the dimensions of the data in the uvfits file
-    tb.open(visfile + '/SOURCE')
-    pcd_ra = tb.getcol('DIRECTION')[0][0] * 180 / numpy.pi
-    pcd_dec = tb.getcol('DIRECTION')[1][0] * 180 / numpy.pi
-    pcd = [pcd_ra, pcd_dec]
-    return pcd
+    if uvfits:
+        # uv fits format
+        visdata = fits.open(visfile)
+        visheader = visdata[0].header
 
-def uvload(visfile):
+        if visheader['NAXIS'] == 7:
 
-    # read in the uvfits data
-    tb.open(visfile)
-    uvw = tb.getcol('UVW')
-    uvspw = tb.getcol('DATA_DESC_ID')
+            # identify the phase center
+            pcd_ra = visdata['AIPS SU '].data['RAEPO'][0]
+            pcd_dec = visdata['AIPS SU '].data['DECEPO'][0]
+            pcd = [pcd_ra, pcd_dec]
+            return pcd
 
-    tb.open(visfile + '/SPECTRAL_WINDOW')
-    freq = tb.getcol('CHAN_FREQ')
+        if visheader['NAXIS'] == 6:
 
-    tb.open(visfile + '/POLARIZATION')
-    polinfo = tb.getcol('NUM_CORR')
-    npol = polinfo[0]
+           # identify the channel frequency(ies):
+            pcd_ra = visdata[0].header['OBSRA']
+            pcd_dec = visdata[0].header['OBSDEC']
+            pcd = [pcd_ra, pcd_dec]
+            return pcd
 
-    nspw = len(freq[0])
+    else:
+        # CASA MS
+        from taskinit import tb
+        tb.open(visfile + '/SOURCE')
+        pcd_ra = tb.getcol('DIRECTION')[0][0] * 180 / numpy.pi
+        pcd_dec = tb.getcol('DIRECTION')[1][0] * 180 / numpy.pi
+        pcd = [pcd_ra, pcd_dec]
+        return pcd
 
-    for ispw in range(nspw):
-        ilam = 3e8 / freq[0][ispw]
-        indx_spw = uvspw == ispw
-        uvw[:, indx_spw] /= ilam
+def uvload(visfile, uvfits=False):
 
-    uu = []
-    vv = []
-    for ipol in range(npol):
-        uu.append(uvw[0, :])
-        vv.append(uvw[1, :])
-    uu = numpy.array(uu)
-    vv = numpy.array(vv)
+    if uvfits:
+        visdata = fits.open(visfile)
+        visibilities = visdata[0].data
+        visheader = visdata[0].header
+
+        if visheader['NAXIS'] == 7:
+
+            # identify the channel frequency(ies):
+            visfreq = visdata[1].data
+            freq0 = visheader['CRVAL4']
+            dfreq = visheader['CDELT4']
+            cfreq = visheader['CRPIX4']
+            nvis = visibilities['DATA'][:, 0, 0, 0, 0, 0, 0].size
+            nspw = visibilities['DATA'][0, 0, 0, :, 0, 0, 0].size
+            nfreq = visibilities['DATA'][0, 0, 0, 0, :, 0, 0].size
+            npol = visibilities['DATA'][0, 0, 0, 0, 0, :, 0].size
+            uu = numpy.zeros([nvis, nspw, nfreq, npol])
+            vv = numpy.zeros([nvis, nspw, nfreq, npol])
+            #wgt = numpy.zeros([nvis, nspw, nfreq, npol])
+            for ispw in range(nspw):
+                if nspw > 1:
+                    freqif = freq0 + visfreq['IF FREQ'][0][ispw]
+                else:
+                    freqif = freq0
+            #uu[:, ispw] = freqif * visibilities['UU']
+            #vv[:, ispw] = freqif * visibilities['VV']
+            for ipol in range(npol):
+               # then compute the spatial frequencies:
+                if nfreq > 1:
+                    freq = (numpy.arange(nfreq) - cfreq + 1) * dfreq + freqif
+                    freqvis = numpy.meshgrid(freq, visibilities['UU'])
+                    uu[:, ispw, :, ipol] = freqvis[0] * freqvis[1]
+                    freqvis = numpy.meshgrid(freq, visibilities['VV'])
+                    vv[:, ispw, :, ipol] = freqvis[0] * freqvis[1]
+                else:
+                    uu[:, ispw, 0, ipol] = freqif * visibilities['UU']
+                    vv[:, ispw, 0, ipol] = freqif * visibilities['VV']
+
+        if visheader['NAXIS'] == 6:
+
+            # identify the channel frequency(ies):
+            freq0 = visheader['CRVAL4']
+            dfreq = visheader['CDELT4']
+            cfreq = visheader['CRPIX4']
+            nvis = visibilities['DATA'][:, 0, 0, 0, 0, 0].size
+            nfreq = visibilities['DATA'][0, 0, 0, :, 0, 0].size
+            npol = visibilities['DATA'][0, 0, 0, 0, :, 0].size
+            uu = numpy.zeros([nvis, nfreq, npol])
+            vv = numpy.zeros([nvis, nfreq, npol])
+            #wgt = numpy.zeros([nvis, nspw, nfreq, npol])
+
+            freqif = freq0
+            #uu[:, ispw] = freqif * visibilities['UU']
+            #vv[:, ispw] = freqif * visibilities['VV']
+
+            for ipol in range(npol):
+
+                # then compute the spatial frequencies:
+                if nfreq > 1:
+                    freq = (numpy.arange(nfreq) - cfreq + 1) * dfreq + freqif
+                    freqvis = numpy.meshgrid(freq, visibilities['UU'])
+                    uu[:, :, ipol] = freqvis[0] * freqvis[1]
+                    freqvis = numpy.meshgrid(freq, visibilities['VV'])
+                    vv[:, :, ipol] = freqvis[0] * freqvis[1]
+                else:
+                    uu[:, 0, ipol] = freqif * visibilities['UU']
+                    vv[:, 0, ipol] = freqif * visibilities['VV']
+                    #www = freqif * visibilities['WW']
+    
+    else:
+        from taskinit import tb
+        # read in the uvfits data
+        tb.open(visfile)
+        uvw = tb.getcol('UVW')
+        uvspw = tb.getcol('DATA_DESC_ID')
+
+        tb.open(visfile + '/SPECTRAL_WINDOW')
+        freq = tb.getcol('CHAN_FREQ')
+
+        tb.open(visfile + '/POLARIZATION')
+        polinfo = tb.getcol('NUM_CORR')
+        npol = polinfo[0]
+
+        nspw = len(freq[0])
+
+        for ispw in range(nspw):
+            ilam = 3e8 / freq[0][ispw]
+            indx_spw = uvspw == ispw
+            uvw[:, indx_spw] /= ilam
+
+        uu = []
+        vv = []
+        for ipol in range(npol):
+            uu.append(uvw[0, :])
+            vv.append(uvw[1, :])
+        uu = numpy.array(uu)
+        vv = numpy.array(vv)
 
     return uu, vv
 
-def visload(visfile):
+def visload(visfile, uvfits=False):
 
-    # read in the uvfits data
-    tb.open(visfile)
-    vis_complex = tb.getcol('DATA')
-    vis_weight = tb.getcol('WEIGHT')
+    if uvfits:
+        visdata = fits.open(visfile)
+        # get the telescope name
+        visheader = visdata[0].header
+        #telescop = visheader['TELESCOP']
 
-    tb.open(visfile + '/POLARIZATION')
-    polinfo = tb.getcol('NUM_CORR')
-    npol = polinfo[0]
+        # if we are dealing with SMA data
+        if visheader['NAXIS'] == 6:
+            data_real = visdata[0].data['DATA'][:,0,0,:,:,0]
+            data_imag = visdata[0].data['DATA'][:,0,0,:,:,1]
+            data_wgt = visdata[0].data['DATA'][:,0,0,:,:,2]
 
-    data_complex = []
-    data_wgt = []
-    for ipol in range(npol):
-        data_complex.append(vis_complex[ipol, 0, :])
-        data_wgt.append(vis_weight[ipol, :])
-    data_complex = numpy.array(data_complex)
-    data_wgt = numpy.array(data_wgt)
+        # if we are dealing with ALMA or PdBI data
+        if visheader['NAXIS'] == 7:
+            data_real = visdata[0].data['DATA'][:,0,0,:,:,:,0]
+            data_imag = visdata[0].data['DATA'][:,0,0,:,:,:,1]
+            data_wgt = visdata[0].data['DATA'][:,0,0,:,:,:,2]
+
+        data_complex = numpy.array(data_real) + \
+                1j * numpy.array(data_imag)
+
+    else:
+        from taskinit import tb
+        # read in the CASA MS
+        tb.open(visfile)
+        vis_complex = tb.getcol('DATA')
+        vis_weight = tb.getcol('WEIGHT')
+
+        tb.open(visfile + '/POLARIZATION')
+        polinfo = tb.getcol('NUM_CORR')
+        npol = polinfo[0]
+
+        data_complex = []
+        data_wgt = []
+        for ipol in range(npol):
+            data_complex.append(vis_complex[ipol, 0, :])
+            data_wgt.append(vis_weight[ipol, :])
+        data_complex = numpy.array(data_complex)
+        data_wgt = numpy.array(data_wgt)
 
     return data_complex, data_wgt
 
