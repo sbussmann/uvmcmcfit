@@ -235,7 +235,7 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
     #chi2_real_all = (real - model_real) ** 2. / modvariance_real
     #chi2_imag_all = (imag - model_imag) ** 2. / modvariance_imag
     #chi2_all = numpy.append(chi2_real_all, chi2_imag_all)
-    chi2_all = numpy.abs(vis_complex - model_complex) ** 2
+    chi2_all = wgt * numpy.abs(vis_complex - model_complex) ** 2
     
     # compute the sigma term
     #sigmaterm_real = numpy.log(2 * numpy.pi / wgt)
@@ -260,6 +260,7 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
     if likeln * 0 != 0:
         likeln = -numpy.inf
 
+    print(likeln)
 
     return likeln, amp
 
