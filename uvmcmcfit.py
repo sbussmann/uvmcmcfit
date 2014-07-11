@@ -318,6 +318,9 @@ else:
     # set the number of threads to use for parallel processing
     Nthreads = config['Nthreads']
 
+    # Initialize the pool object
+    pool = ''
+
 #--------------------------------------------------------------------------
 # Read in ALMA image and beam
 #im = fits.getdata(config['ImageName'])
@@ -420,16 +423,14 @@ if not realpdf:
 fixindx = setuputil.fixParams(paramSetup)
 
 # Initialize the sampler with the chosen specs.
-if mpi != 'MPI':
-    # Single processor with Nthreads cores
-    sampler = emcee.EnsembleSampler(nwalkers, nparams, lnprob, \
-        args=[vis_complex, wgt, uuu, vvv, pcd, \
-        fixindx, paramSetup], threads=Nthreads)
-else:
-    # Multiple processors using MPI
+if mpi:
     sampler = emcee.EnsembleSampler(nwalkers, nparams, lnprob, pool=pool, \
         args=[vis_complex, wgt, uuu, vvv, pcd, \
         fixindx, paramSetup])
+else:
+    sampler = emcee.EnsembleSampler(nwalkers, nparams, lnprob, \
+        args=[vis_complex, wgt, uuu, vvv, pcd, \
+        fixindx, paramSetup], threads=Nthreads)
 
 # Sample, outputting to a file
 os.system('date')

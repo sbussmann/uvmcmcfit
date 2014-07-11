@@ -20,10 +20,15 @@ import os
 from astropy.io import fits
 import visualutil
 import sys
-cwd = os.getcwd()
-sys.path.append(cwd)
-import config
+#cwd = os.getcwd()
+#sys.path.append(cwd)
+#import config
+import yaml
 
+
+configloc = 'config.yaml'
+configfile = open(configloc)
+config = yaml.load(configfile)
 
 def convergence(bestfitloc='posteriorpdf.fits'):
 

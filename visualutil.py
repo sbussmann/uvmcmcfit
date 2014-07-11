@@ -140,8 +140,10 @@ def makeVis(config, regioni):
     # "Observe" the lensed emission with the SMA and write to a new file
     #----------------------------------------------------------------------
     # Python version of UVMODEL's "replace" subroutine:
-    nameindx = visfile.find('ms')
+    nameindx = visfile.find('uvfits')
     name = visfile[0:nameindx-1]
+    print(name)
+    visfile = name + '.ms'
 
     sri = str(regioni)
     SBmapLoc = 'LensedSBmap_Region' + sri + '.fits'
