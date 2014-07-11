@@ -39,11 +39,11 @@
 
  2. Inside this directory, you must ensure the following files are present:
 
- - "config.py": This is the configuration file that describes where the source
+ - "config.yaml": This is the configuration file that describes where the source
  of interest is located, what type of model to use for the lens and source, the
  name of the image of the target from your interferometric data, the name of
  the uvfits files containing the interferometric visibilities, and a few
- important processing options as well.  Syntax is python.
+ important processing options as well.  Syntax is yaml.
 
  - Image of the target from your interferometric data.  The spatial resolution
  of this image (arcseconds per pixel), modified by an optional oversampling
@@ -58,17 +58,13 @@
  - Lenses: The lenses are assumed to have singular isothermal ellipsoid
  profiles.  
 
- - Sources: Sources are represented by Gaussian profiles.  Source positions are
- always defined relative to the primary lens, unless there is no lens, in which
- case they are defined relative to the emission centroid defined in
- "config.py."
+ - Sources: Sources are represented by Gaussian profiles.
 
 --------
  OUTPUTS
 
- "posteriorpdf.hdf5": model parameters for every MCMC iteration, in hdf5
- format.  Google search for hdf5 view if you want a tool to inspect the hdf5
- files directly.
+ "posteriorpdf.fits": model parameters for every MCMC iteration, in fits
+ format.
 
 """
 
@@ -79,7 +75,6 @@ import os
 import os.path
 import sys
 from astropy.io import fits
-from astropy.io.misc import hdf5
 import numpy
 from astropy.table import Table
 #import emcee
@@ -91,11 +86,55 @@ import sample_vis
 import lensutil
 import uvutil
 import setuputil
+import yaml
 
 
-cwd = os.getcwd()
-sys.path.append(cwd)
-import config
+configloc = 'config.yaml'
+configfile = open(configloc, 'r')
+config = yaml.load(configfile)
+
+paramSetup = setuputil.loadParams(config)
+
+#--------------------------------------------------------------------------
+# read in visibility data
+visfile = config['UVData']
+filetype = visfile[-6:]
+if filetype == 'uvfits':
+    uvfits = True
+else:
+    uvfits = False
+uuu, vvv = uvutil.uvload(visfile, uvfits=uvfits)
+pcd = uvutil.pcdload(visfile, uvfits=uvfits)
+vis_complex, wgt = uvutil.visload(visfile, uvfits=uvfits)
+
+# remove the data points with zero or negative weight
+positive_definite = wgt > 0
+vis_complex = vis_complex[positive_definite]
+wgt = wgt[positive_definite]
+uuu = uuu[positive_definite]
+vvv = vvv[positive_definite]
+#www = www[positive_definite]
+
+npos = wgt.size
+
+#--------------------------------------------------------------------------
+# Read in ALMA header data
+headim = fits.getheader(config['ImageName'])
+
+#----------------------------------------------------------------------------
+# Load input parameters
+paramSetup = setuputil.loadParams(config)
+Nwalkers = paramSetup['Nwalkers']
+Ntemps = paramSetup['Ntemps']
+betaladder = paramSetup['betaladder']
+nregions = paramSetup['nregions']
+nparams = paramSetup['nparams']
+pname = paramSetup['pname']
+nsource_regions = paramSetup['nsource_regions']
+
+#cwd = os.getcwd()
+#sys.path.append(cwd)
+#import config
 
 def logp(pzero_regions):
 
@@ -105,17 +144,13 @@ def logp(pzero_regions):
 
     """
 
-    import config
-
-
-    paramSetup = setuputil.loadParams(config)
 
     # ensure all parameters are finite
     if (pzero_regions * 0 != 0).any():
         priorln = -numpy.inf
 
     # Uniform priors
-    uniform_regions = paramSetup['prior_shape'] == 'Uniform'
+    uniform_regions = paramSetup['PriorShape'] == 'Uniform'
     if uniform_regions.any():
         p_l_regions = paramSetup['p_l'][uniform_regions]
         p_u_regions = paramSetup['p_u'][uniform_regions]
@@ -128,7 +163,7 @@ def logp(pzero_regions):
             priorln = -numpy.inf
 
     # Gaussian priors
-    gaussian_regions = paramSetup['prior_shape'] == 'Gaussian'
+    gaussian_regions = paramSetup['PriorShape'] == 'Gaussian'
     if gaussian_regions.any():
     #ngaussian = paramSetup['prior_shape'][gaussian_regions].size
     #for ipar in range(ngaussian):
@@ -152,17 +187,12 @@ def logl(pzero_regions):
     
     """
 
-    import config
-
-
-    paramSetup = setuputil.loadParams(config)
-
-    real = paramSetup['real']
-    imag = paramSetup['imag']
-    wgt = paramSetup['wgt']
-    uuu = paramSetup['uu']
-    vvv = paramSetup['vv']
-    pcd = paramSetup['pcd']
+    #real = paramSetup['real']
+    #imag = paramSetup['imag']
+    #wgt = paramSetup['wgt']
+    #uuu = paramSetup['uu']
+    #vvv = paramSetup['vv']
+    #pcd = paramSetup['pcd']
     
     fixindx = paramSetup['fixindx']
     # search poff_models for parameters fixed relative to other parameters
@@ -183,8 +213,6 @@ def logl(pzero_regions):
 
     parameters_regions = pzero_regions + poff_regions
 
-    model_real = 0.
-    model_imag = 0.
     npar_previous = 0
 
     amp = []  # Will contain the 'blobs' we compute
@@ -217,6 +245,7 @@ def logl(pzero_regions):
         amp.extend(amp_tot)
         amp.extend(amp_mask)
 
+
         #----------------------------------------------------------------------
         # Python version of UVMODEL:
         # "Observe" the lensed emission with the interferometer
@@ -240,8 +269,8 @@ def logl(pzero_regions):
             amp.extend([amp_mask])
 
         model_complex = sample_vis.uvmodel(g_lensimage, headmod, uuu, vvv, pcd)
-        model_real += numpy.real(model_complex)
-        model_imag += numpy.imag(model_complex)
+        #model_real += numpy.real(model_complex)
+        #model_imag += numpy.imag(model_complex)
 
         #fits.writeto('g_lensimage.fits', g_lensimage, headmod, clobber=True)
         #import matplotlib.pyplot as plt
@@ -252,24 +281,25 @@ def logl(pzero_regions):
         #plt.imshow(g_image, origin='lower')
         #plt.colorbar()
         #plt.show()
-        #import pdb; pdb.set_trace()
 
     # use all visibilities
-    goodvis = (real * 0 == 0)
+    #goodvis = (vis_complex * 0 == 0)
 
     # calculate chi^2 assuming natural weighting
     #fnuisance = 0.0
-    modvariance_real = 1 / wgt #+ fnuisance ** 2 * model_real ** 2
-    modvariance_imag = 1 / wgt #+ fnuisance ** 2 * model_imag ** 2
+    #modvariance_real = 1 / wgt #+ fnuisance ** 2 * model_real ** 2
+    #modvariance_imag = 1 / wgt #+ fnuisance ** 2 * model_imag ** 2
     #wgt = wgt / 4.
-    chi2_real_all = (real - model_real) ** 2. / modvariance_real
-    chi2_imag_all = (imag - model_imag) ** 2. / modvariance_imag
-    chi2_all = numpy.append(chi2_real_all, chi2_imag_all)
-
+    #chi2_real_all = (real - model_real) ** 2. / modvariance_real
+    #chi2_imag_all = (imag - model_imag) ** 2. / modvariance_imag
+    #chi2_all = numpy.append(chi2_real_all, chi2_imag_all)
+    diff_all = numpy.abs(vis_complex - model_complex)
+    chi2_all = wgt * diff_all * diff_all
+    
     # compute the sigma term
-    sigmaterm_real = numpy.log(2 * numpy.pi * modvariance_real)
-    sigmaterm_imag = numpy.log(2 * numpy.pi * modvariance_imag)
-    sigmaterm_all = numpy.append(sigmaterm_real, sigmaterm_imag)
+    #sigmaterm_real = numpy.log(2 * numpy.pi / wgt)
+    #sigmaterm_imag = numpy.log(2 * numpy.pi * modvariance_imag)
+    sigmaterm_all = 2 * numpy.log(2 * numpy.pi / wgt)
 
     # compute the ln likelihood
     lnlikemethod = paramSetup['lnlikemethod']
@@ -284,7 +314,8 @@ def logl(pzero_regions):
     #ndof = nmeasure - nparam
 
     # assert that lnlike is equal to -1 * maximum likelihood estimate
-    likeln = -0.5 * lnlike[goodvis].sum()
+    #likeln = -0.5 * lnlike[goodvis].sum()
+    likeln = -0.5 * lnlike.sum()
     if likeln * 0 != 0:
         likeln = -numpy.inf
 
@@ -313,17 +344,13 @@ def logl(pzero_regions):
 #    
 #    return probln, mu
 
+
 # Determine parallel processing options
-mpi = config.ParallelProcessingMode
-
-# Single processor with Nthreads cores
-if mpi != 'MPI':
-
-    # set the number of threads to use for parallel processing
-    Nthreads = config.Nthreads
+mpi = config['MPI']
 
 # multiple processors on a cluster using MPI
-else:
+if mpi:
+
     from emcee.utils import MPIPool
 
     # One thread per slot
@@ -337,30 +364,19 @@ else:
         pool.wait()
         sys.exit(0)
 
-#--------------------------------------------------------------------------
-# Read in ALMA image and beam
-im = fits.getdata(config.ImageName)
-im = im[0, 0, :, :].copy()
-headim = fits.getheader(config.ImageName)
+# Single processor with Nthreads cores
+else:
 
-#----------------------------------------------------------------------------
-# Load input parameters
-paramSetup = setuputil.loadParams(config)
-Nwalkers = paramSetup['Nwalkers']
-Ntemps = paramSetup['Ntemps']
-betaladder = paramSetup['betaladder']
-nregions = paramSetup['nregions']
-nparams = paramSetup['nparams']
-pname = paramSetup['pname']
-nsource_regions = paramSetup['nsource_regions']
+    # set the number of threads to use for parallel processing
+    Nthreads = config['Nthreads']
 
 # Use an intermediate posterior PDF to initialize the walkers if it exists
-posteriorloc = 'posteriorpdf.hdf5'
+posteriorloc = 'posteriorpdf.fits'
 if os.path.exists(posteriorloc):
 
     # read the latest posterior PDFs
     print("Found existing posterior PDF file: {:s}".format(posteriorloc))
-    posteriordat = hdf5.read_table_hdf5(posteriorloc)
+    posteriordat = Table.read(posteriorloc)
     if len(posteriordat) > 1:
 
         # assign values to pzero
@@ -423,16 +439,16 @@ if not realpdf:
 fixindx = paramSetup['fixindx']
 
 # Initialize the sampler with the chosen specs.
-if mpi != 'MPI':
+if mpi:
     # Single processor with Nthreads cores
-    sampler = PTSampler(Ntemps, Nwalkers, nparams, logl, logp,
-            threads=Nthreads, betas=betaladder)
+    sampler = PTSampler(Ntemps, Nwalkers, nparams, logl, logp, pool=pool,
+            betas=betaladder)
     #sampler = EnsembleSampler(Nwalkers, nparams, lnprob, 
     #        threads=Nthreads)
 else:
     # Multiple processors using MPI
-    sampler = PTSampler(Ntemps, Nwalkers, nparams, logl, logp, pool=pool,
-            betas=betaladder)
+    sampler = PTSampler(Ntemps, Nwalkers, nparams, logl, logp,
+            betas=betaladder, threads=Nthreads)
     #sampler = EnsembleSampler(Nwalkers, nparams, lnprob, pool=pool)
 
 # Sample, outputting to a file
@@ -458,6 +474,4 @@ for pos, prob, like in sampler.sample(pzero, iterations=10000):
             superpos[1:nparams + 1] = pos[ti, wi]
             #superpos[nparams + 1:nparams + nmu + 1] = amp[ti, wi]
             posteriordat.add_row(superpos)
-    posteriordat.write('posteriorpdf.hdf5', 
-            path = '/posteriorpdf', overwrite=True, compression=True)
-    #posteriordat.write('posteriorpdf.txt', format='ascii')
+    posteriordat.write('posteriorpdf.fits', overwrite=True)
