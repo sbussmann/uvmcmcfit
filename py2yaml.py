@@ -12,6 +12,21 @@ import config
 import yaml
 
 
+def grabvalues(config, parname):
+    priorparname = 'Prior_' + parname
+    prior = getattr(config, priorparname)
+    initparname = 'Init_' + parname
+    init = getattr(config, initparname)
+    limits = [prior[0], init[0], init[1], prior[1]]
+    fixed = prior[2]
+    print(fixed)
+    if fixed != 'free':
+        fixed = fixed.split("_")
+        fixed.reverse()
+        fixed = " ".join(fixed)
+    priorshape = prior[3]
+    return limits, fixed, priorshape
+
 objectname = config.ObjectName
 ImageName = config.ImageName
 opticalimage = config.OpticalImage
@@ -60,65 +75,32 @@ for iregion in range(nregions):
         lenskey = 'Lens' + sl
 
         # Einstein Radius
-        parname = 'Prior_EinsteinRadius_Lens' + sl + '_Region' + sr
-        prior = getattr(config, parname)
-        parname = 'Init_EinsteinRadius_Lens' + sl + '_Region' + sr
-        init = getattr(config, parname)
-        limits = [prior[0], init[0], init[1], prior[1]]
-        fixed = prior[2]
-        priorshape = prior[3]
+        parname = 'EinsteinRadius_Lens' + sl + '_Region' + sr
+        limits, fixed, priorshape = grabvalues(config, parname)
         EinsteinRadius = dict([('Limits', limits), ('FixedTo', fixed), 
             ('PriorShape', priorshape)])
 
         # DeltaRA
-        DeltaRA = dict([('Limits', limits), ('FixedTo', fixed), 
-            ('PriorShape', priorshape)])
-        parname = 'Prior_DeltaRA_Lens' + sl + '_Region' + sr
-        prior = getattr(config, parname)
-        parname = 'Init_DeltaRA_Lens' + sl + '_Region' + sr
-        init = getattr(config, parname)
-        limits = [prior[0], init[0], init[1], prior[1]]
-        fixed = prior[2]
-        priorshape = prior[3]
+        parname = 'DeltaRA_Lens' + sl + '_Region' + sr
+        limits, fixed, priorshape = grabvalues(config, parname)
         DeltaRA = dict([('Limits', limits), ('FixedTo', fixed), 
             ('PriorShape', priorshape)])
 
         # DeltaDec
-        DeltaDec = dict([('Limits', limits), ('FixedTo', fixed), 
-            ('PriorShape', priorshape)])
-        parname = 'Prior_DeltaDec_Lens' + sl + '_Region' + sr
-        prior = getattr(config, parname)
-        parname = 'Init_DeltaDec_Lens' + sl + '_Region' + sr
-        init = getattr(config, parname)
-        limits = [prior[0], init[0], init[1], prior[1]]
-        fixed = prior[2]
-        priorshape = prior[3]
+        parname = 'DeltaDec_Lens' + sl + '_Region' + sr
+        limits, fixed, priorshape = grabvalues(config, parname)
         DeltaDec = dict([('Limits', limits), ('FixedTo', fixed), 
             ('PriorShape', priorshape)])
 
         # AxialRatio
-        AxialRatio = dict([('Limits', limits), ('FixedTo', fixed), 
-            ('PriorShape', priorshape)])
-        parname = 'Prior_AxialRatio_Lens' + sl + '_Region' + sr
-        prior = getattr(config, parname)
-        parname = 'Init_AxialRatio_Lens' + sl + '_Region' + sr
-        init = getattr(config, parname)
-        limits = [prior[0], init[0], init[1], prior[1]]
-        fixed = prior[2]
-        priorshape = prior[3]
+        parname = 'AxialRatio_Lens' + sl + '_Region' + sr
+        limits, fixed, priorshape = grabvalues(config, parname)
         AxialRatio = dict([('Limits', limits), ('FixedTo', fixed), 
             ('PriorShape', priorshape)])
 
         # PositionAngle
-        PositionAngle = dict([('Limits', limits), ('FixedTo', fixed), 
-            ('PriorShape', priorshape)])
-        parname = 'Prior_PositionAngle_Lens' + sl + '_Region' + sr
-        prior = getattr(config, parname)
-        parname = 'Init_PositionAngle_Lens' + sl + '_Region' + sr
-        init = getattr(config, parname)
-        limits = [prior[0], init[0], init[1], prior[1]]
-        fixed = prior[2]
-        priorshape = prior[3]
+        parname = 'PositionAngle_Lens' + sl + '_Region' + sr
+        limits, fixed, priorshape = grabvalues(config, parname)
         PositionAngle = dict([('Limits', limits), ('FixedTo', fixed), 
             ('PriorShape', priorshape)])
 
@@ -145,76 +127,38 @@ for iregion in range(nregions):
             modeltype = 'Gaussian'
 
         # IntrinsicFlux
-        parname = 'Prior_IntrinsicFlux_Source' + ss + '_Region' + sr
-        prior = getattr(config, parname)
-        parname = 'Init_IntrinsicFlux_Source' + ss + '_Region' + sr
-        init = getattr(config, parname)
-        limits = [prior[0], init[0], init[1], prior[1]]
-        fixed = prior[2]
-        priorshape = prior[3]
+        parname = 'IntrinsicFlux_Source' + ss + '_Region' + sr
+        limits, fixed, priorshape = grabvalues(config, parname)
         IntrinsicFlux = dict([('Limits', limits), ('FixedTo', fixed), 
             ('PriorShape', priorshape)])
 
         # DeltaRA
-        DeltaRA = dict([('Limits', limits), ('FixedTo', fixed), 
-            ('PriorShape', priorshape)])
-        parname = 'Prior_DeltaRA_Source' + ss + '_Region' + sr
-        prior = getattr(config, parname)
-        parname = 'Init_DeltaRA_Source' + ss + '_Region' + sr
-        init = getattr(config, parname)
-        limits = [prior[0], init[0], init[1], prior[1]]
-        fixed = prior[2]
-        priorshape = prior[3]
+        parname = 'DeltaRA_Source' + ss + '_Region' + sr
+        limits, fixed, priorshape = grabvalues(config, parname)
         DeltaRA = dict([('Limits', limits), ('FixedTo', fixed), 
             ('PriorShape', priorshape)])
 
         # DeltaDec
-        DeltaDec = dict([('Limits', limits), ('FixedTo', fixed), 
-            ('PriorShape', priorshape)])
-        parname = 'Prior_DeltaDec_Source' + ss + '_Region' + sr
-        prior = getattr(config, parname)
-        parname = 'Init_DeltaDec_Source' + ss + '_Region' + sr
-        init = getattr(config, parname)
-        limits = [prior[0], init[0], init[1], prior[1]]
-        fixed = prior[2]
-        priorshape = prior[3]
+        parname = 'DeltaDec_Source' + ss + '_Region' + sr
+        limits, fixed, priorshape = grabvalues(config, parname)
         DeltaDec = dict([('Limits', limits), ('FixedTo', fixed), 
             ('PriorShape', priorshape)])
 
         # Size
-        parname = 'Prior_Size_Source' + ss + '_Region' + sr
-        prior = getattr(config, parname)
-        parname = 'Init_Size_Source' + ss + '_Region' + sr
-        init = getattr(config, parname)
-        limits = [prior[0], init[0], init[1], prior[1]]
-        fixed = prior[2]
-        priorshape = prior[3]
+        parname = 'Size_Source' + ss + '_Region' + sr
+        limits, fixed, priorshape = grabvalues(config, parname)
         Size = dict([('Limits', limits), ('FixedTo', fixed), 
             ('PriorShape', priorshape)])
 
         # AxialRatio
-        AxialRatio = dict([('Limits', limits), ('FixedTo', fixed), 
-            ('PriorShape', priorshape)])
-        parname = 'Prior_AxialRatio_Source' + ss + '_Region' + sr
-        prior = getattr(config, parname)
-        parname = 'Init_AxialRatio_Source' + ss + '_Region' + sr
-        init = getattr(config, parname)
-        limits = [prior[0], init[0], init[1], prior[1]]
-        fixed = prior[2]
-        priorshape = prior[3]
+        parname = 'AxialRatio_Source' + ss + '_Region' + sr
+        limits, fixed, priorshape = grabvalues(config, parname)
         AxialRatio = dict([('Limits', limits), ('FixedTo', fixed), 
             ('PriorShape', priorshape)])
 
         # PositionAngle
-        PositionAngle = dict([('Limits', limits), ('FixedTo', fixed), 
-            ('PriorShape', priorshape)])
-        parname = 'Prior_PositionAngle_Source' + ss + '_Region' + sr
-        prior = getattr(config, parname)
-        parname = 'Init_PositionAngle_Source' + ss + '_Region' + sr
-        init = getattr(config, parname)
-        limits = [prior[0], init[0], init[1], prior[1]]
-        fixed = prior[2]
-        priorshape = prior[3]
+        parname = 'PositionAngle_Source' + ss + '_Region' + sr
+        limits, fixed, priorshape = grabvalues(config, parname)
         PositionAngle = dict([('Limits', limits), ('FixedTo', fixed), 
             ('PriorShape', priorshape)])
 

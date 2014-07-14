@@ -63,8 +63,8 @@ def convergence(bestfitloc='posteriorpdf.fits'):
     objname = tmpcwd[startindx:endindx]
     plt.title(objname)
     plt.semilogy()
-    from IPython import embed
-    embed()
+    #from IPython import embed
+    #embed()
 
     outfile = 'convergence'
     savefig(outfile)

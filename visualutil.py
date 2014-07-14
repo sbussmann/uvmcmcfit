@@ -141,7 +141,6 @@ def makeVis(config, regioni):
     # Python version of UVMODEL's "replace" subroutine:
     nameindx = visfile.find('uvfits')
     name = visfile[0:nameindx-1]
-    print(name)
     visfile = name + '.ms'
 
     sri = str(regioni)
@@ -211,8 +210,11 @@ def makeImage(config, objectname, regioni, interactive=True, miriad=False):
         # use CASA for imaging
         from clean import clean
         from casa import exportfits
-        index = visfile.find('.ms')
-        name = visfile[0:index]
+        #index = visfile.find('.ms')
+        #name = visfile[0:index]
+        nameindx = visfile.find('uvfits')
+        name = visfile[0:nameindx-1]
+        visfile = name + '.ms'
         miriadmodelvisloc = name + '.Region' + sri + '_model.ms'
         os.system('rm -rf ' + imloc + '*')
         clean(vis=miriadmodelvisloc, imagename=imloc, mode='mfs', niter=10000,
