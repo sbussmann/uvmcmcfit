@@ -29,7 +29,6 @@ def cleanColumns(PDFdata):
     PDFkeys = PDFdata.keys()
     for key in PDFkeys:
         rms = numpy.std(PDFdata[key])
-        import pdb; pdb.set_trace()
         if rms == 0:
             PDFdata.remove_column(key)
 
