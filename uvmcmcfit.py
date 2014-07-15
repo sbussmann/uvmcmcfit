@@ -399,8 +399,10 @@ if not realpdf:
             for i in range(nsource):
                 si = '.Source' + str(i) + '.Region' + ri
                 extendedpname.append('mu_tot' + si) 
+                nmu += 1
+            for i in range(nsource):
                 extendedpname.append('mu_aper' + si) 
-                nmu += 2
+                nmu += 1
             extendedpname.append('mu_tot.Region' + ri)
             extendedpname.append('mu_aper.Region' + ri) 
             nmu += 2

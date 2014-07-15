@@ -84,7 +84,8 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
     savefile = tag + 'PDFs.png'
     savefig(savefile)
 
-def makeSBmap(paramData, parameters, regioni):
+def makeSBmap(config, fitresult, tag='', cleanup=True,
+        showOptical=False, interactive=True):
 
     """
 
@@ -96,30 +97,92 @@ def makeSBmap(paramData, parameters, regioni):
     import lensutil
     from astropy.io import fits
     import os
+    import setuputil
+    import re
+    import numpy
 
 
-    nlens = paramData['nlens_regions'][regioni]
-    nsource = paramData['nsource_regions'][regioni]
-    x = paramData['x'][regioni]
-    y = paramData['y'][regioni]
-    modelheader = paramData['modelheader'][regioni]
-    model_types = paramData['model_types'][regioni]
+    # Loop over each region
 
-    SBmap, LensedSBmap, Aperture, LensedAperture, mu_tot, mu_mask = \
-            lensutil.sbmap(x, y, nlens, nsource, parameters, model_types)
+    # read the input parameters
+    paramData = setuputil.loadParams(config)
+    nlensedsource = paramData['nlensedsource']
+    nlensedregions = paramData['nlensedregions']
+    npar_previous = 0
 
-    sri = str(regioni)
-    LensedSBmapLoc = 'LensedSBmap_Region' + sri + '.fits'
-    SBmapLoc = 'SBmap_Region' + sri + '.fits'
+    configkeys = config.keys()
+    configkeystring = " ".join(configkeys)
+    regionlist = re.findall('Region.', configkeystring)
+    SBmap_all = 0
+    LensedSBmap_all = 0
+    for regioni, region in enumerate(regionlist):
+        regstring = 'Region' + str(regioni)
+        indx = paramData['regionlist'].index(regstring)
+        cr = config[regstring]
+
+        nmu = 2 * (numpy.array(nlensedsource).sum() + nlensedregions)
+        if nmu > 0:
+            allparameters0 = list(fitresult)[1:-nmu]
+        else:
+            allparameters0 = list(fitresult)[1:]
+
+        # search poff_models for parameters fixed relative to other parameters
+        fixindx = setuputil.fixParams(paramData)
+        poff = paramData['poff']
+        ndim_total = len(poff)
+        fixed = (numpy.where(fixindx >= 0))[0]
+        nfixed = fixindx[fixed].size
+        parameters_offset = numpy.zeros(ndim_total)
+        for ifix in range(nfixed):
+            ifixed = fixed[ifix]
+            subindx = fixindx[ifixed]
+            par0 = 0
+            if fixindx[subindx] > 0:
+                par0 = fitresult[fixindx[subindx] + 1]
+            parameters_offset[ifixed] = fitresult[subindx + 1] + par0
+
+        allparameters = allparameters0 + parameters_offset
+
+        # count the number of lenses
+        configkeys = cr.keys()
+        configkeystring = " ".join(configkeys)
+        lenslist = re.findall('Lens.', configkeystring)
+        nlens = len(lenslist)
+
+        # count the number of sources
+        sourcelist = re.findall('Source.', configkeystring)
+        nsource = len(sourcelist)
+
+        nparlens = 5 * nlens
+        nparsource = 6 * nsource
+        npar = nparlens + nparsource + npar_previous
+        parameters = allparameters[npar_previous:npar]
+        npar_previous = npar
+
+        #nlens = paramData['nlens_regions'][indx]
+        #nsource = paramData['nsource_regions'][indx]
+        x = paramData['x'][regioni]
+        y = paramData['y'][regioni]
+        modelheader = paramData['modelheader'][regioni]
+        model_types = paramData['model_types'][regioni]
+
+        SBmap, LensedSBmap, Aperture, LensedAperture, mu_tot, mu_mask = \
+                lensutil.sbmap(x, y, nlens, nsource, parameters, model_types)
+
+        SBmap_all += SBmap
+        LensedSBmap_all += LensedSBmap
+
+    LensedSBmapLoc = 'LensedSBmap.fits'
+    SBmapLoc = 'SBmap_Region.fits'
     cmd = 'rm -rf ' + LensedSBmapLoc + ' ' + SBmapLoc
     os.system(cmd)
 
-    fits.writeto(LensedSBmapLoc, LensedSBmap, modelheader)
-    fits.writeto(SBmapLoc, SBmap, modelheader)
+    fits.writeto(LensedSBmapLoc, LensedSBmap_all, modelheader)
+    fits.writeto(SBmapLoc, SBmap_all, modelheader)
 
     return
 
-def makeVis(config, regioni):
+def makeVis(config):
 
     """
 
@@ -145,18 +208,17 @@ def makeVis(config, regioni):
     print(name)
     visfile = name + '.ms'
 
-    sri = str(regioni)
-    SBmapLoc = 'LensedSBmap_Region' + sri + '.fits'
-    modelvisfile = name + '.Region' + sri + '_model.ms'
+    SBmapLoc = 'LensedSBmap.fits'
+    modelvisfile = name + '_model.ms'
     os.system('rm -rf ' + modelvisfile)
     uvmodel.replace(SBmapLoc, visfile, modelvisfile)
     
     # Python version of UVMODEL's "subtract" subroutine:
-    modelvisfile = name + '.Region' + sri + '_residual.ms'
+    modelvisfile = name + '_residual.ms'
     os.system('rm -rf ' + modelvisfile)
     uvmodel.subtract(SBmapLoc, visfile, modelvisfile)
 
-def makeImage(config, objectname, regioni, interactive=True, miriad=False):
+def makeImage(config, interactive=True, miriad=False):
 
     """
 
@@ -171,7 +233,6 @@ def makeImage(config, objectname, regioni, interactive=True, miriad=False):
         
     visfile = config['UVData']
     target = config['ObjectName']
-    sri = str(regioni)
     fitsim = config['ImageName']
     fitshead = fits.getheader(fitsim)
     imsize = [fitshead['NAXIS1'], fitshead['NAXIS2']]
@@ -191,20 +252,20 @@ def makeImage(config, objectname, regioni, interactive=True, miriad=False):
         mask = ''
 
     # invert and clean the simulated model visibilities
-    imloc = target + '_Region' + sri + '_model'
 
     if miriad:
         # use miriad for imaging
         index = visfile.find('.uvfits')
         name = visfile[0:index]
-        miriadmodelvisloc = name + '.Region' + sri + '_model.miriad'
+        imloc = target + '_model'
+        miriadmodelvisloc = name + '_model.miriad'
         miriadin = miriadmodelvisloc + ' ' + imloc + ' ' + imsize + ' ' + cell
         command = 'csh image.csh ' + miriadin
         os.system(command + ' > dump')
 
         # the simulated residual visibilities
-        imloc = target + '_Region' + sri + '_residual'
-        miriadresidvisloc = name + '.Region' + sri + '_residual.miriad'
+        imloc = target + '_residual'
+        miriadresidvisloc = name + '_residual.miriad'
         miriadin = miriadresidvisloc + ' ' + imloc + ' ' + imsize + ' ' + cell
         command = 'csh image.csh ' + miriadin
         os.system(command + ' > dump')
@@ -212,9 +273,10 @@ def makeImage(config, objectname, regioni, interactive=True, miriad=False):
         # use CASA for imaging
         from clean import clean
         from casa import exportfits
-        index = visfile.find('.ms')
+        index = visfile.find('.uvfits')
         name = visfile[0:index]
-        miriadmodelvisloc = name + '.Region' + sri + '_model.ms'
+        imloc = target + '_model'
+        miriadmodelvisloc = name + '_model.ms'
         os.system('rm -rf ' + imloc + '*')
         clean(vis=miriadmodelvisloc, imagename=imloc, mode='mfs', niter=10000,
             threshold='0.2mJy', interactive=interactive, mask=mask, 
@@ -225,8 +287,8 @@ def makeImage(config, objectname, regioni, interactive=True, miriad=False):
         exportfits(imagename=imloc + '.image', fitsimage=imloc + '.fits')
 
         # invert and clean the residual visibilities
-        imloc = target + '_Region' + sri + '_residual'
-        miriadmodelvisloc = name + '.Region' + sri + '_residual.ms'
+        imloc = target + '_residual'
+        miriadmodelvisloc = name + '_residual.ms'
         os.system('rm -rf ' + imloc + '*')
         clean(vis=miriadmodelvisloc, imagename=imloc, mode='mfs', niter=10000,
             threshold='0.2mJy', interactive=interactive, mask=mask, 
@@ -238,7 +300,7 @@ def makeImage(config, objectname, regioni, interactive=True, miriad=False):
     
     return
 
-def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
+def plotImage(model, data, config, modeltype, fitresult, tag=''):
 
     """
 
@@ -268,28 +330,93 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
     ax = fig.add_subplot(1, 1, 1)
     plt.subplots_adjust(left=0.08, right=0.97, top=0.97, 
             bottom=0.08, wspace=0.35)
+    paramData = setuputil.loadParams(config)
+    nlensedsource = paramData['nlensedsource']
+    nlensedregions = paramData['nlensedregions']
+    npar_previous = 0
 
     configkeys = config.keys()
     configkeystring = " ".join(configkeys)
     regionlist = re.findall('Region.', configkeystring)
-    region = regionlist[regioni]
-    cr = config[region]
+    nregion = len(regionlist)
+    for iregion in range(nregion):
+        region = 'Region' + str(iregion)
+        cr = config[region]
 
-    ra_centroid = cr['RACentroid']
-    dec_centroid = cr['DecCentroid']
-    radialextent = cr['RadialExtent']
+        ra_centroid = cr['RACentroid']
+        dec_centroid = cr['DecCentroid']
+        radialextent = cr['RadialExtent']
 
-    # count the number of lenses
-    configkeys = cr.keys()
-    configkeystring = " ".join(configkeys)
-    lenslist = re.findall('Lens.', configkeystring)
-    nlens = len(lenslist)
+        nmu = 2 * (numpy.array(nlensedsource).sum() + nlensedregions)
+        if nmu > 0:
+            allparameters0 = list(fitresult)[1:-nmu]
+        else:
+            allparameters0 = list(fitresult)[1:]
 
-    # count the number of sources
-    sourcelist = re.findall('Source.', configkeystring)
-    nsource = len(sourcelist)
+        # search poff_models for parameters fixed relative to other parameters
+        fixindx = setuputil.fixParams(paramData)
+        poff = paramData['poff']
+        ndim_total = len(poff)
+        fixed = (numpy.where(fixindx >= 0))[0]
+        nfixed = fixindx[fixed].size
+        parameters_offset = numpy.zeros(ndim_total)
+        for ifix in range(nfixed):
+            ifixed = fixed[ifix]
+            subindx = fixindx[ifixed]
+            par0 = 0
+            if fixindx[subindx] > 0:
+                par0 = fitresult[fixindx[subindx] + 1]
+            parameters_offset[ifixed] = fitresult[subindx + 1] + par0
 
-    nparlens = 5 * nlens
+        allparameters = allparameters0 + parameters_offset
+
+        # count the number of lenses
+        configkeys = cr.keys()
+        configkeystring = " ".join(configkeys)
+        lenslist = re.findall('Lens.', configkeystring)
+        nlens = len(lenslist)
+
+        # count the number of sources
+        sourcelist = re.findall('Source.', configkeystring)
+        nsource = len(sourcelist)
+
+        nparlens = 5 * nlens
+        nparsource = 6 * nsource
+        npar = nparlens + nparsource + npar_previous
+        parameters = allparameters[npar_previous:npar]
+        npar_previous = npar
+
+        for i in range(nsource):
+            i6 = i * 6
+            xxx = parameters[i6 + 2 + nparlens]
+            yyy = parameters[i6 + 3 + nparlens]
+            source_pa = 90 - parameters[i6 + 5 + nparlens]
+            #model_type = model_types[i]
+            #if model_type == 'gaussian':
+            norm = 2.35
+            #if model_type == 'cylinder':
+            #    norm = numpy.sqrt(2)
+            meansize = norm * parameters[i6 + 1 + nparlens]
+            source_bmaj = meansize / numpy.sqrt(parameters[i6 + 4 + nparlens])
+            source_bmin = meansize * numpy.sqrt(parameters[i6 + 4 + nparlens])
+            e = Ellipse((xxx, yyy), source_bmaj, source_bmin, \
+                    angle=source_pa, ec='white', lw=0.5, fc='magenta', \
+                    zorder=2, fill=True, alpha=0.5)
+            ax.add_artist(e)
+        for i in range(nlens):
+            i5 = i * 5
+            xxx = numpy.array([parameters[i5 + 1]])
+            yyy = numpy.array([parameters[i5 + 2]])
+            plt.plot(xxx, yyy, 'o', ms=5., mfc='black', mec='white', mew=0.5, \
+                label='Lens Position', zorder=20)
+            lens_pa = 90 - parameters[i5 + 4]
+            meansize = 2 * parameters[i5]
+            lens_bmaj = meansize / numpy.sqrt(parameters[i5 + 3])
+            lens_bmin = meansize * numpy.sqrt(parameters[i5 + 3])
+            elens = Ellipse((xxx, yyy), lens_bmaj, lens_bmin, \
+                    angle=lens_pa, ec='orange', lw=1.0, \
+                    zorder=20, fill=False)
+            ax.add_artist(elens)
 
     # get the image centroid in model pixel coordinates
     headim = data[0].header
@@ -370,38 +497,6 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
     totdy2 = y0 + modrady
     modelcut = im_model[totdy1:totdy2,totdx1:totdx2]
 
-    for i in range(nsource):
-        i6 = i * 6
-        xxx = parameters[i6 + 2 + nparlens]
-        yyy = parameters[i6 + 3 + nparlens]
-        source_pa = 90 - parameters[i6 + 5 + nparlens]
-        #model_type = model_types[i]
-        #if model_type == 'gaussian':
-        norm = 2.35
-        #if model_type == 'cylinder':
-        #    norm = numpy.sqrt(2)
-        meansize = norm * parameters[i6 + 1 + nparlens]
-        source_bmaj = meansize / numpy.sqrt(parameters[i6 + 4 + nparlens])
-        source_bmin = meansize * numpy.sqrt(parameters[i6 + 4 + nparlens])
-        e = Ellipse((xxx, yyy), source_bmaj, source_bmin, \
-                angle=source_pa, ec='white', lw=0.5, fc='magenta', \
-                zorder=2, fill=True, alpha=0.5)
-        ax.add_artist(e)
-    for i in range(nlens):
-        i5 = i * 5
-        xxx = numpy.array([parameters[i5 + 1]])
-        yyy = numpy.array([parameters[i5 + 2]])
-        plt.plot(xxx, yyy, 'o', ms=5., mfc='black', mec='white', mew=0.5, \
-            label='Lens Position', zorder=20)
-        lens_pa = 90 - parameters[i5 + 4]
-        meansize = 2 * parameters[i5]
-        lens_bmaj = meansize / numpy.sqrt(parameters[i5 + 3])
-        lens_bmin = meansize * numpy.sqrt(parameters[i5 + 3])
-        elens = Ellipse((xxx, yyy), lens_bmaj, lens_bmin, \
-                angle=lens_pa, ec='orange', lw=1.0, \
-                zorder=20, fill=False)
-        ax.add_artist(elens)
-
     #cellp = cell * (2 * pixextent + 1.1) / (2 * pixextent)
     xlo = -radialextent
     xhi = radialextent
@@ -456,7 +551,7 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
     # plot the critical curve
     #plt.contour(cmodx, cmody, dmu, colors='orange', levels=[100])
     #axisrange = plt.axis()
-    axisrange = [numpy.float(xhi),numpy.float(xlo),numpy.float(ylo),numpy.float(yhi)]
+    axisrange = numpy.array([xhi,xlo,ylo,yhi]).astype(float)
     plt.axis(axisrange)
 
     plt.minorticks_on()
@@ -496,10 +591,9 @@ def plotImage(model, data, config, parameters, regioni, modeltype, tag=''):
     objname = config['ObjectName']
     plt.text(0.08, 0.88, objname, transform=ax.transAxes,
             fontsize='xx-large')
-    sri = str(regioni)
     bigtag = '.' + modeltype + '.' + tag
 
-    savefig('LensedSBmap.Region' + sri + bigtag + '.pdf')
+    savefig('LensedSBmap' + bigtag + '.pdf')
     #plt.clf()
 
 def removeTempFiles():
@@ -516,8 +610,8 @@ def removeTempFiles():
     cmd = 'rm -rf *SBmap*fits *_model* *_residual* dump'
     os.system(cmd)    
 
-def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True,
-        showOptical=False, interactive=True):
+def plotFit(config, fitresult, tag='', cleanup=True, showOptical=False,
+        interactive=True):
 
     """
 
@@ -529,21 +623,21 @@ def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True,
 
 
     # make the lensed image
-    makeSBmap(paramData, parameters, regioni)
+    makeSBmap(config, fitresult, tag=tag, cleanup=True,
+        showOptical=False, interactive=True)
 
     # make the simulated visibilities
-    makeVis(config, regioni)
+    makeVis(config)
 
     # image the simulated visibilities
-    objectname = config['ObjectName']
-    makeImage(config, objectname, regioni, interactive=interactive)
+    makeImage(config, interactive=interactive)
 
     # read in the images of the simulated visibilities
-    sri = str(regioni)
-    simimloc = objectname + '_Region' + sri + '_model.fits'
+    objectname = config['ObjectName']
+    simimloc = objectname + '_model.fits'
     model = fits.open(simimloc)
 
-    simimloc = objectname + '_Region' + sri + '_residual.fits'
+    simimloc = objectname + '_residual.fits'
     residual = fits.open(simimloc)
 
     # read in the data
@@ -554,15 +648,13 @@ def plotFit(config, paramData, parameters, regioni, tag='', cleanup=True,
         optical = fits.open(config['OpticalImage'])
 
         # plot the images
-        plotImage(optical, data, config, parameters, regioni, 'optical', 
-                tag=tag)
+        plotImage(optical, data, config, 'optical', fitresult, tag=tag)
 
     # plot the images
-    plotImage(model, data, config, parameters, regioni, 'model', tag=tag)
+    plotImage(model, data, config, 'model', fitresult, tag=tag)
 
     # plot the residual
-    plotImage(residual, residual, config, parameters, regioni, 'residual', 
-            tag=tag)
+    plotImage(residual, residual, config, 'residual', fitresult, tag=tag)
 
     # remove the intermediate files
     if cleanup:

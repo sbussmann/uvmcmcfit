@@ -258,7 +258,7 @@ def sbmap(x, y, nlens, nsource, parameters, model_types):
     e_image = N.zeros(x.shape)
     amp1 = []
     amp2 = []
-    for i in N.arange(nsource):
+    for i in range(nsource):
 
         i6 = i * 6
 

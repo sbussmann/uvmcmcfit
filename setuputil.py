@@ -169,9 +169,11 @@ def loadParams(config):
     nparams_total = 0
     nlensedsource = 0
     nlensedregions = 0
-    for region in regionlist:
-        #ri = str(i)
+    nregion = len(regionlist)
+    for iregion in range(nregion):
+        ri = str(iregion)
         
+        region = 'Region' + ri
         cfdr = config[region]
         ra_centroid = cfdr['RACentroid']
         dec_centroid = cfdr['DecCentroid']
@@ -229,9 +231,10 @@ def loadParams(config):
         p1 = []
         p2 = []
 
-        for lens in lenslist:
+        for ilens in range(nlens):
 
-            #li = str(ilens)
+            li = str(ilens)
+            lens = 'Lens' + li
             cfdrl = cfdr[lens]
 
             # constraints on the lenses
@@ -281,10 +284,11 @@ def loadParams(config):
         if nlens > 0:
             nlensedsource += nsource
             nlensedregions += 1
-        for source in sourcelist:
+        for isource in range(nsource):
 
+            si = str(isource)
+            source = 'Source' + si
             cfdrs = cfdr[source]
-            #si = str(isource)
 
             sourceparams = ['IntrinsicFlux', 
                     'EffectiveRadius', 
@@ -361,6 +365,7 @@ def loadParams(config):
     paramSetup = {'x': x, 
             'y': y, 
             'modelheader': modelheader,
+            'regionlist': regionlist,
             'nlens_regions': nlens_regions, 
             'nsource_regions': nsource_regions,
             'nlensedsource': nlensedsource,

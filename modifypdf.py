@@ -23,27 +23,49 @@ def trim(oldpdfloc, newpdfloc, niters=5000):
     # write the trimmed list
     PDFdata.write(newpdfloc, format='ascii')
 
+def bigScoop(PDFdata, Nbuffer=300):
+
+    """ get model fits within Nbuffer of the best-fit model. """
+    lnprob = PDFdata['lnprob']
+    good = lnprob > lnprob.max() - Nbuffer
+    PDFdata = PDFdata[good]
+
+    # write the trimmed list
+    return PDFdata
+
+def goodMu(PDFdata):
+
+    """ get model fits with mu < 100. """
+
+    # search for magnification measurements
+    lnprob = PDFdata['lnprob']
+    good = lnprob > lnprob.max() - 300
+    PDFdata = PDFdata[good]
+
+    # write the trimmed list
+    return PDFdata
+
 def cleanColumns(PDFdata):
 
     # get the last niters iterations
     PDFkeys = PDFdata.keys()
     for key in PDFkeys:
         rms = numpy.std(PDFdata[key])
-        import pdb; pdb.set_trace()
         if rms == 0:
             PDFdata.remove_column(key)
 
     # write the trimmed list
     return PDFdata
 
-def prune(PDFdata, scaler=5.0):
+def prune(PDFdata, scaler=5.0, quiet=False):
 
     # get the last niters iterations
     #PDFdata = Table.read(oldpdfloc, format='ascii')
     okok = PDFdata['lnprob'] * 0 == 0
     PDFdata = PDFdata[okok]
 
-    print("prior to pruning, <Lnprob>: {:f}".format(PDFdata['lnprob'].mean()))
+    if not quiet:
+        print("Pre-pruning, <Lnprob>: {:f}".format(PDFdata['lnprob'].mean()))
     #import pdb; pdb.set_trace()
 
     # identify the good fits
@@ -73,7 +95,8 @@ def prune(PDFdata, scaler=5.0):
         medlnprob = numpy.median(dlnprob)
         avglnprob = numpy.mean(dlnprob)
         skewlnprob = numpy.abs(avglnprob - medlnprob)
-        print(medlnprob, avglnprob, skewlnprob)
+        if not quiet:
+            print(medlnprob, avglnprob, skewlnprob)
         if medlnprob == medlnprob_previous:
             scaler /= 1.5
         medlnprob_previous = medlnprob

@@ -126,6 +126,7 @@ def covariance(bestfitloc='posteriorpdf.fits'):
     import numpy
     from pylab import savefig
     import modifypdf
+    from astropy.table import Table
     from matplotlib import rc
 
 
@@ -133,7 +134,7 @@ def covariance(bestfitloc='posteriorpdf.fits'):
     rc('font',**{'family':'sans-serif', 'sans-serif':['Arial Narrow'], 
         'size':'6'})
 
-    posteriorpdf = fits.getdata(bestfitloc)
+    posteriorpdf = Table.read(bestfitloc)
     posteriorpdf = posteriorpdf[-5000:]
 
     # remove columns where the values are not changing
@@ -211,11 +212,6 @@ def bestFit(bestfitloc='posteriorpdf.fits', showOptical=False, cleanup=True,
     
     """
 
-    import setuputil
-
-
-    # read the input parameters
-    paramData = setuputil.loadParams(config)
 
     # read the posterior PDFs
     print("Found posterior PDF file: {:s}".format(bestfitloc))
@@ -226,11 +222,11 @@ def bestFit(bestfitloc='posteriorpdf.fits', showOptical=False, cleanup=True,
     index = fitresults['lnprob'] == minchi2
     bestfit = fitresults[index][0]
     tag = 'bestfit'
-    visualutil.preProcess(config, paramData, bestfit, tag=tag, cleanup=cleanup,
+    visualutil.plotFit(config, bestfit, tag=tag, cleanup=cleanup,
             showOptical=showOptical, interactive=interactive)
 
 def goodFits(bestfitloc='posteriorpdf.fits', Nfits=12, Ngood=5000,
-        cleanup=True, interactive=True):
+        cleanup=True, interactive=True, showOptical=False):
 
     """ 
 
@@ -243,11 +239,7 @@ def goodFits(bestfitloc='posteriorpdf.fits', Nfits=12, Ngood=5000,
 
     import modifypdf
     import numpy
-    import setuputil
 
-
-    # read the input parameters
-    paramData = setuputil.loadParams(config)
 
     # read the posterior PDFs
     print("Found posterior PDF file: {:s}".format(bestfitloc))
@@ -263,5 +255,5 @@ def goodFits(bestfitloc='posteriorpdf.fits', Nfits=12, Ngood=5000,
         realid = numpy.int(realids[ifit])
         fitresult = fitresults[realid]
         tag = 'goodfit' + str(realid).zfill(4)
-        visualutil.preProcess(config, paramData, fitresult, tag=tag,
+        visualutil.plotFit(config, fitresult, tag=tag, showOptical=showOptical,
                 cleanup=cleanup, interactive=interactive)
