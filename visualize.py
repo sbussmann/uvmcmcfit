@@ -129,13 +129,14 @@ def covariance(bestfitloc='posteriorpdf.fits'):
     from pylab import savefig
     import modifypdf
     from matplotlib import rc
+    from astropy.table import Table
 
 
     # plotting parameters
     rc('font',**{'family':'sans-serif', 'sans-serif':['Arial Narrow'], 
         'size':'6'})
 
-    posteriorpdf = fits.getdata(bestfitloc)
+    posteriorpdf = Table.read(bestfitloc)
     posteriorpdf = posteriorpdf[-5000:]
 
     # remove columns where the values are not changing
@@ -143,7 +144,7 @@ def covariance(bestfitloc='posteriorpdf.fits'):
 
     posteriorpdfgood = modifypdf.prune(posteriorpdfclean)
 
-    headers = posteriorpdf.colnames
+    headers = posteriorpdf.keys()
     ncol = len(headers)
     k = 0
     xsize = ncol * 2
