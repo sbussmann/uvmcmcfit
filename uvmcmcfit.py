@@ -158,6 +158,10 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
     npar_previous = 0
 
     amp = []  # Will contain the 'blobs' we compute
+    g_image_all = 0.
+    g_lensimage_all = 0.
+    e_image_all = 0.
+    e_lensimage_all = 0.
 
     nregions = paramSetup['nregions']
     for regioni in range(nregions):
@@ -184,6 +188,10 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
 
         g_image, g_lensimage, e_image, e_lensimage, amp_tot, amp_mask = \
                 lensutil.sbmap(x, y, nlens, nsource, parameters, model_types)
+        e_image_all += e_image
+        e_lensimage_all += e_lensimage
+        g_image_all += g_image
+        g_lensimage_all += g_lensimage
         amp.extend(amp_tot)
         amp.extend(amp_mask)
 
@@ -209,19 +217,19 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
             amp.extend([amp_tot])
             amp.extend([amp_mask])
 
-        model_complex = sample_vis.uvmodel(g_lensimage, headmod, uuu, vvv, pcd)
-        #model_real += numpy.real(model_complex)
-        #model_imag += numpy.imag(model_complex)
+    model_complex = sample_vis.uvmodel(g_lensimage_all, headmod, uuu, vvv, pcd)
+    #model_real += numpy.real(model_complex)
+    #model_imag += numpy.imag(model_complex)
 
-        #fits.writeto('g_lensimage.fits', g_lensimage, headmod, clobber=True)
-        #import matplotlib.pyplot as plt
-        #print(pzero_regions)
-        #plt.imshow(g_lensimage, origin='lower')
-        #plt.colorbar()
-        #plt.show()
-        #plt.imshow(g_image, origin='lower')
-        #plt.colorbar()
-        #plt.show()
+    #fits.writeto('g_lensimage.fits', g_lensimage, headmod, clobber=True)
+    #import matplotlib.pyplot as plt
+    #print(pzero_regions)
+    #plt.imshow(g_lensimage, origin='lower')
+    #plt.colorbar()
+    #plt.show()
+    #plt.imshow(g_image, origin='lower')
+    #plt.colorbar()
+    #plt.show()
 
     # use all visibilities
     #goodvis = (vis_complex * 0 == 0)
