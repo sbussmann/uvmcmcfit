@@ -115,9 +115,10 @@ def makeSBmap(config, fitresult, tag='', cleanup=True,
     regionlist = re.findall('Region.', configkeystring)
     SBmap_all = 0
     LensedSBmap_all = 0
-    for regioni, region in enumerate(regionlist):
+    nregion = len(regionlist)
+    for regioni in range(nregion):
         regstring = 'Region' + str(regioni)
-        indx = paramData['regionlist'].index(regstring)
+        #indx = paramData['regionlist'].index(regstring)
         cr = config[regstring]
 
         nmu = 2 * (numpy.array(nlensedsource).sum() + nlensedregions)

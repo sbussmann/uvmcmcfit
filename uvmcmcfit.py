@@ -187,7 +187,6 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
         amp.extend(amp_tot)
         amp.extend(amp_mask)
 
-
         #----------------------------------------------------------------------
         # Python version of UVMODEL:
         # "Observe" the lensed emission with the interferometer
@@ -401,6 +400,7 @@ if not realpdf:
                 extendedpname.append('mu_tot' + si) 
                 nmu += 1
             for i in range(nsource):
+                si = '.Source' + str(i) + '.Region' + ri
                 extendedpname.append('mu_aper' + si) 
                 nmu += 1
             extendedpname.append('mu_tot.Region' + ri)
