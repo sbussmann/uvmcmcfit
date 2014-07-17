@@ -147,7 +147,7 @@ def covariance(bestfitloc='posteriorpdf.fits'):
     headers = posteriorpdf.keys()
     ncol = len(headers)
     k = 0
-    xsize = ncol * 2
+    xsize = ncol * 3
     ysize = ncol * 1.5
     fig = plt.figure(figsize=(xsize, ysize))
     plt.subplots_adjust(left=0.020, bottom=0.02, right=0.99, top=0.97,
