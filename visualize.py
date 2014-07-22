@@ -69,7 +69,7 @@ def convergence(bestfitloc='posteriorpdf.fits'):
     outfile = 'convergence'
     savefig(outfile)
 
-def posteriorPDF(bestfitloc='posteriorpdf.fits'):
+def posteriorPDF(bestfitloc='posteriorpdf.fits', Ngood=15000):
 
     """
 
@@ -81,7 +81,7 @@ def posteriorPDF(bestfitloc='posteriorpdf.fits'):
     print("Reading output from emcee")
     fitresults = fits.getdata(bestfitloc)
     tag = 'posterior'
-    visualutil.plotPDF(fitresults, tag, Ngood=5000, axes='auto')
+    visualutil.plotPDF(fitresults, tag, Ngood=Ngood, axes='auto')
 
 def evolvePDF(bestfitloc='posteriorpdf.fits', stepsize=50000):
 
@@ -233,7 +233,7 @@ def bestFit(bestfitloc='posteriorpdf.fits', showOptical=False, cleanup=True,
             showOptical=showOptical, interactive=interactive)
 
 def goodFits(bestfitloc='posteriorpdf.fits', Nfits=12, Ngood=5000,
-        cleanup=True, interactive=True):
+        cleanup=True, interactive=False):
 
     """ 
 

@@ -232,9 +232,10 @@ def loadParams(config):
         p1 = []
         p2 = []
 
-        for lens in lenslist:
+        for ilens in range(nlens):
 
-            #li = str(ilens)
+            li = str(ilens)
+            lens = 'Lens' + li
             cfdrl = cfdr[lens]
 
             # constraints on the lenses
@@ -284,10 +285,11 @@ def loadParams(config):
         if nlens > 0:
             nlensedsource += nsource
             nlensedregions += 1
-        for source in sourcelist:
+        for isource in range(nsource):
 
+            si = str(isource)
+            source = 'Source' + si
             cfdrs = cfdr[source]
-            #si = str(isource)
 
             sourceparams = ['IntrinsicFlux', 
                     'EffectiveRadius', 
