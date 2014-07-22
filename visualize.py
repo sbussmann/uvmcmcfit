@@ -44,25 +44,37 @@ def convergence(bestfitloc='posteriorpdf.fits'):
     from pylab import savefig
 
 
+    plt.clf()
     print("Reading burnin results from {0:s}".format(bestfitloc))
     pdf = fits.getdata(bestfitloc)
     keyname = 'lnprob'
     lnprob = pdf[keyname]
+    print(lnprob.max())
+    #lnprob = lnprob.max() - lnprob
+    #lnprob = numpy.abs(lnprob)
 
-    lnprob = numpy.array(lnprob)
-    lnprob = lnprob.max() - lnprob
-    lnprob = numpy.abs(lnprob)
+    Ntemps = config['Ntemps']
+    Nwalkers = config['Nwalkers']
+    Ncycles = len(lnprob) / Ntemps / Nwalkers
+    for itemp in range(Ntemps):
 
-    plt.clf()
-    plt.plot(lnprob, ',', alpha=0.5)
+        lnproball = []
+        for icycle in range(Ncycles):
+
+            indx1 = itemp * Nwalkers + (Ntemps * Nwalkers * icycle)
+            indx2 = itemp * Nwalkers + Nwalkers + (Ntemps * Nwalkers * icycle)
+            lnproball.extend(lnprob[indx1:indx2])
+
+        plt.plot(lnproball, ',', alpha=0.5)
     plt.xlabel('iteration')
     plt.ylabel('max(lnprob) - lnprob')
     tmpcwd = os.getcwd()
     startindx = tmpcwd.find('ModelFits') + 10
     endindx = tmpcwd.find('uvfit') + 7
     objname = tmpcwd[startindx:endindx]
+    plt.ylim(3e5, 6e5)
     plt.title(objname)
-    plt.semilogy()
+    #plt.semilogy()
     #from IPython import embed
     #embed()
 
