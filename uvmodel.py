@@ -22,12 +22,41 @@ import numpy
 #pyximport.install(setup_args={"include_dirs":numpy.get_include()})
 import sample_vis
 import uvutil
-from taskinit import tb
 import os
 #import time
 
 
-def replace(sbmodelloc, visdataloc, modelvisloc):
+def writeout(vis_complex, visdataloc, modelvisloc, miriad=False):
+
+    if miriad:
+        os.system('rm -rf ' + modelvisloc)
+        cmd = 'cp ' + visdataloc + ' ' + modelvisloc
+        os.system(cmd)
+        # get the real and imaginary components
+        real = numpy.real(vis_complex)
+        imag = numpy.imag(vis_complex)
+
+        # replace data visibilities with model visibilities
+        visfile = fits.open(modelvisloc, mode='update')
+        visibilities = visfile[0].data
+        visibilities['DATA'][:, 0, 0, 0, :, :, 0] = real
+        visibilities['DATA'][:, 0, 0, 0, :, :, 1] = imag
+        #visibilities['DATA'][:, 0, 0, :, :, 2] = wgt
+
+        # replace the data visibilities with the model visibilities
+        visfile[0].data = visibilities
+        visfile.flush()
+        
+    else:
+        from taskinit import tb
+        tb.open(visdataloc)
+        os.system('rm -rf ' + modelvisloc)
+        tb.copy(modelvisloc)
+        tb.close()
+        tb.open(modelvisloc, nomodify=False)
+        tb.putcol('DATA', vis_complex)
+
+def replace(sbmodelloc, visdataloc, modelvisloc, miriad=False):
 
     # read in the surface brightness map of the model
     modelimage = fits.getdata(sbmodelloc)
@@ -47,20 +76,16 @@ def replace(sbmodelloc, visdataloc, modelvisloc):
     model_complex = sample_vis.uvmodel(modelimage, modelheader, \
             uu, vv, pcd)
 
-    model_complex = model_complex.reshape(npol, 1, nrow)
+    vis_complex = model_complex.reshape(npol, 1, nrow)
 
-    tb.open(visdataloc)
-    os.system('rm -rf ' + modelvisloc)
-    tb.copy(modelvisloc)
-    tb.close()
-    tb.open(modelvisloc, nomodify=False)
-    tb.putcol('DATA', model_complex)
+    print(miriad)
+    writeout(vis_complex, visdataloc, modelvisloc, miriad=miriad)
 
     print("Exiting replace")
 
     return
 
-def subtract(sbmodelloc, visdataloc, modelvisloc):
+def subtract(sbmodelloc, visdataloc, modelvisloc, miriad=False):
 
     # read in the surface brightness map of the model
     modelimage = fits.getdata(sbmodelloc)
@@ -89,12 +114,7 @@ def subtract(sbmodelloc, visdataloc, modelvisloc):
 
     vis_complex = vis_complex.reshape(npol, 1, nrow)
 
-    tb.open(visdataloc)
-    os.system('rm -rf ' + modelvisloc)
-    tb.copy(modelvisloc)
-    tb.close()
-    tb.open(modelvisloc, nomodify=False)
-    tb.putcol('DATA', vis_complex)
+    writeout(vis_complex, visdataloc, modelvisloc, miriad=miriad)
 
     print("Exiting subtract")
 

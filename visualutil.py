@@ -198,6 +198,7 @@ def makeVis(config):
 
     # get the list of uvfits files
     visfile = config['UVData']
+    miriad = config['UseMiriad']
     
     #----------------------------------------------------------------------
     # Python version of UVMODEL
@@ -207,17 +208,21 @@ def makeVis(config):
     nameindx = visfile.find('uvfits')
     name = visfile[0:nameindx-1]
     print(name)
-    visfile = name + '.ms'
+    if miriad:
+        tag = '.uvfits'
+    else:
+        tag = '.ms'
 
+    visfile = name + tag
     SBmapLoc = 'LensedSBmap.fits'
-    modelvisfile = name + '_model.ms'
+    modelvisfile = name + '_model' + tag
     os.system('rm -rf ' + modelvisfile)
-    uvmodel.replace(SBmapLoc, visfile, modelvisfile)
+    uvmodel.replace(SBmapLoc, visfile, modelvisfile, miriad=miriad)
     
     # Python version of UVMODEL's "subtract" subroutine:
-    modelvisfile = name + '_residual.ms'
+    modelvisfile = name + '_residual' + tag
     os.system('rm -rf ' + modelvisfile)
-    uvmodel.subtract(SBmapLoc, visfile, modelvisfile)
+    uvmodel.subtract(SBmapLoc, visfile, modelvisfile, miriad=miriad)
 
 def makeImage(config, interactive=True, miriad=False):
 
@@ -232,6 +237,7 @@ def makeImage(config, interactive=True, miriad=False):
     from astropy.io import fits
 
         
+    #import pdb; pdb.set_trace()
     visfile = config['UVData']
     target = config['ObjectName']
     fitsim = config['ImageName']
@@ -255,6 +261,7 @@ def makeImage(config, interactive=True, miriad=False):
     # invert and clean the simulated model visibilities
 
     if miriad:
+        imsize = str(fitshead['NAXIS1'])
         # use miriad for imaging
         index = visfile.find('.uvfits')
         name = visfile[0:index]
@@ -274,6 +281,7 @@ def makeImage(config, interactive=True, miriad=False):
         # use CASA for imaging
         from clean import clean
         from casa import exportfits
+        print(visfile)
         index = visfile.find('.uvfits')
         name = visfile[0:index]
         imloc = target + '_model'
@@ -430,7 +438,12 @@ def plotImage(model, data, config, modeltype, fitresult, tag=''):
     goodregion = mask == 0
 
     # compute sigma image from cutout of SMA flux image
-    rms = im[goodregion].std()
+    dv = 1.
+    bunit = headim['BUNIT']
+    if bunit == 'JY/BEAM.KM/S':
+        dv = 500.
+    #import pdb; pdb.set_trace()
+    rms = im[goodregion].std()# * dv
 
     # Obtain measurements of beamsize and image min/max
     bmaj = headim['BMAJ'] * 3600
@@ -520,7 +533,7 @@ def plotImage(model, data, config, modeltype, fitresult, tag=''):
         pcolor = 'red'
         ncolor = 'red'
         vmax = modelcut.max()
-        vmin = -3 * rms
+        vmin = modelcut.min()
     else:
         grayscalename = config['OpticalTag']
         filtindx = grayscalename.find(' ')
@@ -631,7 +644,8 @@ def plotFit(config, fitresult, tag='', cleanup=True, showOptical=False,
     makeVis(config)
 
     # image the simulated visibilities
-    makeImage(config, interactive=interactive)
+    miriad = config['UseMiriad']
+    makeImage(config, miriad=miriad, interactive=interactive)
 
     # read in the images of the simulated visibilities
     objectname = config['ObjectName']

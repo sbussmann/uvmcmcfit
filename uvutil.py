@@ -10,8 +10,13 @@ from __future__ import print_function
 import numpy
 from astropy.io import fits
 
-def pcdload(visfile, uvfits=False):
+def pcdload(visfile):
 
+    checker = visfile.find('uvfits')
+    if checker == -1:
+        uvfits = False
+    else:
+        uvfits = True
     if uvfits:
         # uv fits format
         visdata = fits.open(visfile)
@@ -42,8 +47,13 @@ def pcdload(visfile, uvfits=False):
         pcd = [pcd_ra, pcd_dec]
         return pcd
 
-def uvload(visfile, uvfits=False):
+def uvload(visfile):
 
+    checker = visfile.find('uvfits')
+    if checker == -1:
+        uvfits = False
+    else:
+        uvfits = True
     if uvfits:
         visdata = fits.open(visfile)
         visibilities = visdata[0].data
@@ -144,8 +154,13 @@ def uvload(visfile, uvfits=False):
 
     return uu, vv
 
-def visload(visfile, uvfits=False):
+def visload(visfile):
 
+    checker = visfile.find('uvfits')
+    if checker == -1:
+        uvfits = False
+    else:
+        uvfits = True
     if uvfits:
         visdata = fits.open(visfile)
         # get the telescope name
@@ -160,9 +175,9 @@ def visload(visfile, uvfits=False):
 
         # if we are dealing with ALMA or PdBI data
         if visheader['NAXIS'] == 7:
-            data_real = visdata[0].data['DATA'][:,0,0,:,:,:,0]
-            data_imag = visdata[0].data['DATA'][:,0,0,:,:,:,1]
-            data_wgt = visdata[0].data['DATA'][:,0,0,:,:,:,2]
+            data_real = visdata[0].data['DATA'][:,0,0,0,0,:,0]
+            data_imag = visdata[0].data['DATA'][:,0,0,0,0,:,1]
+            data_wgt = visdata[0].data['DATA'][:,0,0,0,0,:,2]
 
         data_complex = numpy.array(data_real) + \
                 1j * numpy.array(data_imag)
