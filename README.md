@@ -15,11 +15,11 @@ Python software to fit models to interferometric data, appropriately accounting 
 
  2. Inside this directory, you must ensure the following files are present:
 
- - "config.py": This is the configuration file that describes where the source
+ - "config.yaml": This is the configuration file that describes where the source
  of interest is located, what type of model to use for the lens and source, the
  name of the image of the target from your interferometric data, the name of
  the uvfits files containing the interferometric visibilities, and a few
- important processing options as well.  Syntax is python.
+ important processing options as well.  Syntax is yaml.
 
  - Image of the target from your interferometric data.  The spatial resolution
  of this image (arcseconds per pixel), modified by an optional oversampling
@@ -42,7 +42,7 @@ Python software to fit models to interferometric data, appropriately accounting 
 --------
  OUTPUTS
 
- "posteriorpdf.hdf5": model parameters for every MCMC iteration, in hdf5
- format.  Google search for hdf5 view if you want a tool to inspect the hdf5
- files directly.
+"posteriorpdf.fits": model parameters for every MCMC iteration, in fits
+format.  Use astropy (either the fits or table module) to inspect the results
+directly.
 

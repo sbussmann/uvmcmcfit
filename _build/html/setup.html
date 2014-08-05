@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Preliminary Setup Procedures &mdash; uvmcmcfit 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="uvmcmcfit 0.1 documentation" href="index.html" />
+    <link rel="up" title="XMM03: a single, unlensed galaxy" href="xmm03.html" />
+    <link rel="next" title="ADFS07: a single, strongly lensed galaxy" href="adfs07.html" />
+    <link rel="prev" title="XMM03: a single, unlensed galaxy" href="xmm03.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="adfs07.html" title="ADFS07: a single, strongly lensed galaxy"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="xmm03.html" title="XMM03: a single, unlensed galaxy"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li>
+          <li><a href="examples.html" >Examples</a> &raquo;</li>
+          <li><a href="xmm03.html" accesskey="U">XMM03: a single, unlensed galaxy</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="preliminary-setup-procedures">
+<h1>Preliminary Setup Procedures<a class="headerlink" href="#preliminary-setup-procedures" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="inputs">
+<h2>Inputs<a class="headerlink" href="#inputs" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li>Establish a directory that contains data for the specific target for which
+you wish to measure a lens model.  This is the directory from which you will
+run the software.  I call this &#8220;uvfit00&#8221; for the first run on a given
+dataset, &#8220;uvfit01&#8221; for the second, etc.</li>
+<li>Inside this directory, you must ensure the following files are present:</li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li>config.yaml: This is the configuration file that describes where the
+source of interest is located, what type of model to use for the lens and
+source, the name of the image of the target from your interferometric
+data, the name of the uvfits files containing the interferometric
+visibilities, and a few important processing options as well.  Syntax is
+yaml.</li>
+<li>Image of the target from your interferometric data in fits format.  This
+image is used to set the spatial resolution of the model image (modified by
+an optional oversampling parameter).</li>
+<li>interferometric visibilities in uvfits format.</li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li>More info about the constraints and priors input files.</li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li>Lenses: The lenses are assumed to have singular isothermal ellipsoid
+profiles.</li>
+<li>Sources: Sources are represented by Gaussian profiles.</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="outputs">
+<h2>Outputs<a class="headerlink" href="#outputs" title="Permalink to this headline">¶</a></h2>
+<p>posteriorpdf.fits: model parameters for every MCMC iteration, in fits format.
+Use astropy (either the fits or table module) to inspect the results directly.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Preliminary Setup Procedures</a><ul>
+<li><a class="reference internal" href="#inputs">Inputs</a></li>
+<li><a class="reference internal" href="#outputs">Outputs</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="xmm03.html"
+                        title="previous chapter">XMM03: a single, unlensed galaxy</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="adfs07.html"
+                        title="next chapter">ADFS07: a single, strongly lensed galaxy</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/setup.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="adfs07.html" title="ADFS07: a single, strongly lensed galaxy"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="xmm03.html" title="XMM03: a single, unlensed galaxy"
+             >previous</a> |</li>
+        <li><a href="index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li>
+          <li><a href="examples.html" >Examples</a> &raquo;</li>
+          <li><a href="xmm03.html" >XMM03: a single, unlensed galaxy</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Shane Bussmann.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

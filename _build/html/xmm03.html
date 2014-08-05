@@ -1,0 +1,205 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>XMM03: a single, unlensed galaxy &mdash; uvmcmcfit 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="uvmcmcfit 0.1 documentation" href="index.html" />
+    <link rel="up" title="Examples" href="examples.html" />
+    <link rel="next" title="Preliminary Setup Procedures" href="setup.html" />
+    <link rel="prev" title="Examples" href="examples.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="setup.html" title="Preliminary Setup Procedures"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li>
+          <li><a href="examples.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="xmm03-a-single-unlensed-galaxy">
+<h1>XMM03: a single, unlensed galaxy<a class="headerlink" href="#xmm03-a-single-unlensed-galaxy" title="Permalink to this headline">¶</a></h1>
+<p>This example shows how to run <tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt> on the simplest of systems: a
+single galaxy that is unaffected by lensing of any kind.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">Preliminary Setup Procedures</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="setup.html#inputs">Inputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup.html#outputs">Outputs</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="configuring-config-yaml">
+<h2>Configuring config.yaml<a class="headerlink" href="#configuring-config-yaml" title="Permalink to this headline">¶</a></h2>
+<p>config.yaml contains the instructions needed by <tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt> to initiate the
+model fitting process.</p>
+<div class="section" id="required-keywords">
+<h3>Required keywords<a class="headerlink" href="#required-keywords" title="Permalink to this headline">¶</a></h3>
+<p>The name of the target (used for plotting the best-fit model):</p>
+<div class="highlight-python"><div class="highlight"><pre>ObjectName: XMM03
+</pre></div>
+</div>
+<p>The name of the fits image of the target:</p>
+<div class="highlight-python"><div class="highlight"><pre>ImageName: XMM03.concat.statwt.cont.mfs.fits
+</pre></div>
+</div>
+<p>The name of the uvfits visibility data:</p>
+<div class="highlight-python"><div class="highlight"><pre>UVData: XMM03.concat.statwt.cont.uvfits
+</pre></div>
+</div>
+<p>The number of walkers for emcee to use (must be more than double the number of
+parameters).  In this case, there are only 6 parameters, so the minimum number
+of walkers is 12.  I selected 24 to be on the safe side:</p>
+<div class="highlight-python"><div class="highlight"><pre>Nwalkers: 24
+</pre></div>
+</div>
+<p>You must define at least one region.  The first region should be named
+<em>Region0</em>, the second <em>Region1</em>, etc.  Pay attention to the indentation; the
+remaining keywords must be indented to indicate they are sub-components of
+<em>Region0</em>:</p>
+<div class="highlight-python"><div class="highlight"><pre>Region0:
+
+Right Ascension center of the model image (degrees)::
+
+    RACentroid:
+</pre></div>
+</div>
+</div>
+<div class="section" id="optional-keywords">
+<h3>Optional keywords<a class="headerlink" href="#optional-keywords" title="Permalink to this headline">¶</a></h3>
+<p>By default, the maximum likelihood estimate is used to measure the goodness of
+fit.  Alternatively, you may use the chi-squared value as the goodness of the
+fit via:</p>
+<div class="highlight-python"><div class="highlight"><pre>LogLike: chi2
+</pre></div>
+</div>
+<p>By default, parallel processing is not used.  To use parallel processing on a
+single machine, set the Nthreads variable to a number greater than 1.  For
+example,</p>
+<div class="highlight-python"><div class="highlight"><pre>Nthreads: 2
+</pre></div>
+</div>
+<p>If you have access to a computer cluster with many compute cores, you can use
+Message Passing Interface to greatly speed up the modeling process:</p>
+<div class="highlight-python"><div class="highlight"><pre>MPI: True
+Nthreads: 1
+</pre></div>
+</div>
+<div class="admonition caution">
+<p class="first admonition-title">Caution</p>
+<p class="last">Nthreads must be equal to 1 if using MPI!</p>
+</div>
+<p>If you want to compare the model results with an image obtained at another
+wavelength (e.g., an <em>HST</em> image):</p>
+<div class="highlight-python"><div class="highlight"><pre>OpticalImage: /Users/rbussman/Papers/Bussmann_2014a/fitscutouts/XMM03_F110W.fits
+OpticalTag: HST F110W
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">XMM03: a single, unlensed galaxy</a><ul>
+<li><a class="reference internal" href="#configuring-config-yaml">Configuring config.yaml</a><ul>
+<li><a class="reference internal" href="#required-keywords">Required keywords</a></li>
+<li><a class="reference internal" href="#optional-keywords">Optional keywords</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="examples.html"
+                        title="previous chapter">Examples</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="setup.html"
+                        title="next chapter">Preliminary Setup Procedures</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/xmm03.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="setup.html" title="Preliminary Setup Procedures"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             >previous</a> |</li>
+        <li><a href="index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li>
+          <li><a href="examples.html" >Examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Shane Bussmann.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
