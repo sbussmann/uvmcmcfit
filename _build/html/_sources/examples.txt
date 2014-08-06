@@ -7,6 +7,6 @@ demonstrate usage of ``uvmcmcfit``.
 .. toctree::
     :maxdepth: 2
 
-    xmm03
+    xmm101
     adfs07
     cdfsm0
