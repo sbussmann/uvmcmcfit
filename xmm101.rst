@@ -1,4 +1,4 @@
-XMM03: a single, unlensed galaxy
+XMM101: a single, unlensed galaxy
 ********************************
 
 This example shows how to run ``uvmcmcfit`` on the simplest of systems: a
@@ -21,17 +21,17 @@ Required keywords
 The name of the target (used for plotting the best-fit model)::
 
     # Name of the target
-    ObjectName: XMM03
+    ObjectName: XMM101
 
 The name of the fits image of the target::
  
     # Name of the fits image
-    ImageName: XMM03.concat.statwt.cont.mfs.fits
+    ImageName: XMM101.concat.statwt.cont.mfs.fits
 
 The name of the uvfits visibility data::
 
     # Name of the uvfits visibility data
-    UVData: XMM03.concat.statwt.cont.uvfits
+    UVData: XMM101.concat.statwt.cont.uvfits
 
 The number of walkers for emcee to use (must be more than double the number of
 parameters).  In this case, there are only 6 parameters, so the minimum number
@@ -79,10 +79,13 @@ Message Passing Interface to greatly speed up the modeling process::
 .. caution:: Nthreads must be equal to 1 if using MPI!
 
 If you want to compare the model results with an image obtained at another
-wavelength (e.g., an *HST* image)::
+wavelength (e.g., an *HST* image), you must specify the location of the
+alternative image as well as the telescope and filter used to obtain the
+image::
 
     # Alternative image name (used only for comparing with best-fit model)
-    OpticalImage: /Users/rbussman/Papers/Bussmann_2014a/fitscutouts/XMM03_F110W.fits
+    OpticalImage: XMM101_F110W.fits
+
     # Telescope and filter of alternative image    
     OpticalTag: HST F110W
 
