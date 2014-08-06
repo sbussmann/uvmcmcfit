@@ -74,7 +74,7 @@ Message Passing Interface to greatly speed up the modeling process::
 
     # Use Message Passing Interface
     MPI: True
-    Nthreads: 2
+    Nthreads: 1
 
 .. caution:: Nthreads must be equal to 1 if using MPI!
 
