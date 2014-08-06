@@ -72,15 +72,18 @@ model fitting process.</p>
 <div class="section" id="required-keywords">
 <h3>Required keywords<a class="headerlink" href="#required-keywords" title="Permalink to this headline">¶</a></h3>
 <p>The name of the target (used for plotting the best-fit model):</p>
-<div class="highlight-python"><div class="highlight"><pre>ObjectName: XMM03
+<div class="highlight-python"><div class="highlight"><pre># Name of the target
+ObjectName: XMM03
 </pre></div>
 </div>
 <p>The name of the fits image of the target:</p>
-<div class="highlight-python"><div class="highlight"><pre>ImageName: XMM03.concat.statwt.cont.mfs.fits
+<div class="highlight-python"><div class="highlight"><pre># Name of the fits image
+ImageName: XMM03.concat.statwt.cont.mfs.fits
 </pre></div>
 </div>
 <p>The name of the uvfits visibility data:</p>
-<div class="highlight-python"><div class="highlight"><pre>UVData: XMM03.concat.statwt.cont.uvfits
+<div class="highlight-python"><div class="highlight"><pre># Name of the uvfits visibility data
+UVData: XMM03.concat.statwt.cont.uvfits
 </pre></div>
 </div>
 <p>The number of walkers for emcee to use (must be more than double the number of
@@ -90,14 +93,14 @@ of walkers is 12.  I selected 24 to be on the safe side:</p>
 </pre></div>
 </div>
 <p>You must define at least one region.  The first region should be named
-<em>Region0</em>, the second <em>Region1</em>, etc.  Pay attention to the indentation; the
-remaining keywords must be indented to indicate they are sub-components of
-<em>Region0</em>:</p>
-<div class="highlight-python"><div class="highlight"><pre>Region0:
+<tt class="docutils literal"><span class="pre">Region0</span></tt>, the second <tt class="docutils literal"><span class="pre">Region1</span></tt>, etc.  Pay attention to the indentation;
+the remaining keywords must be indented to indicate they are sub-components of
+<tt class="docutils literal"><span class="pre">Region0</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre># First region
+Region0:
 
-Right Ascension center of the model image (degrees)::
-
-    RACentroid:
+  # Right Ascension center of the model image (degrees)::
+  RACentroid:
 </pre></div>
 </div>
 </div>
@@ -106,19 +109,22 @@ Right Ascension center of the model image (degrees)::
 <p>By default, the maximum likelihood estimate is used to measure the goodness of
 fit.  Alternatively, you may use the chi-squared value as the goodness of the
 fit via:</p>
-<div class="highlight-python"><div class="highlight"><pre>LogLike: chi2
+<div class="highlight-python"><div class="highlight"><pre># Goodness of fit measurement
+LogLike: chi2
 </pre></div>
 </div>
 <p>By default, parallel processing is not used.  To use parallel processing on a
 single machine, set the Nthreads variable to a number greater than 1.  For
 example,</p>
-<div class="highlight-python"><div class="highlight"><pre>Nthreads: 2
+<div class="highlight-python"><div class="highlight"><pre># Number of threads for multi-processing on a single computer
+Nthreads: 2
 </pre></div>
 </div>
 <p>If you have access to a computer cluster with many compute cores, you can use
 Message Passing Interface to greatly speed up the modeling process:</p>
-<div class="highlight-python"><div class="highlight"><pre>MPI: True
-Nthreads: 1
+<div class="highlight-python"><div class="highlight"><pre># Use Message Passing Interface
+MPI: True
+Nthreads: 2
 </pre></div>
 </div>
 <div class="admonition caution">
@@ -127,7 +133,9 @@ Nthreads: 1
 </div>
 <p>If you want to compare the model results with an image obtained at another
 wavelength (e.g., an <em>HST</em> image):</p>
-<div class="highlight-python"><div class="highlight"><pre>OpticalImage: /Users/rbussman/Papers/Bussmann_2014a/fitscutouts/XMM03_F110W.fits
+<div class="highlight-python"><div class="highlight"><pre># Alternative image name (used only for comparing with best-fit model)
+OpticalImage: /Users/rbussman/Papers/Bussmann_2014a/fitscutouts/XMM03_F110W.fits
+# Telescope and filter of alternative image
 OpticalTag: HST F110W
 </pre></div>
 </div>

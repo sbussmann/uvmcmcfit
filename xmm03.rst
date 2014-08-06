@@ -20,32 +20,37 @@ Required keywords
 
 The name of the target (used for plotting the best-fit model)::
 
+    # Name of the target
     ObjectName: XMM03
 
 The name of the fits image of the target::
  
+    # Name of the fits image
     ImageName: XMM03.concat.statwt.cont.mfs.fits
 
 The name of the uvfits visibility data::
 
+    # Name of the uvfits visibility data
     UVData: XMM03.concat.statwt.cont.uvfits
 
 The number of walkers for emcee to use (must be more than double the number of
 parameters).  In this case, there are only 6 parameters, so the minimum number
 of walkers is 12.  I selected 24 to be on the safe side::
     
+    # Number of walkers
     Nwalkers: 24
 
 You must define at least one region.  The first region should be named
-*Region0*, the second *Region1*, etc.  Pay attention to the indentation; the
-remaining keywords must be indented to indicate they are sub-components of
-*Region0*::
+``Region0``, the second ``Region1``, etc.  Pay attention to the indentation;
+the remaining keywords must be indented to indicate they are sub-components of
+``Region0``::
 
+    # First region
     Region0:
 
-    Right Ascension center of the model image (degrees)::
-
-        RACentroid:
+      # Right Ascension and Declination center of the model image (degrees)::
+      RACentroid: 36.449395
+      DecCentroid: -4.2974618
 
 Optional keywords
 ^^^^^^^^^^^^^^^^^
@@ -54,25 +59,30 @@ By default, the maximum likelihood estimate is used to measure the goodness of
 fit.  Alternatively, you may use the chi-squared value as the goodness of the
 fit via::
 
+    # Goodness of fit measurement
     LogLike: chi2
 
 By default, parallel processing is not used.  To use parallel processing on a
 single machine, set the Nthreads variable to a number greater than 1.  For
 example, ::
 
+    # Number of threads for multi-processing on a single computer
     Nthreads: 2
 
 If you have access to a computer cluster with many compute cores, you can use
 Message Passing Interface to greatly speed up the modeling process::
 
+    # Use Message Passing Interface
     MPI: True
-    Nthreads: 1
+    Nthreads: 2
 
 .. caution:: Nthreads must be equal to 1 if using MPI!
 
 If you want to compare the model results with an image obtained at another
 wavelength (e.g., an *HST* image)::
 
+    # Alternative image name (used only for comparing with best-fit model)
     OpticalImage: /Users/rbussman/Papers/Bussmann_2014a/fitscutouts/XMM03_F110W.fits
+    # Telescope and filter of alternative image    
     OpticalTag: HST F110W
 

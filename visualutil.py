@@ -183,7 +183,7 @@ def makeSBmap(config, fitresult, tag='', cleanup=True,
 
     return
 
-def makeVis(config):
+def makeVis(config, miriad=False):
 
     """
 
@@ -198,7 +198,6 @@ def makeVis(config):
 
     # get the list of uvfits files
     visfile = config['UVData']
-    miriad = config['UseMiriad']
     
     #----------------------------------------------------------------------
     # Python version of UVMODEL
@@ -640,11 +639,16 @@ def plotFit(config, fitresult, tag='', cleanup=True, showOptical=False,
     makeSBmap(config, fitresult, tag=tag, cleanup=True,
         showOptical=False, interactive=True)
 
+    # are we using miriad to image the best-fit model?
+    if config.keys().count('UseMiriad') > 0:
+        miriad = config['UseMiriad']
+    else:
+        miriad = False
+
     # make the simulated visibilities
-    makeVis(config)
+    makeVis(config, miriad=miriad)
 
     # image the simulated visibilities
-    miriad = config['UseMiriad']
     makeImage(config, miriad=miriad, interactive=interactive)
 
     # read in the images of the simulated visibilities
