@@ -48,9 +48,41 @@ the remaining keywords must be indented to indicate they are sub-components of
     # First region
     Region0:
 
-      # Right Ascension and Declination center of the model image (degrees)::
-      RACentroid: 36.449395
-      DecCentroid: -4.2974618
+        # Right Ascension and Declination center of the model image (degrees)::
+        RACentroid: 36.449395
+        DecCentroid: -4.2974618
+
+        # Factor by which to increase resolution of model image (integer)
+        Oversample: 1
+
+        # Angular radial extent of the model image (arcsec)
+        RadialExtent: 1.5
+
+        # Source0
+        Source0:
+
+            # total intrinsic flux density
+            IntrinsicFlux:
+                Limits: [1.0, 5.0, 10.0, 25.0]
+
+            # effective radius of elliptical Gaussian [sqrt(a*b)] (arcsec)
+            EffectiveRadius:
+                Limits: [0.01, 0.01, 1.2, 1.2]
+
+            # Offset in RA and Dec from RACentroid and DecCentroid (arcseconds)
+            DeltaRA:
+                Limits: [-0.4, -0.2, 0.2, 0.4]
+            DeltaDec:
+                Limits: [-0.4, -0.2, 0.2, 0.4]
+
+            # axial ratio = semi-minor axis / semi-major axis
+            AxialRatio:
+                Limits: [0.2, 0.3, 1.0, 1.0]
+
+            # position angle (degrees east of north)
+            PositionAngle:
+                Limits: [0.0, 0.0, 180.0, 180.0]
+      
 
 Optional keywords
 ^^^^^^^^^^^^^^^^^
