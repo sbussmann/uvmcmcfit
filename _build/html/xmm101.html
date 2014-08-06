@@ -75,10 +75,12 @@ model fitting process.</p>
 <div class="highlight-python"><div class="highlight"><pre># Name of the target
 ObjectName: XMM101
 
-# Name of the fits image
+# Name of the fits image; the pixel scale in this image sets the pixel
+# scale in the model image
 ImageName: XMM101.concat.statwt.cont.mfs.fits
 
-# Name of the uvfits visibility data
+# Name of the uvfits visibility data; the weights should be scaled such
+# that Sum(weights * real) ~ N_vis [see uvutil.statwt()]
 UVData: XMM101.concat.statwt.cont.uvfits
 
 # Number of walkers
@@ -89,19 +91,32 @@ Nwalkers: 24
 <p class="first admonition-title">Caution</p>
 <p class="last">The number of walkers used by emcee must be more than double the number of parameters).  In this case, there are only 6 parameters, so the minimum number of walkers is 12.  I selected 24 to be on the safe side.</p>
 </div>
-<p>You must define at least one region.  The first region should be named
-<tt class="docutils literal"><span class="pre">Region0</span></tt>, the second <tt class="docutils literal"><span class="pre">Region1</span></tt>, etc.  Pay attention to the indentation;
-the remaining keywords must be indented to indicate they are sub-components of
-<tt class="docutils literal"><span class="pre">Region0</span></tt>:</p>
+<p>Now for parameters that describe the geometry of the system.  You must define
+at least one region.  The first region should be named <tt class="docutils literal"><span class="pre">Region0</span></tt>, the second
+<tt class="docutils literal"><span class="pre">Region1</span></tt>, etc.  Pay attention to the indentation; the remaining keywords
+must be indented to indicate they are sub-components of <tt class="docutils literal"><span class="pre">Region0</span></tt>.  For each
+region, you must define a RA and Dec center, an angular radial extent that
+contains the emission which you are attempting to model, and at least one
+source.</p>
+<p>The first source should be named <tt class="docutils literal"><span class="pre">Source0</span></tt>, the second source should be named
+<tt class="docutils literal"><span class="pre">Source1</span></tt>, etc.  Each source must have the following parameters: the total
+intrinsic flux density (IntrinsicFlux [mJy]), the effective radius defined as
+sqrt(a*b) (EffectiveRadius [arcsec]), the offset in RA and Dec from RACentroid
+and DecCentroid (DeltaRA and DeltaDec [arcsec]), the axial ratio (AxialRatio),
+and the position angle in degrees east of north (PositionAngle [degrees]).</p>
+<p>For each source parameter, you must specify the lower and upper limits as well
+as how to initialize the walkers for that parameter.  This is done using the
+following syntax: <tt class="docutils literal"><span class="pre">Limits:</span> <span class="pre">[lower</span> <span class="pre">limit,</span> <span class="pre">lower</span> <span class="pre">initialization,</span> <span class="pre">upper</span>
+<span class="pre">initialization,</span> <span class="pre">upper</span> <span class="pre">limit]</span></tt>. So, for example, in the code snippet below for
+XMM101, <tt class="docutils literal"><span class="pre">Source0</span></tt> is permitted to have a total intrinsic flux density ranging
+from 1 to 25 mJy, but is initialized with a uniform probability density
+distribution between 5 and 10 mJy.</p>
 <div class="highlight-python"><div class="highlight"><pre># First region
 Region0:
 
     # Right Ascension and Declination center of the model image (degrees)::
     RACentroid: 36.449395
     DecCentroid: -4.2974618
-
-    # Factor by which to increase resolution of model image (integer)
-    Oversample: 1
 
     # Angular radial extent of the model image (arcsec)
     RadialExtent: 1.5

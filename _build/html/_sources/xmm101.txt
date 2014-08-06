@@ -23,10 +23,12 @@ A few house-keeping parameters::
     # Name of the target
     ObjectName: XMM101
  
-    # Name of the fits image
+    # Name of the fits image; the pixel scale in this image sets the pixel
+    # scale in the model image
     ImageName: XMM101.concat.statwt.cont.mfs.fits
 
-    # Name of the uvfits visibility data
+    # Name of the uvfits visibility data; the weights should be scaled such
+    # that Sum(weights * real) ~ N_vis [see uvutil.statwt()]
     UVData: XMM101.concat.statwt.cont.uvfits
     
     # Number of walkers
@@ -34,10 +36,30 @@ A few house-keeping parameters::
 
 .. caution:: The number of walkers used by emcee must be more than double the number of parameters).  In this case, there are only 6 parameters, so the minimum number of walkers is 12.  I selected 24 to be on the safe side.
 
-You must define at least one region.  The first region should be named
-``Region0``, the second ``Region1``, etc.  Pay attention to the indentation;
-the remaining keywords must be indented to indicate they are sub-components of
-``Region0``::
+Now for parameters that describe the geometry of the system.  You must define
+at least one region.  The first region should be named ``Region0``, the second
+``Region1``, etc.  Pay attention to the indentation; the remaining keywords
+must be indented to indicate they are sub-components of ``Region0``.  For each
+region, you must define a RA and Dec center, an angular radial extent that
+contains the emission which you are attempting to model, and at least one
+source.
+
+The first source should be named ``Source0``, the second source should be named
+``Source1``, etc.  Each source must have the following parameters: the total
+intrinsic flux density (IntrinsicFlux [mJy]), the effective radius defined as
+sqrt(a*b) (EffectiveRadius [arcsec]), the offset in RA and Dec from RACentroid
+and DecCentroid (DeltaRA and DeltaDec [arcsec]), the axial ratio (AxialRatio),
+and the position angle in degrees east of north (PositionAngle [degrees]).
+
+For each source parameter, you must specify the lower and upper limits as well
+as how to initialize the walkers for that parameter.  This is done using the
+following syntax: ``Limits: [lower limit, lower initialization, upper
+initialization, upper limit]``. So, for example, in the code snippet below for
+XMM101, ``Source0`` is permitted to have a total intrinsic flux density ranging
+from 1 to 25 mJy, but is initialized with a uniform probability density
+distribution between 5 and 10 mJy.
+
+::
 
     # First region
     Region0:
@@ -45,9 +67,6 @@ the remaining keywords must be indented to indicate they are sub-components of
         # Right Ascension and Declination center of the model image (degrees)::
         RACentroid: 36.449395
         DecCentroid: -4.2974618
-
-        # Factor by which to increase resolution of model image (integer)
-        Oversample: 1
 
         # Angular radial extent of the model image (arcsec)
         RadialExtent: 1.5
