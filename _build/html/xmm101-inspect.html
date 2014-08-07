@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Preliminary Setup Procedures &mdash; uvmcmcfit 0.1 documentation</title>
+    <title>Inspecting the Model Results for XMM101 &mdash; uvmcmcfit 0.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -26,8 +26,8 @@
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uvmcmcfit 0.1 documentation" href="index.html" />
     <link rel="up" title="XMM101: a single, unlensed galaxy" href="xmm101.html" />
-    <link rel="next" title="Configuring config.yaml" href="xmm101-config.html" />
-    <link rel="prev" title="XMM101: a single, unlensed galaxy" href="xmm101.html" /> 
+    <link rel="next" title="Accessing the Data Directly" href="xmm101-access.html" />
+    <link rel="prev" title="Running uvmcmcfit" href="usage.html" /> 
   </head>
   <body>
     <div class="related">
@@ -37,10 +37,10 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="xmm101-config.html" title="Configuring config.yaml"
+          <a href="xmm101-access.html" title="Accessing the Data Directly"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="xmm101.html" title="XMM101: a single, unlensed galaxy"
+          <a href="usage.html" title="Running uvmcmcfit"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li>
           <li><a href="examples.html" >Examples</a> &raquo;</li>
@@ -53,36 +53,27 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="preliminary-setup-procedures">
-<h1>Preliminary Setup Procedures<a class="headerlink" href="#preliminary-setup-procedures" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="inputs">
-<h2>Inputs<a class="headerlink" href="#inputs" title="Permalink to this headline">¶</a></h2>
-<ol class="arabic simple">
-<li>Establish a directory that contains data for the specific target for which
-you wish to measure a lens model.  This is the directory from which you will
-run the software.  I call this &#8220;uvfit00&#8221; for the first run on a given
-dataset, &#8220;uvfit01&#8221; for the second, etc.</li>
-<li>Inside this directory, you must ensure the following files are present:</li>
-</ol>
-<blockquote>
-<div><ul class="simple">
-<li>config.yaml: This is the configuration file that describes where the
-source of interest is located, what type of model to use for the lens and
-source, the name of the image of the target from your interferometric
-data, the name of the uvfits files containing the interferometric
-visibilities, and a few important processing options as well.  Syntax is
-<a class="reference external" href="http://www.yaml.org">yaml</a>.</li>
-<li>Image of the target from your interferometric data in fits format.  This
-image is used to set the spatial resolution of the model image (modified by
-an optional oversampling parameter).</li>
-<li>interferometric visibilities in uvfits format.</li>
+  <div class="section" id="inspecting-the-model-results-for-xmm101">
+<h1>Inspecting the Model Results for XMM101<a class="headerlink" href="#inspecting-the-model-results-for-xmm101" title="Permalink to this headline">¶</a></h1>
+<p>It is essential to inspect the results of the model fitting process to ensure
+the best-fit model and the associated parameter uncertainties are robust and
+acceptable.  <tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt> provides a suite of visualization routines that will
+assist you in this task.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="xmm101-access.html">Accessing the Data Directly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xmm101-convergence.html">Testing Convergence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xmm101-bestfit.html">Plot the Best-fit Model</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="xmm101-bestfit.html#some-preliminaries">Some Preliminaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xmm101-bestfit.html#the-simplest-best-fit-plot">The Simplest Best-fit Plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xmm101-bestfit.html#comparison-to-alternative-imaging">Comparison to Alternative Imaging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xmm101-bestfit.html#additional-options">Additional Options</a></li>
 </ul>
-</div></blockquote>
-</div>
-<div class="section" id="outputs">
-<h2>Outputs<a class="headerlink" href="#outputs" title="Permalink to this headline">¶</a></h2>
-<p>posteriorpdf.fits: model parameters for every MCMC iteration, in fits format.
-Use astropy (either the fits or table module) to inspect the results directly.</p>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="xmm101-goodfits.html">Plot Several Acceptable Model Fits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xmm101-posteriors.html">Plot the Posterior PDFs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="xmm101-covariance.html">Plot the Covariance Matrix</a></li>
+</ul>
 </div>
 </div>
 
@@ -92,24 +83,15 @@ Use astropy (either the fits or table module) to inspect the results directly.</
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Preliminary Setup Procedures</a><ul>
-<li><a class="reference internal" href="#inputs">Inputs</a></li>
-<li><a class="reference internal" href="#outputs">Outputs</a></li>
-</ul>
-</li>
-</ul>
-
   <h4>Previous topic</h4>
-  <p class="topless"><a href="xmm101.html"
-                        title="previous chapter">XMM101: a single, unlensed galaxy</a></p>
+  <p class="topless"><a href="usage.html"
+                        title="previous chapter">Running <tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt></a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="xmm101-config.html"
-                        title="next chapter">Configuring config.yaml</a></p>
+  <p class="topless"><a href="xmm101-access.html"
+                        title="next chapter">Accessing the Data Directly</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="_sources/setup.txt"
+    <li><a href="_sources/xmm101-inspect.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -136,10 +118,10 @@ Use astropy (either the fits or table module) to inspect the results directly.</
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="xmm101-config.html" title="Configuring config.yaml"
+          <a href="xmm101-access.html" title="Accessing the Data Directly"
              >next</a> |</li>
         <li class="right" >
-          <a href="xmm101.html" title="XMM101: a single, unlensed galaxy"
+          <a href="usage.html" title="Running uvmcmcfit"
              >previous</a> |</li>
         <li><a href="index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li>
           <li><a href="examples.html" >Examples</a> &raquo;</li>

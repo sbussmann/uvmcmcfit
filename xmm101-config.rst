@@ -1,22 +1,11 @@
-XMM101: a single, unlensed galaxy
-*********************************
-
-This example shows how to run ``uvmcmcfit`` on the simplest of systems: a
-single galaxy that is unaffected by lensing of any kind.
-
-.. toctree::
-    :maxdepth: 2
-
-    setup
-
 Configuring config.yaml
------------------------
+***********************
 
 config.yaml contains the instructions needed by ``uvmcmcfit`` to initiate the
 model fitting process.
 
 Required keywords
-^^^^^^^^^^^^^^^^^
+-----------------
 
 A few house-keeping parameters::
 
@@ -45,11 +34,12 @@ contains the emission which you are attempting to model, and at least one
 source.
 
 The first source should be named ``Source0``, the second source should be named
-``Source1``, etc.  Each source must have the following parameters: the total
-intrinsic flux density (IntrinsicFlux [mJy]), the effective radius defined as
-sqrt(a*b) (EffectiveRadius [arcsec]), the offset in RA and Dec from RACentroid
-and DecCentroid (DeltaRA and DeltaDec [arcsec]), the axial ratio (AxialRatio),
-and the position angle in degrees east of north (PositionAngle [degrees]).
+``Source1``, etc.  Sources are elliptical Gaussians.  Each source must have the
+following parameters: the total intrinsic flux density (IntrinsicFlux [mJy]),
+the effective radius defined as sqrt(a*b) (EffectiveRadius [arcsec]), the
+offset in RA and Dec from RACentroid and DecCentroid (DeltaRA and DeltaDec
+[arcsec]), the axial ratio (AxialRatio), and the position angle in degrees east
+of north (PositionAngle [degrees]).
 
 For each source parameter, you must specify the lower and upper limits as well
 as how to initialize the walkers for that parameter.  This is done using the
@@ -98,11 +88,11 @@ distribution between 5 and 10 mJy.
       
 
 Optional keywords
-^^^^^^^^^^^^^^^^^
+-----------------
 
 By default, the maximum likelihood estimate is used to measure the goodness of
-fit.  Alternatively, you may use the chi-squared value as the goodness of the
-fit via::
+fit.  Alternatively, you may use the chi-squared value as the goodness of fit
+criterion via::
 
     # Goodness of fit measurement
     LogLike: chi2

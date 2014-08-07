@@ -16,20 +16,13 @@ Inputs
    source, the name of the image of the target from your interferometric
    data, the name of the uvfits files containing the interferometric
    visibilities, and a few important processing options as well.  Syntax is
-   yaml.
+   `yaml <http://www.yaml.org>`_.
 
  * Image of the target from your interferometric data in fits format.  This
    image is used to set the spatial resolution of the model image (modified by
    an optional oversampling parameter).
 
  * interferometric visibilities in uvfits format.  
-
-3. More info about the constraints and priors input files.
-
-  * Lenses: The lenses are assumed to have singular isothermal ellipsoid
-    profiles.  
-
-  * Sources: Sources are represented by Gaussian profiles.  
 
 Outputs
 -------

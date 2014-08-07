@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>XMM101: a single, unlensed galaxy &mdash; uvmcmcfit 0.1 documentation</title>
+    <title>Configuring config.yaml &mdash; uvmcmcfit 0.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -25,9 +25,9 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uvmcmcfit 0.1 documentation" href="index.html" />
-    <link rel="up" title="Examples" href="examples.html" />
-    <link rel="next" title="Preliminary Setup Procedures" href="setup.html" />
-    <link rel="prev" title="Examples" href="examples.html" /> 
+    <link rel="up" title="XMM101: a single, unlensed galaxy" href="xmm101.html" />
+    <link rel="next" title="Running uvmcmcfit" href="usage.html" />
+    <link rel="prev" title="Preliminary Setup Procedures" href="setup.html" /> 
   </head>
   <body>
     <div class="related">
@@ -37,13 +37,14 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="setup.html" title="Preliminary Setup Procedures"
+          <a href="usage.html" title="Running uvmcmcfit"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="examples.html" title="Examples"
+          <a href="setup.html" title="Preliminary Setup Procedures"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li>
-          <li><a href="examples.html" accesskey="U">Examples</a> &raquo;</li> 
+          <li><a href="examples.html" >Examples</a> &raquo;</li>
+          <li><a href="xmm101.html" accesskey="U">XMM101: a single, unlensed galaxy</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -52,25 +53,12 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="xmm101-a-single-unlensed-galaxy">
-<h1>XMM101: a single, unlensed galaxy<a class="headerlink" href="#xmm101-a-single-unlensed-galaxy" title="Permalink to this headline">¶</a></h1>
-<p>This example shows how to run <tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt> on the simplest of systems: a
-single galaxy that is unaffected by lensing of any kind.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="setup.html">Preliminary Setup Procedures</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="setup.html#inputs">Inputs</a></li>
-<li class="toctree-l2"><a class="reference internal" href="setup.html#outputs">Outputs</a></li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section" id="configuring-config-yaml">
-<h2>Configuring config.yaml<a class="headerlink" href="#configuring-config-yaml" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="configuring-config-yaml">
+<h1>Configuring config.yaml<a class="headerlink" href="#configuring-config-yaml" title="Permalink to this headline">¶</a></h1>
 <p>config.yaml contains the instructions needed by <tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt> to initiate the
 model fitting process.</p>
 <div class="section" id="required-keywords">
-<h3>Required keywords<a class="headerlink" href="#required-keywords" title="Permalink to this headline">¶</a></h3>
+<h2>Required keywords<a class="headerlink" href="#required-keywords" title="Permalink to this headline">¶</a></h2>
 <p>A few house-keeping parameters:</p>
 <div class="highlight-python"><div class="highlight"><pre># Name of the target
 ObjectName: XMM101
@@ -99,11 +87,12 @@ region, you must define a RA and Dec center, an angular radial extent that
 contains the emission which you are attempting to model, and at least one
 source.</p>
 <p>The first source should be named <tt class="docutils literal"><span class="pre">Source0</span></tt>, the second source should be named
-<tt class="docutils literal"><span class="pre">Source1</span></tt>, etc.  Each source must have the following parameters: the total
-intrinsic flux density (IntrinsicFlux [mJy]), the effective radius defined as
-sqrt(a*b) (EffectiveRadius [arcsec]), the offset in RA and Dec from RACentroid
-and DecCentroid (DeltaRA and DeltaDec [arcsec]), the axial ratio (AxialRatio),
-and the position angle in degrees east of north (PositionAngle [degrees]).</p>
+<tt class="docutils literal"><span class="pre">Source1</span></tt>, etc.  Sources are elliptical Gaussians.  Each source must have the
+following parameters: the total intrinsic flux density (IntrinsicFlux [mJy]),
+the effective radius defined as sqrt(a*b) (EffectiveRadius [arcsec]), the
+offset in RA and Dec from RACentroid and DecCentroid (DeltaRA and DeltaDec
+[arcsec]), the axial ratio (AxialRatio), and the position angle in degrees east
+of north (PositionAngle [degrees]).</p>
 <p>For each source parameter, you must specify the lower and upper limits as well
 as how to initialize the walkers for that parameter.  This is done using the
 following syntax: <tt class="docutils literal"><span class="pre">Limits:</span> <span class="pre">[lower</span> <span class="pre">limit,</span> <span class="pre">lower</span> <span class="pre">initialization,</span> <span class="pre">upper</span>
@@ -149,10 +138,10 @@ Region0:
 </div>
 </div>
 <div class="section" id="optional-keywords">
-<h3>Optional keywords<a class="headerlink" href="#optional-keywords" title="Permalink to this headline">¶</a></h3>
+<h2>Optional keywords<a class="headerlink" href="#optional-keywords" title="Permalink to this headline">¶</a></h2>
 <p>By default, the maximum likelihood estimate is used to measure the goodness of
-fit.  Alternatively, you may use the chi-squared value as the goodness of the
-fit via:</p>
+fit.  Alternatively, you may use the chi-squared value as the goodness of fit
+criterion via:</p>
 <div class="highlight-python"><div class="highlight"><pre># Goodness of fit measurement
 LogLike: chi2
 </pre></div>
@@ -188,7 +177,6 @@ OpticalTag: HST F110W
 </div>
 </div>
 </div>
-</div>
 
 
           </div>
@@ -198,25 +186,22 @@ OpticalTag: HST F110W
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">XMM101: a single, unlensed galaxy</a><ul>
-<li><a class="reference internal" href="#configuring-config-yaml">Configuring config.yaml</a><ul>
+<li><a class="reference internal" href="#">Configuring config.yaml</a><ul>
 <li><a class="reference internal" href="#required-keywords">Required keywords</a></li>
 <li><a class="reference internal" href="#optional-keywords">Optional keywords</a></li>
 </ul>
 </li>
 </ul>
-</li>
-</ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="examples.html"
-                        title="previous chapter">Examples</a></p>
-  <h4>Next topic</h4>
   <p class="topless"><a href="setup.html"
-                        title="next chapter">Preliminary Setup Procedures</a></p>
+                        title="previous chapter">Preliminary Setup Procedures</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="usage.html"
+                        title="next chapter">Running <tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt></a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="_sources/xmm101.txt"
+    <li><a href="_sources/xmm101-config.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -243,13 +228,14 @@ OpticalTag: HST F110W
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="setup.html" title="Preliminary Setup Procedures"
+          <a href="usage.html" title="Running uvmcmcfit"
              >next</a> |</li>
         <li class="right" >
-          <a href="examples.html" title="Examples"
+          <a href="setup.html" title="Preliminary Setup Procedures"
              >previous</a> |</li>
         <li><a href="index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li>
-          <li><a href="examples.html" >Examples</a> &raquo;</li> 
+          <li><a href="examples.html" >Examples</a> &raquo;</li>
+          <li><a href="xmm101.html" >XMM101: a single, unlensed galaxy</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Examples &mdash; uvmcmcfit 0.1 documentation</title>
+    <title>Testing Convergence &mdash; uvmcmcfit 0.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -25,8 +25,9 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="uvmcmcfit 0.1 documentation" href="index.html" />
-    <link rel="next" title="XMM101: a single, unlensed galaxy" href="xmm101.html" />
-    <link rel="prev" title="Installation" href="install.html" /> 
+    <link rel="up" title="Inspecting the Model Results for XMM101" href="xmm101-inspect.html" />
+    <link rel="next" title="Plot the Best-fit Model" href="xmm101-bestfit.html" />
+    <link rel="prev" title="Accessing the Data Directly" href="xmm101-access.html" /> 
   </head>
   <body>
     <div class="related">
@@ -36,12 +37,15 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="xmm101.html" title="XMM101: a single, unlensed galaxy"
+          <a href="xmm101-bestfit.html" title="Plot the Best-fit Model"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="install.html" title="Installation"
+          <a href="xmm101-access.html" title="Accessing the Data Directly"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li>
+          <li><a href="examples.html" >Examples</a> &raquo;</li>
+          <li><a href="xmm101.html" >XMM101: a single, unlensed galaxy</a> &raquo;</li>
+          <li><a href="xmm101-inspect.html" accesskey="U">Inspecting the Model Results for XMM101</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -50,34 +54,20 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="examples">
-<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
-<p>This section contains three examples in order of increasing complexity to
-demonstrate usage of <tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt>.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="xmm101.html">XMM101: a single, unlensed galaxy</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="setup.html">Preliminary Setup Procedures</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="setup.html#inputs">Inputs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="setup.html#outputs">Outputs</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="xmm101-config.html">Configuring config.yaml</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="xmm101-config.html#required-keywords">Required keywords</a></li>
-<li class="toctree-l3"><a class="reference internal" href="xmm101-config.html#optional-keywords">Optional keywords</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="usage.html">Running <tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt></a></li>
-<li class="toctree-l2"><a class="reference internal" href="xmm101-inspect.html">Inspecting the Model Results for XMM101</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="xmm101-access.html">Accessing the Data Directly</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="adfs07.html">ADFS07: a single, strongly lensed galaxy</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cdfsm0.html">CDFS_M0: a strongly lensed galaxy, a weakly lensed galaxy, and a lens</a></li>
-</ul>
+  <div class="section" id="testing-convergence">
+<h1>Testing Convergence<a class="headerlink" href="#testing-convergence" title="Permalink to this headline">¶</a></h1>
+<p>The first step in determining whether you have an acceptable model is to plot
+the convergence profile of the goodness of fit estimate (by default, the
+maximum likelihood estimate).  You can do this using
+<tt class="xref py py-func docutils literal"><span class="pre">visualize.convergence()</span></tt></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">visualize</span>
+<span class="n">visualize</span><span class="o">.</span><span class="n">convergence</span><span class="p">()</span>
+</pre></div>
 </div>
+<p>This routine produces <em>convergence.png</em>, a plot of the difference between
+max(lnprob) and lnprob as a function of iteration.  This turns out to be a
+convenient way to visualize the convergence, but it does mean that the best-fit
+model is shown at the bottom of the plot.</p>
 </div>
 
 
@@ -87,14 +77,14 @@ demonstrate usage of <tt class="docutils literal"><span class="pre">uvmcmcfit</s
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="install.html"
-                        title="previous chapter">Installation</a></p>
+  <p class="topless"><a href="xmm101-access.html"
+                        title="previous chapter">Accessing the Data Directly</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="xmm101.html"
-                        title="next chapter">XMM101: a single, unlensed galaxy</a></p>
+  <p class="topless"><a href="xmm101-bestfit.html"
+                        title="next chapter">Plot the Best-fit Model</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="_sources/examples.txt"
+    <li><a href="_sources/xmm101-convergence.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -121,12 +111,15 @@ demonstrate usage of <tt class="docutils literal"><span class="pre">uvmcmcfit</s
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="xmm101.html" title="XMM101: a single, unlensed galaxy"
+          <a href="xmm101-bestfit.html" title="Plot the Best-fit Model"
              >next</a> |</li>
         <li class="right" >
-          <a href="install.html" title="Installation"
+          <a href="xmm101-access.html" title="Accessing the Data Directly"
              >previous</a> |</li>
-        <li><a href="index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li>
+          <li><a href="examples.html" >Examples</a> &raquo;</li>
+          <li><a href="xmm101.html" >XMM101: a single, unlensed galaxy</a> &raquo;</li>
+          <li><a href="xmm101-inspect.html" >Inspecting the Model Results for XMM101</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -35,7 +35,7 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
     fig = plt.figure(figsize=(12.0, 1.5 * nrow))
 
     # set up the plotting window
-    plt.subplots_adjust(left=0.08, bottom=0.1, right=0.95, top=0.95,
+    plt.subplots_adjust(left=0.08, bottom=0.15, right=0.95, top=0.95,
         wspace=0.4, hspace=0.65)
 
     pnames = fitresultsgood.names
