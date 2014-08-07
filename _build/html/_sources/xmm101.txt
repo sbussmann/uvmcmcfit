@@ -1,0 +1,13 @@
+XMM101: a single, unlensed galaxy
+*********************************
+
+This example shows how to run ``uvmcmcfit`` on the simplest of systems: a
+single galaxy that is unaffected by lensing of any kind.
+
+.. toctree::
+    :maxdepth: 2
+
+    setup
+    xmm101-config
+    usage
+    xmm101-inspect
