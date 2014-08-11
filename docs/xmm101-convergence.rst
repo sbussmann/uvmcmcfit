@@ -19,4 +19,4 @@ model fit has max(lnprob) - lnprob ~ 2e3.  Both values are fairly typical for
 a single unlensed source like XMM101.
 
 .. image::
-    media/ADFS07_convergence.png
+    media/XMM101_convergence.png
