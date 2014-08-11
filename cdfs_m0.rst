@@ -1,5 +1,5 @@
-CDFS_M0: a strongly lensed galaxy, a weakly lensed galaxy, and a sub-mm bright lens
-***********************************************************************************
+CDFS_M0: A Complex, Multi-component System
+******************************************
 
 This example shows how to run ``uvmcmcfit`` on a complex system: a strongly
 lensed galaxy, a weakly lensed galaxy, and a sub-mm bright lens. 

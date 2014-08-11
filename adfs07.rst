@@ -1,5 +1,5 @@
-ADFS07: a single, strongly lensed galaxy
-*********************************
+ADFS07: A Single, Strongly Lensed Galaxy
+****************************************
 
 This example shows how to run ``uvmcmcfit`` on the simplest strongly lensed
 system: a single galaxy that is lensed by a single intervening galaxy along the
