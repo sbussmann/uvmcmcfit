@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Configuring config.yaml &mdash; uvmcmcfit 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="uvmcmcfit 0.1 documentation" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="configuring-config-yaml">
+<h1>Configuring config.yaml<a class="headerlink" href="#configuring-config-yaml" title="Permalink to this headline">¶</a></h1>
+<p>config.yaml contains the instructions needed by <tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt> to initiate the
+model fitting process.</p>
+<div class="section" id="required-keywords">
+<h2>Required keywords<a class="headerlink" href="#required-keywords" title="Permalink to this headline">¶</a></h2>
+<p>A few house-keeping parameters:</p>
+<div class="highlight-python"><div class="highlight"><pre># Name of the target
+ObjectName: XMM101
+
+# Name of the fits image; the pixel scale in this image sets the pixel
+# scale in the model image
+ImageName: XMM101.concat.statwt.cont.mfs.fits
+
+# Name of the uvfits visibility data; the weights should be scaled such
+# that Sum(weights * real) ~ N_vis [see uvutil.statwt()]
+UVData: XMM101.concat.statwt.cont.uvfits
+
+# Number of walkers
+Nwalkers: 24
+</pre></div>
+</div>
+<div class="admonition caution">
+<p class="first admonition-title">Caution</p>
+<p class="last">The number of walkers used by emcee must be more than double the number of parameters).  In this case, there are only 6 parameters, so the minimum number of walkers is 12.  I selected 24 to be on the safe side.</p>
+</div>
+<p>Now for parameters that describe the geometry of the system.  You must define
+at least one region.  The first region should be named <tt class="docutils literal"><span class="pre">Region0</span></tt>, the second
+<tt class="docutils literal"><span class="pre">Region1</span></tt>, etc.  Pay attention to the indentation; the remaining keywords
+must be indented to indicate they are sub-components of <tt class="docutils literal"><span class="pre">Region0</span></tt>.  For each
+region, you must define a RA and Dec center, an angular radial extent that
+contains the emission which you are attempting to model, and at least one
+source.</p>
+<p>The first source should be named <tt class="docutils literal"><span class="pre">Source0</span></tt>, the second source should be named
+<tt class="docutils literal"><span class="pre">Source1</span></tt>, etc.  Sources are elliptical Gaussians.  Each source must have the
+following parameters: the total intrinsic flux density (IntrinsicFlux [mJy]),
+the effective radius defined as sqrt(a*b) (EffectiveRadius [arcsec]), the
+offset in RA and Dec from RACentroid and DecCentroid (DeltaRA and DeltaDec
+[arcsec]), the axial ratio (AxialRatio), and the position angle in degrees east
+of north (PositionAngle [degrees]).</p>
+<p>For each source parameter, you must specify the lower and upper limits as well
+as how to initialize the walkers for that parameter.  This is done using the
+following syntax: <tt class="docutils literal"><span class="pre">Limits:</span> <span class="pre">[lower</span> <span class="pre">limit,</span> <span class="pre">lower</span> <span class="pre">initialization,</span> <span class="pre">upper</span>
+<span class="pre">initialization,</span> <span class="pre">upper</span> <span class="pre">limit]</span></tt>. So, for example, in the code snippet below for
+XMM101, <tt class="docutils literal"><span class="pre">Source0</span></tt> is permitted to have a total intrinsic flux density ranging
+from 1 to 25 mJy, but is initialized with a uniform probability density
+distribution between 5 and 10 mJy.</p>
+<div class="highlight-python"><div class="highlight"><pre># First region
+Region0:
+
+    # Right Ascension and Declination center of the model image (degrees)::
+    RACentroid: 36.449395
+    DecCentroid: -4.2974618
+
+    # Angular radial extent of the model image (arcsec)
+    RadialExtent: 1.5
+
+    # Source0
+    Source0:
+
+        # total intrinsic flux density
+        IntrinsicFlux:
+            Limits: [1.0, 5.0, 10.0, 25.0]
+
+        # effective radius of elliptical Gaussian [sqrt(a*b)] (arcsec)
+        EffectiveRadius:
+            Limits: [0.01, 0.01, 1.2, 1.2]
+
+        # Offset in RA and Dec from RACentroid and DecCentroid (arcseconds)
+        DeltaRA:
+            Limits: [-0.4, -0.2, 0.2, 0.4]
+        DeltaDec:
+            Limits: [-0.4, -0.2, 0.2, 0.4]
+
+        # axial ratio = semi-minor axis / semi-major axis
+        AxialRatio:
+            Limits: [0.2, 0.3, 1.0, 1.0]
+
+        # position angle (degrees east of north)
+        PositionAngle:
+            Limits: [0.0, 0.0, 180.0, 180.0]
+</pre></div>
+</div>
+</div>
+<div class="section" id="optional-keywords">
+<h2>Optional keywords<a class="headerlink" href="#optional-keywords" title="Permalink to this headline">¶</a></h2>
+<p>By default, the maximum likelihood estimate is used to measure the goodness of
+fit.  Alternatively, you may use the chi-squared value as the goodness of fit
+criterion via:</p>
+<div class="highlight-python"><div class="highlight"><pre># Goodness of fit measurement
+LogLike: chi2
+</pre></div>
+</div>
+<p>By default, parallel processing is not used.  To use parallel processing on a
+single machine, set the Nthreads variable to a number greater than 1.  For
+example,</p>
+<div class="highlight-python"><div class="highlight"><pre># Number of threads for multi-processing on a single computer
+Nthreads: 2
+</pre></div>
+</div>
+<p>If you have access to a computer cluster with many compute cores, you can use
+Message Passing Interface to greatly speed up the modeling process:</p>
+<div class="highlight-python"><div class="highlight"><pre># Use Message Passing Interface
+MPI: True
+Nthreads: 1
+</pre></div>
+</div>
+<div class="admonition caution">
+<p class="first admonition-title">Caution</p>
+<p class="last">Nthreads must be equal to 1 if using MPI!</p>
+</div>
+<p>If you want to compare the model results with an image obtained at another
+wavelength (e.g., an <em>HST</em> image), you must specify the location of the
+alternative image as well as the telescope and filter used to obtain the
+image:</p>
+<div class="highlight-python"><div class="highlight"><pre># Alternative image name (used only for comparing with best-fit model)
+OpticalImage: XMM101_F110W.fits
+
+# Telescope and filter of alternative image
+OpticalTag: HST F110W
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Configuring config.yaml</a><ul>
+<li><a class="reference internal" href="#required-keywords">Required keywords</a></li>
+<li><a class="reference internal" href="#optional-keywords">Optional keywords</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/docs/xmm101-config.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Shane Bussmann.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

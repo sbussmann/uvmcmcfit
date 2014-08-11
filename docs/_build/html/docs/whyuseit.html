@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Why Use uvmcmcfit? &mdash; uvmcmcfit 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="uvmcmcfit 0.1 documentation" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="why-use-uvmcmcfit">
+<h1>Why Use <tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt>?<a class="headerlink" href="#why-use-uvmcmcfit" title="Permalink to this headline">¶</a></h1>
+<p>Here are three reasons why you might be interested in using <tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt>.</p>
+<div class="section" id="markov-chain-monte-carlo">
+<h2>Markov Chain Monte Carlo<a class="headerlink" href="#markov-chain-monte-carlo" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt> uses D. Foreman-Mackey&#8217;s <a class="reference external" href="http://dan.iel.fm/emcee/current/">emcee</a> to do Markov Chain Monte Carlo (MCMC).
+<a class="reference external" href="http://dan.iel.fm/emcee/current/">emcee</a> is an affine-invariant MCMC
+ensemble sampler that is efficient at identifying the best-fit model and the
+uncertainties on the parameters of the model.</p>
+</div>
+<div class="section" id="interferometry">
+<h2>Interferometry<a class="headerlink" href="#interferometry" title="Permalink to this headline">¶</a></h2>
+<p>Interferometers measure visibilities, not images.  In many situations (e.g.,
+strong gravitational lensing), it is advantageous to measure the goodness of
+fit from the visibilities rather than the deconvolved images.</p>
+<p><tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt> includes a pure-Python adaptation of Miriad&#8217;s <tt class="docutils literal"><span class="pre">uvmodel</span></tt> task
+that allows it to generate simulated visibilities given observed visibilities
+and a model image.</p>
+</div>
+<div class="section" id="gravitational-lensing">
+<h2>Gravitational Lensing<a class="headerlink" href="#gravitational-lensing" title="Permalink to this headline">¶</a></h2>
+<p>Many of the brightest galaxies that have been observed by interferometers are
+gravitationally lensed by an intervening galaxy or group of galaxies along the
+line of sight.  Understanding the intrinsic properties of the lensed galaxies
+requires a lens model.</p>
+<p><tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt> includes a simple ray-tracing routine that allows it to account
+for both strongly lensed systems (where multiple images of the lensed galaxy
+are detected) and weakly lensed systems (where only a single image of the
+lensed galaxy is detected).</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Why Use <tt class="docutils literal"><span class="pre">uvmcmcfit</span></tt>?</a><ul>
+<li><a class="reference internal" href="#markov-chain-monte-carlo">Markov Chain Monte Carlo</a></li>
+<li><a class="reference internal" href="#interferometry">Interferometry</a></li>
+<li><a class="reference internal" href="#gravitational-lensing">Gravitational Lensing</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/docs/whyuseit.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../index.html">uvmcmcfit 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Shane Bussmann.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
