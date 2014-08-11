@@ -1,0 +1,9 @@
+cp adfs07-access.rst           cdfs_m0-access.rst          
+cp adfs07-bestfit.rst          cdfs_m0-bestfit.rst
+cp adfs07-config.rst           cdfs_m0-config.rst
+cp adfs07-convergence.rst      cdfs_m0-convergence.rst
+cp adfs07-covariance.rst       cdfs_m0-covariance.rst
+cp adfs07-goodfits.rst         cdfs_m0-goodfits.rst
+cp adfs07-inspect.rst          cdfs_m0-inspect.rst
+cp adfs07-posteriors.rst       cdfs_m0-posteriors.rst
+cp adfs07.rst                  cdfs_m0.rst

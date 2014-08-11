@@ -9,4 +9,4 @@ demonstrate usage of ``uvmcmcfit``.
 
     xmm101
     adfs07
-    cdfsm0
+    cdfs_m0

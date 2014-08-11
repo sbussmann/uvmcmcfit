@@ -92,7 +92,7 @@ visibilities.  White and black contours trace positive and negative contours,
 respectively.
 
 In this case, the model provides a good fit.  There is evidence that the source
-is elongated in a direction perpendicular to the semi-minor axis of the
+is elongated in a direction perpendicular to the semi-major axis of the
 synthesized beam.
 
 Comparison to Alternative Imaging
