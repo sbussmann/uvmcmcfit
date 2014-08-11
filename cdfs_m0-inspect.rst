@@ -1,5 +1,5 @@
 Inspecting the Model Results for CDFS_M0
-***************************************
+****************************************
 
 It is essential to inspect the results of the model fitting process to ensure
 the best-fit model and the associated parameter uncertainties are robust and
