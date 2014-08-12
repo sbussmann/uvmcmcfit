@@ -1,6 +1,8 @@
 uvmcmcfit
 =========
 
+Detailed documentation is available at http://uvmcmcfit.readthedocs.org/
+
 Python software to fit models to interferometric data, appropriately accounting for gravitational lensing as needed.
 
 --------------------------
