@@ -345,9 +345,9 @@ if filetype == 'uvfits':
     uvfits = True
 else:
     uvfits = False
-uuu, vvv = uvutil.uvload(visfile, uvfits=uvfits)
-pcd = uvutil.pcdload(visfile, uvfits=uvfits)
-vis_complex, wgt = uvutil.visload(visfile, uvfits=uvfits)
+uuu, vvv = uvutil.uvload(visfile)
+pcd = uvutil.pcdload(visfile)
+vis_complex, wgt = uvutil.visload(visfile)
 
 # remove the data points with zero or negative weight
 positive_definite = wgt > 0
