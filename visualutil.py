@@ -183,7 +183,7 @@ def makeSBmap(config, fitresult, tag='', cleanup=True,
 
     return
 
-def makeVis(config, miriad=False):
+def makeVis(config, miriad=False, idtag=''):
 
     """
 
@@ -214,16 +214,16 @@ def makeVis(config, miriad=False):
 
     visfile = name + tag
     SBmapLoc = 'LensedSBmap.fits'
-    modelvisfile = name + '_model' + tag
+    modelvisfile = name + '_model_' + idtag + tag
     os.system('rm -rf ' + modelvisfile)
     uvmodel.replace(SBmapLoc, visfile, modelvisfile, miriad=miriad)
     
     # Python version of UVMODEL's "subtract" subroutine:
-    modelvisfile = name + '_residual' + tag
+    modelvisfile = name + '_residual_' + idtag + tag
     os.system('rm -rf ' + modelvisfile)
     uvmodel.subtract(SBmapLoc, visfile, modelvisfile, miriad=miriad)
 
-def makeImage(config, interactive=True, miriad=False):
+def makeImage(config, interactive=True, miriad=False, idtag=''):
 
     """
 
@@ -284,7 +284,7 @@ def makeImage(config, interactive=True, miriad=False):
         index = visfile.find('.uvfits')
         name = visfile[0:index]
         imloc = target + '_model'
-        miriadmodelvisloc = name + '_model.ms'
+        miriadmodelvisloc = name + '_model_' + idtag + '.ms'
         os.system('rm -rf ' + imloc + '*')
         clean(vis=miriadmodelvisloc, imagename=imloc, mode='mfs', niter=10000,
             threshold='0.2mJy', interactive=interactive, mask=mask, 
@@ -296,7 +296,7 @@ def makeImage(config, interactive=True, miriad=False):
 
         # invert and clean the residual visibilities
         imloc = target + '_residual'
-        miriadmodelvisloc = name + '_residual.ms'
+        miriadmodelvisloc = name + '_residual_' + idtag + '.ms'
         os.system('rm -rf ' + imloc + '*')
         clean(vis=miriadmodelvisloc, imagename=imloc, mode='mfs', niter=10000,
             threshold='0.2mJy', interactive=interactive, mask=mask, 
@@ -646,10 +646,10 @@ def plotFit(config, fitresult, tag='', cleanup=True, showOptical=False,
         miriad = False
 
     # make the simulated visibilities
-    makeVis(config, miriad=miriad)
+    makeVis(config, miriad=miriad, idtag=tag)
 
     # image the simulated visibilities
-    makeImage(config, miriad=miriad, interactive=interactive)
+    makeImage(config, miriad=miriad, interactive=interactive, idtag=tag)
 
     # read in the images of the simulated visibilities
     objectname = config['ObjectName']
