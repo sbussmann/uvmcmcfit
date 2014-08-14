@@ -248,13 +248,13 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
     # compute the sigma term
     #sigmaterm_real = numpy.log(2 * numpy.pi / wgt)
     #sigmaterm_imag = numpy.log(2 * numpy.pi * modvariance_imag)
-    sigmaterm_all = 2 * numpy.log(2 * numpy.pi / wgt)
 
     # compute the ln likelihood
     lnlikemethod = paramSetup['lnlikemethod']
     if lnlikemethod == 'chi2':
         lnlike = chi2_all
     else:
+        sigmaterm_all = 2 * numpy.log(2 * numpy.pi / wgt)
         lnlike = chi2_all + sigmaterm_all
 
     # compute number of degrees of freedom

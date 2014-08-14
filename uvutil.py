@@ -70,8 +70,12 @@ def uvload(visfile):
             nspw = visibilities['DATA'][0, 0, 0, :, 0, 0, 0].size
             nfreq = visibilities['DATA'][0, 0, 0, 0, :, 0, 0].size
             npol = visibilities['DATA'][0, 0, 0, 0, 0, :, 0].size
-            uu = numpy.zeros([nvis, nspw, nfreq, npol])
-            vv = numpy.zeros([nvis, nspw, nfreq, npol])
+            if nfreq > 1:
+                uu = numpy.zeros([nvis, nspw, nfreq, npol])
+                vv = numpy.zeros([nvis, nspw, nfreq, npol])
+            else:
+                uu = numpy.zeros([nvis, nspw, npol])
+                vv = numpy.zeros([nvis, nspw, npol])
             #wgt = numpy.zeros([nvis, nspw, nfreq, npol])
             for ispw in range(nspw):
                 if nspw > 1:
@@ -89,8 +93,8 @@ def uvload(visfile):
                         freqvis = numpy.meshgrid(freq, visibilities['VV'])
                         vv[:, ispw, :, ipol] = freqvis[0] * freqvis[1]
                     else:
-                        uu[:, ispw, 0, ipol] = freqif * visibilities['UU']
-                        vv[:, ispw, 0, ipol] = freqif * visibilities['VV']
+                        uu[:, ispw, ipol] = freqif * visibilities['UU']
+                        vv[:, ispw, ipol] = freqif * visibilities['VV']
 
         if visheader['NAXIS'] == 6:
 
@@ -175,9 +179,9 @@ def visload(visfile):
 
         # if we are dealing with ALMA or PdBI data
         if visheader['NAXIS'] == 7:
-            data_real = visdata[0].data['DATA'][:,0,0,0,0,:,0]
-            data_imag = visdata[0].data['DATA'][:,0,0,0,0,:,1]
-            data_wgt = visdata[0].data['DATA'][:,0,0,0,0,:,2]
+            data_real = visdata[0].data['DATA'][:,0,0,:,0,:,0]
+            data_imag = visdata[0].data['DATA'][:,0,0,:,0,:,1]
+            data_wgt = visdata[0].data['DATA'][:,0,0,:,0,:,2]
 
         data_complex = numpy.array(data_real) + \
                 1j * numpy.array(data_imag)
