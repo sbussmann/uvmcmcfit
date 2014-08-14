@@ -145,7 +145,10 @@ def loadParams(config):
     nwalkers = config['Nwalkers']
 
     # Determine method of computing lnlike
-    lnlikemethod = config['LogLike']
+    if config.keys().count('LogLike') > 0:
+        lnlikemethod = config['LogLike']
+    else:
+        lnlikemethod = 'MLE'
 
     # determine the number of regions for which we need surface brightness maps
     configkeys = config.keys()
@@ -178,7 +181,10 @@ def loadParams(config):
         ra_centroid = cfdr['RACentroid']
         dec_centroid = cfdr['DecCentroid']
         extent = cfdr['RadialExtent']
-        oversample = cfdr['Oversample']
+        if cfdr.keys().count('Oversample') > 0:
+            oversample = cfdr['Oversample']
+        else:
+            oversample = 1
 
         # count the number of lenses
         configkeys = cfdr.keys()
@@ -335,7 +341,10 @@ def loadParams(config):
                 pname.append(nametag)
 
             # get the model type
-            model_types_source.append(cfdrs['LightProfile'])
+            if cfdrs.keys().count('LightProfile') > 0:
+                model_types_source.append(cfdrs['LightProfile'])
+            else:
+                model_types_source.append('Gaussian')
 
         # append the set of model types for this region
         model_types.append(model_types_source)

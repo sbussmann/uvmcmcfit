@@ -301,7 +301,10 @@ config = yaml.load(configfile)
 
 
 # Determine parallel processing options
-mpi = config['MPI']
+if config.keys().count('MPI') > 0:
+    mpi = config['MPI']
+else:
+    mpi = False
 
 # multiple processors on a cluster using MPI
 if mpi:
@@ -322,8 +325,11 @@ if mpi:
 # Single processor with Nthreads cores
 else:
 
-    # set the number of threads to use for parallel processing
-    Nthreads = config['Nthreads']
+    if config.keys().count('Nthreads') > 0:
+        # set the number of threads to use for parallel processing
+        Nthreads = config['Nthreads']
+    else:
+        Nthreads = 1
 
     # Initialize the pool object
     pool = ''
