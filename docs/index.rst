@@ -13,15 +13,16 @@ interferometers like the Atacama Large Millimeter Array (ALMA), Submillimeter
 Array (SMA), and Plateau de Bure Interferometer (PdBI).
 
 ``uvmcmcfit`` has been thoroughly tested on continuum imaging from ALMA
-(Bussmann et al., in prep.) and SMA (Bussmann et al. 2012, 2013).  It has also
-been tested on spectral line imaging from PdBI (Oteo Gomez et al. in prep.) and
-SMA (Bradli et al., in prep.).
+(Bussmann et al., in prep.), SMA (Bussmann et al. 2012, 2013), and PdBI
+(Miettenen et al., in prep.).  It has also been tested on spectral line imaging
+from PdBI (Oteo et al. in prep.) and SMA (Bradli et al., in prep.).
 
 .. toctree::
     :maxdepth: 2
 
     whyuseit
     install
+    inputformat
     examples
 
 
