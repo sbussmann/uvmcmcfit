@@ -63,7 +63,7 @@ the scatter in the visibilities within a given spectral window.
 
 .. Note::
 
-    You can use the ``ExcludeChannels`` option exclude certain channels from
+    You can use the ``ExcludeChannels`` option to exclude certain channels from
     being considered when computing the scatter in the visibilities (e.g. so
     that a strong line does not bias the rms measurement too high).  Do this by
     defining a list that contains pairs of start and end channels.  All
