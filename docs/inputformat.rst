@@ -37,8 +37,9 @@ job of setting the amplitude of the weights.
 .. Note::
 
     In future versions of CASA, the plan (as I understand it) is to set both
-    the relative and absolute value of the weights rigorously.  Until then, the
-    following advice might be useful to you.
+    the relative and absolute value of the weights rigorously.  For now, only
+    the relative value of the weights is meaningful, so the following advice
+    might be useful to you.
 
 A CASA routine exists to re-compute the weights based on the scatter in the
 visibilities within a spectral window (spw).  This task is called ``statwt``.
