@@ -235,7 +235,9 @@ def statwt(visfileloc, newvisfileloc, ExcludeChannels=False):
     """
 
     visfile = fits.open(visfileloc)
-    data_real, data_imag, data_wgt = visload(visfile)
+    data_complex, data_wgt = visload(visfileloc)
+    data_real = numpy.real(data_complex)
+    data_imag = numpy.imag(data_complex)
     wgt_original = data_wgt.copy()
 
     if ExcludeChannels:

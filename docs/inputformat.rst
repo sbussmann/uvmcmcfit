@@ -46,13 +46,39 @@ visibilities within a spectral window (spw).  This task is called ``statwt``.
 I found that this routine worked well within CASA, but when I exported the
 results to a uvfits file (using ``exportuvfits``), the normalization of the
 weights was off.  So I wrote my own version of CASA's ``statwt``:
-:func:`uvutil.statwt`.  Here is an example of how you would use it::
+:func:`uvutil.statwt`.  Using it properly is more convoluted than I would like
+at the moment, but it works.  
+
+First, you need to export a uvfits file that contains visibility data as
+function of frequency.  Let's call this file 'defaultweights_frequency.uvfits'.
+You then call :func:`uvutil.statwt` as in the following example::
 
     import uvutil
-    uvutil.statwt('defaultweights.uvfits', 'statwtweights.uvfits')
+    uvutil.statwt('defaultweights_frequency.uvfits', 'statwtweights_frequency.uvfits')
 
-where 'defaultweights.uvfits' is the visibility dataset with the default
-weights and 'statwtweights.uvfits' is a new file that is created by
-:func:`uvutil.statwt` that has the weights recomputed according to the scatter
-in the visibilities within a given spectral window.  You would then use
-'statwtwights.uvfits' as the input file for ``uvmcmcfit``.
+.. Note::
+
+    You can use the ``ExcludeChannels`` option exclude certain channels from
+    being considered when computing the scatter in the visibilities (e.g. so
+    that a strong line does not bias the rms measurement too high).  Do this by
+    defining a list that contains pairs of start and end channels.  All
+    channels between (and including) the start and end channels will be
+    excluded when computing the rms scatter in the visibilities.  For example,
+    uvutil.statwt('defaultweights_frequency.uvfits',
+    'statwtweights_frequency.uvfits', ExcludeChannels=[45,145]) will ensure
+    that channels 45 to 145 will not be considered when computing the rms
+    scatter in the visibilities.
+
+where 'defaultweights_frequency.uvfits' is the visibility dataset with the
+default weights and 'statwtweights_frequency.uvfits' is a new file that is
+created by :func:`uvutil.statwt` that has the weights recomputed according to
+the scatter in the visibilities within a given spectral window.
+
+Next, import the new uvfits file back into CASA using ``importuvfits``.
+
+Next, average over the channels of interest to create the single-channel
+visibility dataset of interest.  Do this in CASA using ``split``.
+
+Next export the output from ``split`` to a uvfits file using ``exportuvfits``.
+This is the file that you will use as input for ``uvmcmcfit``.
+
