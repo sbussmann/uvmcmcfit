@@ -56,6 +56,11 @@ You then call :func:`uvutil.statwt` as in the following example::
     import uvutil
     uvutil.statwt('defaultweights_frequency.uvfits', 'statwtweights_frequency.uvfits')
 
+where 'defaultweights_frequency.uvfits' is the visibility dataset with the
+default weights and 'statwtweights_frequency.uvfits' is a new file that is
+created by :func:`uvutil.statwt` that has the weights recomputed according to
+the scatter in the visibilities within a given spectral window.
+
 .. Note::
 
     You can use the ``ExcludeChannels`` option exclude certain channels from
@@ -68,11 +73,6 @@ You then call :func:`uvutil.statwt` as in the following example::
     'statwtweights_frequency.uvfits', ExcludeChannels=[45,145]) will ensure
     that channels 45 to 145 will not be considered when computing the rms
     scatter in the visibilities.
-
-where 'defaultweights_frequency.uvfits' is the visibility dataset with the
-default weights and 'statwtweights_frequency.uvfits' is a new file that is
-created by :func:`uvutil.statwt` that has the weights recomputed according to
-the scatter in the visibilities within a given spectral window.
 
 Next, import the new uvfits file back into CASA using ``importuvfits``.
 
