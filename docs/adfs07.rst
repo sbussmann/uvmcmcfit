@@ -8,7 +8,7 @@ line of sight.
 .. toctree::
     :maxdepth: 2
 
-    setup
+    adfs07-setup
     adfs07-config
-    usage
+    adfs07-usage
     adfs07-inspect

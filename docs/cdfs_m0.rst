@@ -7,7 +7,7 @@ lensed galaxy, a weakly lensed galaxy, and a sub-mm bright lens.
 .. toctree::
     :maxdepth: 2
 
-    setup
+    cdfs_m0-setup
     cdfs_m0-config
-    usage
+    cdfs_m0-usage
     cdfs_m0-inspect

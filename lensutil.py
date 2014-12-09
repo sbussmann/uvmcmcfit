@@ -57,23 +57,27 @@ def delta_2d(x, y, par):
       par: vector of parameters, defined as follows:
         par[0]: x-center
         par[1]: y-center
+        par[2]: radius of a single pixel
+        par[3-5]: unused
         
     RETURNS: 2D Delta function evaluated at x-y coords
 
     WRITTEN: R. S. Bussmann, 2013 November, Cornell University
     """
-    (xnew,ynew) = xy_rotate(x, y, -par[0], par[1], 0.)
-    r_ell_sq = ((xnew**2)*par[4] + (ynew**2)/par[4]) / N.abs(par[1])**2
-    ellipse = r_ell_sq.copy()
-    ellipse[:] = 0.
-    inside = xnew < par[0]
-    ellipse[inside] = 1.
+    square = x.copy()
+    square[:] = 0.
+    offx = x - par[0]
+    offy = y - par[1]
+    offset = N.sqrt(offx ** 2 + offy ** 2)
+    index = offset < par[2]
+    #xspot = x[:, 0] == par[0]
+    #yspot = y[0, :] == par[1]
+    square[index] = 1.0
+    #import pdb; pdb.set_trace()
     #import matplotlib.pyplot as plt
-    #plt.imshow(r_ell_sq, origin='lower', vmax=10*par[1])
-    #plt.colorbar()
-    #plt.contour(ellipse)
+    #plt.imshow(square, origin='lower')
     #plt.show()
-    return ellipse
+    return square
 
 def ellipse_2d(x, y, par):
     """
@@ -271,6 +275,8 @@ def sbmap(x, y, nlens, nsource, parameters, model_types):
 
         # compute the peak flux of the unlensed Gaussian
         model_type = model_types[i]
+        if model_type == 'Delta':
+            g_image = delta_2d(x, y, gpar)
         if model_type == 'Gaussian':
             g_image = gauss_2d(x, y, gpar)
         if model_type == 'cylinder':
@@ -279,7 +285,8 @@ def sbmap(x, y, nlens, nsource, parameters, model_types):
         if totalflux == 0:
             totalflux = 1.
         normflux = parameters[i6 + interindx] / totalflux
-        gpar[0] *= normflux * 1e-3
+        if model_types[i] != 'Delta':
+            gpar[0] *= normflux * 1e-3
 
         # re-evaluate unlensed image with normalized flux
         if model_type == 'Gaussian':
@@ -289,6 +296,8 @@ def sbmap(x, y, nlens, nsource, parameters, model_types):
 
         if nlens > 0:
             # Evaluate lensed Gaussian image:
+            if model_type == 'Delta':
+                tmplens = delta_2d(dx, dy, gpar)
             if model_type == 'Gaussian':
                 tmplens = gauss_2d(dx, dy, gpar)
             if model_type == 'cylinder':
@@ -296,6 +305,8 @@ def sbmap(x, y, nlens, nsource, parameters, model_types):
             g_lensimage += tmplens
         else:
             # Use the unlensed (but normalized) Gaussian image
+            if model_type == 'Delta':
+                tmplens = delta_2d(x, y, gpar)
             if model_type == 'Gaussian':
                 tmplens = gauss_2d(x, y, gpar)
             if model_type == 'cylinder':

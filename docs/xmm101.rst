@@ -7,7 +7,7 @@ single galaxy that is unaffected by lensing of any kind.
 .. toctree::
     :maxdepth: 2
 
-    setup
+    xmm101-setup
     xmm101-config
-    usage
+    xmm101-usage
     xmm101-inspect
