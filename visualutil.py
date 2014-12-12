@@ -172,36 +172,38 @@ def makeSBmap(config, fitresult, tag='', cleanup=True,
         SBmap, LensedSBmap, Aperture, LensedAperture, mu_tot, mu_mask = \
                 lensutil.sbmap(x, y, nlens, nsource, parameters, model_types)
 
-        deltapar = parameters[0:nparlens + nparpersource]
-        refine = 2
-        nx = x[:, 0].size * refine
-        ny = y[:, 0].size * refine
-        x1 = x[0, :].min()
-        x2 = x[0, :].max()
-        linspacex = numpy.linspace(x1, x2, nx)
-        y1 = y[:, 0].min()
-        y2 = y[:, 0].max()
-        linspacey = numpy.linspace(y1, y2, ny)
-        onex = numpy.ones(nx)
-        oney = numpy.ones(ny)
-        finex = numpy.outer(oney, linspacex)
-        finey = numpy.outer(linspacey, onex)
-        
-        mumap = numpy.zeros([ny, nx])
-        for ix in range(nx):
-            for iy in range(ny):
-                deltapar[-nparpersource + 0] = finex[ix, iy]
-                deltapar[-nparpersource + 1] = finey[ix, iy]
-                xcell = paramData['celldata']
-                deltapar[-nparpersource + 2] = xcell
-                deltaunlensed, deltalensed, A1, A2, mu_xy, mu_xymask = \
-                        lensutil.sbmap(finex, finey, nlens, 1, deltapar, ['Delta'])
-                mumap[ix, iy] = mu_xy[0]
+        caustics = False
+        if caustics:
+            deltapar = parameters[0:nparlens + nparpersource]
+            refine = 2
+            nx = x[:, 0].size * refine
+            ny = y[:, 0].size * refine
+            x1 = x[0, :].min()
+            x2 = x[0, :].max()
+            linspacex = numpy.linspace(x1, x2, nx)
+            y1 = y[:, 0].min()
+            y2 = y[:, 0].max()
+            linspacey = numpy.linspace(y1, y2, ny)
+            onex = numpy.ones(nx)
+            oney = numpy.ones(ny)
+            finex = numpy.outer(oney, linspacex)
+            finey = numpy.outer(linspacey, onex)
+            
+            mumap = numpy.zeros([ny, nx])
+            for ix in range(nx):
+                for iy in range(ny):
+                    deltapar[-nparpersource + 0] = finex[ix, iy]
+                    deltapar[-nparpersource + 1] = finey[ix, iy]
+                    xcell = paramData['celldata']
+                    deltapar[-nparpersource + 2] = xcell
+                    deltaunlensed, deltalensed, A1, A2, mu_xy, mu_xymask = \
+                            lensutil.sbmap(finex, finey, nlens, 1, deltapar, ['Delta'])
+                    mumap[ix, iy] = mu_xy[0]
 
-        import matplotlib.pyplot as plt
-        plt.imshow(mumap, origin='lower')
-        plt.contour(mumap, levels=[mumap.max()/1.1])
-        import pdb; pdb.set_trace()
+            import matplotlib.pyplot as plt
+            plt.imshow(mumap, origin='lower')
+            plt.contour(mumap, levels=[mumap.max()/1.1])
+            import pdb; pdb.set_trace()
         SBmap_all += SBmap
         LensedSBmap_all += LensedSBmap
 
@@ -292,22 +294,35 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
     # invert and clean the simulated model visibilities
 
     if miriad:
-        imsize = str(fitshead['NAXIS1'])
         # use miriad for imaging
+        imsize = str(fitshead['NAXIS1'])
         index = visfile.find('.uvfits')
         name = visfile[0:index]
-        imloc = target + '_model'
-        miriadmodelvisloc = name + '_model.miriad'
-        miriadin = miriadmodelvisloc + ' ' + imloc + ' ' + imsize + ' ' + cell
+
+        imloc = name + '_model_' + idtag + '.uvfits'
+        miriadmodelvisloc = name + '_model_' + idtag + '.miriad'
+        command = 'rm -rf ' + miriadmodelvisloc
+        os.system(command)
+        command = 'fits op=uvin in=' + imloc + ' out=' + miriadmodelvisloc
+        os.system(command + ' > fitsoutput.txt')
+
+        outloc = target + '_model'
+        miriadin = miriadmodelvisloc + ' ' + outloc + ' ' + imsize + ' ' + cell
         command = 'csh image.csh ' + miriadin
-        os.system(command + ' > dump')
+        os.system(command + ' > imageoutput.txt')
 
         # the simulated residual visibilities
-        imloc = target + '_residual'
-        miriadresidvisloc = name + '_residual.miriad'
-        miriadin = miriadresidvisloc + ' ' + imloc + ' ' + imsize + ' ' + cell
+        imloc = name + '_residual_' + idtag + '.uvfits'
+        miriadresidvisloc = name + '_residual_' + idtag + '.miriad'
+        command = 'rm -rf ' + miriadresidvisloc
+        os.system(command)
+        command = 'fits op=uvin in=' + imloc + ' out=' + miriadresidvisloc
+        os.system(command + ' >> fitsoutput.txt')
+
+        outloc = target + '_residual'
+        miriadin = miriadresidvisloc + ' ' + outloc + ' ' + imsize + ' ' + cell
         command = 'csh image.csh ' + miriadin
-        os.system(command + ' > dump')
+        os.system(command + ' >> imageoutput.txt')
     else:
         # use CASA for imaging
         from clean import clean
@@ -652,7 +667,7 @@ def removeTempFiles():
     import os
 
 
-    cmd = 'rm -rf *SBmap*fits *_model* *_residual* dump'
+    cmd = 'rm -rf *SBmap*fits *_model* *_residual* *output.txt'
     os.system(cmd)    
 
 def plotFit(config, fitresult, tag='', cleanup=True, showOptical=False,

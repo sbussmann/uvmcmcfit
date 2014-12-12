@@ -39,8 +39,16 @@ def writeout(vis_complex, visdataloc, modelvisloc, miriad=False):
         # replace data visibilities with model visibilities
         visfile = fits.open(modelvisloc, mode='update')
         visibilities = visfile[0].data
-        visibilities['DATA'][:, 0, 0, 0, :, :, 0] = real
-        visibilities['DATA'][:, 0, 0, 0, :, :, 1] = imag
+
+        visheader = visfile[0].header
+        if visheader['NAXIS'] == 7:
+            visibilities['DATA'][:, 0, 0, :, :, :, 0] = real
+            visibilities['DATA'][:, 0, 0, :, :, :, 1] = imag
+        elif visheader['NAXIS'] == 6:
+            visibilities['DATA'][:, 0, 0, :, :, 0] = real
+            visibilities['DATA'][:, 0, 0, :, :, 1] = imag
+        else:
+            print("Visibility dataset has >7 or <6 axes.  I can't read this.")
         #visibilities['DATA'][:, 0, 0, :, :, 2] = wgt
 
         # replace the data visibilities with the model visibilities
@@ -69,14 +77,16 @@ def replace(sbmodelloc, visdataloc, modelvisloc, miriad=False):
     pcd = uvutil.pcdload(visdataloc)
 
     # sample the uv visfile[0].data using the model
-    npol = uu[:,0].size
-    nrow = uu[0, :].size
+    uushape = uu.shape
+    #npol = uu[:,0].size
+    #nrow = uu[0, :].size
+    #import pdb; pdb.set_trace()
     uu = uu.flatten()
     vv = vv.flatten()
     model_complex = sample_vis.uvmodel(modelimage, modelheader, \
             uu, vv, pcd)
 
-    vis_complex = model_complex.reshape(npol, 1, nrow)
+    vis_complex = model_complex.reshape(uushape)
 
     print(miriad)
     writeout(vis_complex, visdataloc, modelvisloc, miriad=miriad)
@@ -101,18 +111,17 @@ def subtract(sbmodelloc, visdataloc, modelvisloc, miriad=False):
     vis_complex, vis_weight = uvutil.visload(visdataloc)
 
     # sample the uv visfile[0].data using the model
-    npol = uu[:, 0].size
-    nrow = uu[0, :].size
+    uushape = uu.shape
     uu = uu.flatten()
     vv = vv.flatten()
     model_complex = sample_vis.uvmodel(modelimage, modelheader, \
             uu, vv, pcd)
 
-    model_complex = model_complex.reshape(npol, nrow)
+    model_complex = model_complex.reshape(uushape)
 
     vis_complex -= model_complex
 
-    vis_complex = vis_complex.reshape(npol, 1, nrow)
+    #vis_complex = vis_complex.reshape(npol, 1, nrow)
 
     writeout(vis_complex, visdataloc, modelvisloc, miriad=miriad)
 

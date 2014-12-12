@@ -105,6 +105,7 @@ def uvload(visfile):
             nvis = visibilities['DATA'][:, 0, 0, 0, 0, 0].size
             nfreq = visibilities['DATA'][0, 0, 0, :, 0, 0].size
             npol = visibilities['DATA'][0, 0, 0, 0, :, 0].size
+            nspw = 1
             uu = numpy.zeros([nvis, nfreq, npol])
             vv = numpy.zeros([nvis, nfreq, npol])
             #wgt = numpy.zeros([nvis, nspw, nfreq, npol])
@@ -119,9 +120,9 @@ def uvload(visfile):
                 if nfreq > 1:
                     freq = (numpy.arange(nfreq) - cfreq + 1) * dfreq + freqif
                     freqvis = numpy.meshgrid(freq, visibilities['UU'])
-                    uu[:, :, ipol] = freqvis[0] * freqvis[1]
+                    uu[:, 0, :, ipol] = freqvis[0] * freqvis[1]
                     freqvis = numpy.meshgrid(freq, visibilities['VV'])
-                    vv[:, :, ipol] = freqvis[0] * freqvis[1]
+                    vv[:, 0, :, ipol] = freqvis[0] * freqvis[1]
                 else:
                     uu[:, 0, ipol] = freqif * visibilities['UU']
                     vv[:, 0, ipol] = freqif * visibilities['VV']
