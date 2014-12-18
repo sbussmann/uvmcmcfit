@@ -238,8 +238,17 @@ def makeVis(config, miriad=False, idtag=''):
     # "Observe" the lensed emission with the SMA and write to a new file
     #----------------------------------------------------------------------
     # Python version of UVMODEL's "replace" subroutine:
-    nameindx = visfile.find('uvfits')
-    name = visfile[0:nameindx-1]
+    checker = visfile.find('uvfits')
+    if checker == -1:
+        uvfits = False
+    else:
+        uvfits = True
+    if uvfits:
+        nameindx = visfile.find('uvfits')
+        name = visfile[0:nameindx-1]
+    else:
+        nameindx = visfile.find('ms')
+        name = visfile[0:nameindx-1]
     print(name)
     if miriad:
         tag = '.uvfits'
@@ -307,7 +316,9 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
         os.system(command + ' > fitsoutput.txt')
 
         outloc = target + '_model'
-        miriadin = miriadmodelvisloc + ' ' + outloc + ' ' + imsize + ' ' + cell
+        niter = '10000'
+        miriadin = miriadmodelvisloc + ' ' + outloc + ' ' + imsize + ' ' \
+                + cell + ' ' + niter
         command = 'csh image.csh ' + miriadin
         os.system(command + ' > imageoutput.txt')
 
@@ -320,7 +331,9 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
         os.system(command + ' >> fitsoutput.txt')
 
         outloc = target + '_residual'
-        miriadin = miriadresidvisloc + ' ' + outloc + ' ' + imsize + ' ' + cell
+        niter = '100'
+        miriadin = miriadresidvisloc + ' ' + outloc + ' ' + imsize + ' ' \
+                + cell + ' ' + niter
         command = 'csh image.csh ' + miriadin
         os.system(command + ' >> imageoutput.txt')
     else:

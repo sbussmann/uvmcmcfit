@@ -156,6 +156,9 @@ def uvload(visfile):
             vv.append(uvw[1, :])
         uu = numpy.array(uu)
         vv = numpy.array(vv)
+        if uu[:, 0].size == 1:
+            uu = uu.flatten()
+            vv = vv.flatten()
 
     return uu, vv
 
@@ -303,7 +306,9 @@ def statwt(visfileloc, newvisfileloc, ExcludeChannels=False):
 def scalewt(visdataloc, newvisdataloc):
 
     visfile = fits.open(visdataloc)
-    data_real, data_imag, data_wgt = visload(visfile)
+    data_complex, data_wgt = visload(visdataloc)
+    data_real = numpy.real(data_complex)
+    data_imag = numpy.imag(data_complex)
 
     # scale the weights such that:
     # Sum(wgt * real^2 + wgt * imag^2) = N_visibilities

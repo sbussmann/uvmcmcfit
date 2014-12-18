@@ -62,9 +62,10 @@ def writeout(vis_complex, visdataloc, modelvisloc, miriad=False):
         tb.copy(modelvisloc)
         tb.close()
         tb.open(modelvisloc, nomodify=False)
+        import pdb; pdb.set_trace()
         tb.putcol('DATA', vis_complex)
 
-def replace(sbmodelloc, visdataloc, modelvisloc, miriad=False):
+def getModel(sbmodelloc, visdataloc, modelvisloc, miriad=False):
 
     # read in the surface brightness map of the model
     modelimage = fits.getdata(sbmodelloc)
@@ -78,54 +79,35 @@ def replace(sbmodelloc, visdataloc, modelvisloc, miriad=False):
 
     # sample the uv visfile[0].data using the model
     uushape = uu.shape
-    #npol = uu[:,0].size
-    #nrow = uu[0, :].size
-    #import pdb; pdb.set_trace()
     uu = uu.flatten()
     vv = vv.flatten()
     model_complex = sample_vis.uvmodel(modelimage, modelheader, \
             uu, vv, pcd)
 
     vis_complex = model_complex.reshape(uushape)
+    return vis_complex
 
-    print(miriad)
+def replace(sbmodelloc, visdataloc, modelvisloc, miriad=False):
+
+    vis_complex = getModel(sbmodelloc, visdataloc, modelvisloc, miriad=miriad)
+    vis_complex, vis_weight = uvutil.visload(visdataloc)
+
     writeout(vis_complex, visdataloc, modelvisloc, miriad=miriad)
-
-    print("Exiting replace")
 
     return
 
 def subtract(sbmodelloc, visdataloc, modelvisloc, miriad=False):
 
-    # read in the surface brightness map of the model
-    modelimage = fits.getdata(sbmodelloc)
-    modelheader = fits.getheader(sbmodelloc)
-     
-    # load the uv values
-    uu, vv = uvutil.uvload(visdataloc)
-     
-    # load the phase center of the data
-    pcd = uvutil.pcdload(visdataloc)
+    model_complex = getModel(sbmodelloc, visdataloc, modelvisloc, miriad=miriad)
      
     # load the visibilities
+    import pdb; pdb.set_trace()
     vis_complex, vis_weight = uvutil.visload(visdataloc)
 
-    # sample the uv visfile[0].data using the model
-    uushape = uu.shape
-    uu = uu.flatten()
-    vv = vv.flatten()
-    model_complex = sample_vis.uvmodel(modelimage, modelheader, \
-            uu, vv, pcd)
-
-    model_complex = model_complex.reshape(uushape)
-
-    vis_complex -= model_complex
-
-    #vis_complex = vis_complex.reshape(npol, 1, nrow)
+    #import pdb; pdb.set_trace()
+    #vis_complex -= model_complex
 
     writeout(vis_complex, visdataloc, modelvisloc, miriad=miriad)
-
-    print("Exiting subtract")
 
     return
 
