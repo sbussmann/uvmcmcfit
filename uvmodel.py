@@ -26,7 +26,7 @@ import os
 #import time
 
 
-def writeout(vis_complex, visdataloc, modelvisloc, miriad=False):
+def writeVis(vis_complex, visdataloc, modelvisloc, miriad=False):
 
     if miriad:
         os.system('rm -rf ' + modelvisloc)
@@ -65,7 +65,7 @@ def writeout(vis_complex, visdataloc, modelvisloc, miriad=False):
         import pdb; pdb.set_trace()
         tb.putcol('DATA', vis_complex)
 
-def getModel(sbmodelloc, visdataloc, modelvisloc, miriad=False):
+def getVis(sbmodelloc, visdataloc):
 
     # read in the surface brightness map of the model
     modelimage = fits.getdata(sbmodelloc)
@@ -89,25 +89,22 @@ def getModel(sbmodelloc, visdataloc, modelvisloc, miriad=False):
 
 def replace(sbmodelloc, visdataloc, modelvisloc, miriad=False):
 
-    vis_complex = getModel(sbmodelloc, visdataloc, modelvisloc, miriad=miriad)
-    vis_complex, vis_weight = uvutil.visload(visdataloc)
+    vis_complex = getVis(sbmodelloc, visdataloc)
 
-    writeout(vis_complex, visdataloc, modelvisloc, miriad=miriad)
+    writeVis(vis_complex, visdataloc, modelvisloc, miriad=miriad)
 
     return
 
 def subtract(sbmodelloc, visdataloc, modelvisloc, miriad=False):
 
-    model_complex = getModel(sbmodelloc, visdataloc, modelvisloc, miriad=miriad)
+    model_complex = getVis(sbmodelloc, visdataloc)
      
     # load the visibilities
-    import pdb; pdb.set_trace()
     vis_complex, vis_weight = uvutil.visload(visdataloc)
 
-    #import pdb; pdb.set_trace()
-    #vis_complex -= model_complex
+    vis_complex -= model_complex
 
-    writeout(vis_complex, visdataloc, modelvisloc, miriad=miriad)
+    writeVis(vis_complex, visdataloc, modelvisloc, miriad=miriad)
 
     return
 

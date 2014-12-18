@@ -238,33 +238,71 @@ def makeVis(config, miriad=False, idtag=''):
     # "Observe" the lensed emission with the SMA and write to a new file
     #----------------------------------------------------------------------
     # Python version of UVMODEL's "replace" subroutine:
-    checker = visfile.find('uvfits')
-    if checker == -1:
-        uvfits = False
-    else:
-        uvfits = True
-    if uvfits:
-        nameindx = visfile.find('uvfits')
-        name = visfile[0:nameindx-1]
-    else:
-        nameindx = visfile.find('ms')
-        name = visfile[0:nameindx-1]
-    print(name)
-    if miriad:
-        tag = '.uvfits'
-    else:
-        tag = '.ms'
+    try:
+        checker = visfile.find('uvfits')
+        if checker == -1:
+            uvfits = False
+        else:
+            uvfits = True
+        if uvfits:
+            nameindx = visfile.find('uvfits')
+            name = visfile[0:nameindx-1]
+        else:
+            nameindx = visfile.find('ms')
+            name = visfile[0:nameindx-1]
+        print(name)
+        if miriad:
+            tag = '.uvfits'
+        else:
+            tag = '.ms'
 
-    visfile = name + tag
-    SBmapLoc = 'LensedSBmap.fits'
-    modelvisfile = name + '_model_' + idtag + tag
-    os.system('rm -rf ' + modelvisfile)
-    uvmodel.replace(SBmapLoc, visfile, modelvisfile, miriad=miriad)
-    
-    # Python version of UVMODEL's "subtract" subroutine:
-    modelvisfile = name + '_residual_' + idtag + tag
-    os.system('rm -rf ' + modelvisfile)
-    uvmodel.subtract(SBmapLoc, visfile, modelvisfile, miriad=miriad)
+        visfile = name + tag
+        SBmapLoc = 'LensedSBmap.fits'
+        modelvisfile = name + '_model_' + idtag + tag
+        os.system('rm -rf ' + modelvisfile)
+        uvmodel.replace(SBmapLoc, visfile, modelvisfile, miriad=miriad)
+        
+        # Python version of UVMODEL's "subtract" subroutine:
+        modelvisfile = name + '_residual_' + idtag + tag
+        os.system('rm -rf ' + modelvisfile)
+        uvmodel.subtract(SBmapLoc, visfile, modelvisfile, miriad=miriad)
+    except:
+        try:
+            for i, ivisfile in enumerate(visfile):
+                checker = ivisfile.find('uvfits')
+                if checker == -1:
+                    uvfits = False
+                else:
+                    uvfits = True
+                if uvfits:
+                    nameindx = ivisfile.find('uvfits')
+                    name = ivisfile[0:nameindx-1]
+                else:
+                    nameindx = ivisfile.find('ms')
+                    name = ivisfile[0:nameindx-1]
+                print(name)
+                if miriad:
+                    tag = '.uvfits'
+                else:
+                    tag = '.ms'
+
+                ivisfile = name + tag
+                SBmapLoc = 'LensedSBmap.fits'
+                modelivisfile = name + '_model_' + idtag + tag
+                os.system('rm -rf ' + modelivisfile)
+                uvmodel.replace(SBmapLoc, ivisfile, modelivisfile, 
+                        miriad=miriad)
+                
+                # Python version of UVMODEL's "subtract" subroutine:
+                modelivisfile = name + '_residual_' + idtag + tag
+                os.system('rm -rf ' + modelivisfile)
+                uvmodel.subtract(SBmapLoc, ivisfile, modelivisfile, 
+                        miriad=miriad)
+        except:
+            msg = "Visibility datasets must be specified as either a string " \
+                    + "or a list of strings."
+            print(msg)
+            raise TypeError
 
 def makeImage(config, interactive=True, miriad=False, idtag=''):
 

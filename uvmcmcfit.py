@@ -346,14 +346,51 @@ headim = fits.getheader(config['ImageName'])
 #--------------------------------------------------------------------------
 # read in visibility data
 visfile = config['UVData']
-filetype = visfile[-6:]
-if filetype == 'uvfits':
-    uvfits = True
-else:
-    uvfits = False
-uuu, vvv = uvutil.uvload(visfile)
-pcd = uvutil.pcdload(visfile)
-vis_complex, wgt = uvutil.visload(visfile)
+try:
+    filetype = visfile[-6:]
+    if filetype == 'uvfits':
+        uvfits = True
+    else:
+        uvfits = False
+    uuu, vvv = uvutil.uvload(visfile)
+    pcd = uvutil.pcdload(visfile)
+    vis_complex, wgt = uvutil.visload(visfile)
+except:
+    try:
+        for i, ivisfile in enumerate(visfile):
+            filetype = ivisfile[-6:]
+            if filetype == 'uvfits':
+                uvfits = True
+            else:
+                uvfits = False
+            iuuu, ivvv = uvutil.uvload(ivisfile)
+            ipcd = uvutil.pcdload(ivisfile)
+            ivis_complex, iwgt = uvutil.visload(ivisfile)
+            if i == 0:
+                uuu = iuuu
+                vvv = ivvv
+                pcd = ipcd
+                vis_complex = ivis_complex
+                wgt = iwgt
+            else:
+                uuu = numpy.append(uuu, iuuu)
+                vvv = numpy.append(vvv, ivvv)
+                if ipcd != pcd:
+                    data1 = visfile[0]
+                    data2 = visfile[ivisfile]
+                    msg = 'Phase centers in ' + data1 + ' and ' + data2 \
+                            + ' do not match.  Please ensure phase ' \
+                            + 'centers in all visibility datasets are equal.'
+                    print(msg)
+                    raise TypeError
+                vis_complex = numpy.append(vis_complex, ivis_complex)
+                wgt = numpy.append(wgt, iwgt)
+    except:
+        msg = "Visibility datasets must be specified as either a string or "\
+                "a list of strings."
+        print(msg)
+        raise TypeError
+
 
 # remove the data points with zero or negative weight
 positive_definite = wgt > 0
