@@ -53,7 +53,7 @@ def writeVis(vis_complex, visdataloc, modelvisloc, miriad=False):
 
         # replace the data visibilities with the model visibilities
         visfile[0].data = visibilities
-        visfile.flush()
+        #visfile.flush()
         
     else:
         from taskinit import tb
@@ -89,22 +89,24 @@ def getVis(sbmodelloc, visdataloc):
 
 def replace(sbmodelloc, visdataloc, modelvisloc, miriad=False):
 
-    vis_complex = getVis(sbmodelloc, visdataloc)
+    vis_model = getVis(sbmodelloc, visdataloc)
+    #sub_complex, vis_weight = uvutil.visload(visdataloc)
 
-    writeVis(vis_complex, visdataloc, modelvisloc, miriad=miriad)
+    writeVis(vis_model, visdataloc, modelvisloc, miriad=miriad)
 
     return
 
 def subtract(sbmodelloc, visdataloc, modelvisloc, miriad=False):
 
-    model_complex = getVis(sbmodelloc, visdataloc)
+    vis_model = getVis(sbmodelloc, visdataloc)
      
     # load the visibilities
-    vis_complex, vis_weight = uvutil.visload(visdataloc)
+    vis_data, vis_weight = uvutil.visload(visdataloc)
 
-    vis_complex -= model_complex
+    #vis_data -= vis_model
 
-    writeVis(vis_complex, visdataloc, modelvisloc, miriad=miriad)
+    #print(visdataloc, modelvisloc, miriad)
+    writeVis(vis_data, visdataloc, modelvisloc, miriad=miriad)
 
     return
 
