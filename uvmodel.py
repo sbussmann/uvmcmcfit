@@ -62,7 +62,6 @@ def writeVis(vis_complex, visdataloc, modelvisloc, miriad=False):
         tb.copy(modelvisloc)
         tb.close()
         tb.open(modelvisloc, nomodify=False)
-        import pdb; pdb.set_trace()
         tb.putcol('DATA', vis_complex)
 
 def getVis(sbmodelloc, visdataloc):
@@ -79,6 +78,10 @@ def getVis(sbmodelloc, visdataloc):
 
     # sample the uv visfile[0].data using the model
     uushape = uu.shape
+    if len(uushape) == 2:
+        npol = uushape[0]
+        nrow = uushape[1]
+        uushape = (npol, 1, nrow)
     uu = uu.flatten()
     vv = vv.flatten()
     model_complex = sample_vis.uvmodel(modelimage, modelheader, \
@@ -103,7 +106,7 @@ def subtract(sbmodelloc, visdataloc, modelvisloc, miriad=False):
     # load the visibilities
     vis_data, vis_weight = uvutil.visload(visdataloc)
 
-    #vis_data -= vis_model
+    vis_data -= vis_model
 
     #print(visdataloc, modelvisloc, miriad)
     writeVis(vis_data, visdataloc, modelvisloc, miriad=miriad)

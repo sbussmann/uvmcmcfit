@@ -197,17 +197,19 @@ def visload(visfile):
         vis_complex = tb.getcol('DATA')
         vis_weight = tb.getcol('WEIGHT')
 
-        tb.open(visfile + '/POLARIZATION')
-        polinfo = tb.getcol('NUM_CORR')
-        npol = polinfo[0]
+        #tb.open(visfile + '/POLARIZATION')
+        #polinfo = tb.getcol('NUM_CORR')
+        #npol = polinfo[0]
 
-        data_complex = []
-        data_wgt = []
-        for ipol in range(npol):
-            data_complex.append(vis_complex[ipol, 0, :])
-            data_wgt.append(vis_weight[ipol, :])
-        data_complex = numpy.array(data_complex)
-        data_wgt = numpy.array(data_wgt)
+        data_complex = vis_complex
+        data_wgt = vis_weight
+        #data_complex = []
+        #data_wgt = []
+        #for ipol in range(npol):
+        #    data_complex.append(vis_complex[ipol, 0, :])
+        #    data_wgt.append(vis_weight[ipol, :])
+        #data_complex = numpy.array(data_complex)
+        #data_wgt = numpy.array(data_wgt)
 
     return data_complex, data_wgt
 
