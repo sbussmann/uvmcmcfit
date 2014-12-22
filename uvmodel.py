@@ -57,12 +57,16 @@ def writeVis(vis_complex, visdataloc, modelvisloc, miriad=False):
         
     else:
         from taskinit import tb
+        print(modelvisloc)
         tb.open(visdataloc)
         os.system('rm -rf ' + modelvisloc)
         tb.copy(modelvisloc)
         tb.close()
         tb.open(modelvisloc, nomodify=False)
+        datashape = tb.getcol('DATA').shape
+        vis_complex = vis_complex.reshape(datashape)
         tb.putcol('DATA', vis_complex)
+        tb.close()
 
 def getVis(sbmodelloc, visdataloc):
 

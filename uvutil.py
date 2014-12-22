@@ -44,6 +44,7 @@ def pcdload(visfile):
         tb.open(visfile + '/SOURCE')
         pcd_ra = tb.getcol('DIRECTION')[0][0] * 180 / numpy.pi
         pcd_dec = tb.getcol('DIRECTION')[1][0] * 180 / numpy.pi
+        tb.close()
         pcd = [pcd_ra, pcd_dec]
         return pcd
 
@@ -134,12 +135,15 @@ def uvload(visfile):
         tb.open(visfile)
         uvw = tb.getcol('UVW')
         uvspw = tb.getcol('DATA_DESC_ID')
+        tb.close()
 
         tb.open(visfile + '/SPECTRAL_WINDOW')
         freq = tb.getcol('CHAN_FREQ')
+        tb.close()
 
         tb.open(visfile + '/POLARIZATION')
         polinfo = tb.getcol('NUM_CORR')
+        tb.close()
         npol = polinfo[0]
 
         nspw = len(freq[0])
@@ -196,6 +200,7 @@ def visload(visfile):
         tb.open(visfile)
         vis_complex = tb.getcol('DATA')
         vis_weight = tb.getcol('WEIGHT')
+        tb.close()
 
         #tb.open(visfile + '/POLARIZATION')
         #polinfo = tb.getcol('NUM_CORR')

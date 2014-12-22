@@ -254,6 +254,19 @@ def makeVis(config, miriad=False, idtag=''):
             tag = '.uvfits'
         else:
             tag = '.ms'
+            # check to see if the CASA ms exists
+            try:
+                from taskinit import tb
+                tb.open(name + tag)
+                tb.close()
+                print "Found an existing CASA ms file."
+            except RuntimeError:
+                print "No CASA ms file found, creating one from " + name \
+                        + ".uvfits file."
+                from casa import importuvfits
+                infile = name + '.uvfits'
+                outfile = name + '.ms'
+                importuvfits(fitsfile=infile, vis=outfile)
 
         visfile = name + tag
         SBmapLoc = 'LensedSBmap.fits'
@@ -495,7 +508,7 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
         print(visfile)
         index = visfile.find('.uvfits')
         name = visfile[0:index]
-        imloc = target + '_model'
+        imloc = target + '_clean_model'
         miriadmodelvisloc = name + '_model_' + idtag + '.ms'
         os.system('rm -rf ' + imloc + '*')
         clean(vis=miriadmodelvisloc, imagename=imloc, mode='mfs', niter=10000,
@@ -507,7 +520,7 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
         exportfits(imagename=imloc + '.image', fitsimage=imloc + '.fits')
 
         # invert and clean the residual visibilities
-        imloc = target + '_residual'
+        imloc = target + '_clean_residual'
         miriadmodelvisloc = name + '_residual_' + idtag + '.ms'
         os.system('rm -rf ' + imloc + '*')
         clean(vis=miriadmodelvisloc, imagename=imloc, mode='mfs', niter=10000,
@@ -865,10 +878,10 @@ def plotFit(config, fitresult, tag='', cleanup=True, showOptical=False,
 
     # read in the images of the simulated visibilities
     objectname = config['ObjectName']
-    simimloc = objectname + '_model.fits'
+    simimloc = objectname + '_clean_model.fits'
     model = fits.open(simimloc)
 
-    simimloc = objectname + '_residual.fits'
+    simimloc = objectname + '_clean_residual.fits'
     residual = fits.open(simimloc)
 
     # read in the data
