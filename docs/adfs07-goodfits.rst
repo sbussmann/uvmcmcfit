@@ -18,8 +18,3 @@ argument.
     Other than ``Nfits``, :func:`visualize.goodFits` takes the same optional
     keyword arguments as :func:`visualize.bestFit`.
 
-.. caution::
-
-    ``Nfits > 1`` is not supported when running in the CASA python environment.
-    You are free to use ``Nfits > 1`` if running outside of the CASA python
-    environment and using MIRIAD to do the imaging.
