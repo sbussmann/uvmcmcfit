@@ -221,7 +221,7 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
     #model_real += numpy.real(model_complex)
     #model_imag += numpy.imag(model_complex)
 
-    #fits.writeto('g_lensimage.fits', g_lensimage, headmod, clobber=True)
+    #fits.writeto('g_lensimage.fits', g_lensimage_all, headmod, clobber=True)
     #import matplotlib.pyplot as plt
     #print(pzero_regions)
     #plt.imshow(g_lensimage, origin='lower')
