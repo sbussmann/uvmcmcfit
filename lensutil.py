@@ -226,7 +226,7 @@ def sie_grad(x, y, par):
     # Return value:
     return (xg, yg, mu)
 
-def sbmap(x, y, nlens, nsource, parameters, model_types):
+def sbmap(x, y, nlens, nsource, parameters, model_types, amp=False):
 
     # define the x, y, and magnification maps
     dx = x.copy()
@@ -289,10 +289,11 @@ def sbmap(x, y, nlens, nsource, parameters, model_types):
             gpar[0] *= normflux * 1e-3
 
         # re-evaluate unlensed image with normalized flux
-        if model_type == 'Gaussian':
-            g_image = gauss_2d(x, y, gpar)
-        if model_type == 'cylinder':
-            g_image = ellipse_2d(x, y, gpar)
+        if amp:
+            if model_type == 'Gaussian':
+                g_image = gauss_2d(x, y, gpar)
+            if model_type == 'cylinder':
+                g_image = ellipse_2d(x, y, gpar)
 
         if nlens > 0:
             # Evaluate lensed Gaussian image:
@@ -314,37 +315,43 @@ def sbmap(x, y, nlens, nsource, parameters, model_types):
             g_lensimage += tmplens
 
         if nlens > 0:
-            # Set elliptical source parameters and pack them into an array:
-            epar = gpar.copy()
-            epar[0] = 1.0
-            epar[1] *= 2.5
+            if amp:
+                # Set elliptical source parameters and pack them into an array:
+                epar = gpar.copy()
+                epar[0] = 1.0
+                epar[1] *= 2.5
 
-            # Evaluate lensed and unlensed elliptical masks:
-            lensellipse = ellipse_2d(dx, dy, epar)
-            e_lensimage += lensellipse
-            ellipse = ellipse_2d(x, y, epar)
-            e_image += ellipse
+                # Evaluate lensed and unlensed elliptical masks:
+                lensellipse = ellipse_2d(dx, dy, epar)
+                e_lensimage += lensellipse
+                ellipse = ellipse_2d(x, y, epar)
+                e_image += ellipse
 
-            # Evaluate amplification for each source
-            lensmask = lensellipse == 1
-            mask = ellipse == 1
-            numer = tmplens[lensmask].sum()
-            denom = g_image[mask].sum()
-            if denom > 0:
-                amp_mask = numer / denom
+                # Evaluate amplification for each source
+                lensmask = lensellipse == 1
+                mask = ellipse == 1
+                numer = tmplens[lensmask].sum()
+                denom = g_image[mask].sum()
+                if denom > 0:
+                    amp_mask = numer / denom
+                else:
+                    amp_mask = 1e2
+                numer = tmplens.sum()
+                denom = g_image.sum()
+                if denom > 0:
+                    amp_tot = numer / denom
+                else:
+                    amp_tot = 1e2
+                if amp_tot > 1e2:
+                    amp_tot = 1e2
+                if amp_mask > 1e2:
+                    amp_mask = 1e2
+                amp1.extend([amp_tot])
+                amp2.extend([amp_mask])
             else:
-                amp_mask = 1e2
-            numer = tmplens.sum()
-            denom = g_image.sum()
-            if denom > 0:
-                amp_tot = numer / denom
-            else:
-                amp_tot = 1e2
-            if amp_tot > 1e2:
-                amp_tot = 1e2
-            if amp_mask > 1e2:
-                amp_mask = 1e2
-            amp1.extend([amp_tot])
-            amp2.extend([amp_mask])
+                amp1.extend([1.0])
+                amp2.extend([1.0])
+                e_image = 1
+                e_lensimage = 1
 
     return g_image, g_lensimage, e_image, e_lensimage, amp1, amp2

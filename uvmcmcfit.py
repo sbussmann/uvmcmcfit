@@ -134,7 +134,7 @@ def lnprior(pzero_regions, paramSetup):
 
 
 def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd, 
-           fixindx, paramSetup):
+           fixindx, paramSetup, amp=False):
     """ Function that computes the Ln likelihood of the data"""
 
     # search poff_models for parameters fixed relative to other parameters
@@ -187,7 +187,8 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
         #-----------------------------------------------------------------
 
         g_image, g_lensimage, e_image, e_lensimage, amp_tot, amp_mask = \
-                lensutil.sbmap(x, y, nlens, nsource, parameters, model_types)
+                lensutil.sbmap(x, y, nlens, nsource, parameters, model_types,
+                amp=amp)
         e_image_all += e_image
         e_lensimage_all += e_lensimage
         g_image_all += g_image
@@ -195,27 +196,31 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
         amp.extend(amp_tot)
         amp.extend(amp_mask)
 
-        #----------------------------------------------------------------------
+        # --------------------------------------------------------------------
         # Python version of UVMODEL:
         # "Observe" the lensed emission with the interferometer
-        #----------------------------------------------------------------------
+        # --------------------------------------------------------------------
 
         if nlens > 0:
-            # Evaluate amplification for each region
-            lensmask = e_lensimage != 0
-            mask = e_image != 0
-            numer = g_lensimage[lensmask].sum()
-            denom = g_image[mask].sum()
-            amp_mask = numer / denom
-            numer = g_lensimage.sum()
-            denom = g_image.sum()
-            amp_tot = numer / denom
-            if amp_tot > 1e2:
-                amp_tot = 1e2
-            if amp_mask > 1e2:
-                amp_mask = 1e2
-            amp.extend([amp_tot])
-            amp.extend([amp_mask])
+            if amp:
+                # Evaluate amplification for each region
+                lensmask = e_lensimage != 0
+                mask = e_image != 0
+                numer = g_lensimage[lensmask].sum()
+                denom = g_image[mask].sum()
+                amp_mask = numer / denom
+                numer = g_lensimage.sum()
+                denom = g_image.sum()
+                amp_tot = numer / denom
+                if amp_tot > 1e2:
+                    amp_tot = 1e2
+                if amp_mask > 1e2:
+                    amp_mask = 1e2
+                amp.extend([amp_tot])
+                amp.extend([amp_mask])
+            else:
+                amp.extend([1.0])
+                amp.extend([1.0])
 
     model_complex = sample_vis.uvmodel(g_lensimage_all, headmod, uuu, vvv, pcd)
     #model_real += numpy.real(model_complex)
@@ -271,7 +276,7 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
     return likeln, amp
 
 def lnprob(pzero_regions, vis_complex, wgt, uuu, vvv, pcd, 
-           fixindx, paramSetup):
+           fixindx, paramSetup, amp=False):
 
     """
 
@@ -287,7 +292,7 @@ def lnprob(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
         return probln, mu
 
     ll, mu = lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd, 
-           fixindx, paramSetup)
+           fixindx, paramSetup, amp=amp)
 
     normalization = 1.0#2 * real.size
     probln = lp * normalization + ll
@@ -299,6 +304,12 @@ configloc = 'config.yaml'
 configfile = open(configloc, 'r')
 config = yaml.load(configfile)
 
+
+# Determine if we are going to compute the amplification of every model
+if config.keys().count('Amp') > 0:
+    amp = config['Amp']
+else:
+    amp = True
 
 # Determine parallel processing options
 if config.keys().count('MPI') > 0:
@@ -507,3 +518,4 @@ for pos, prob, state, amp in sampler.sample(pzero, iterations=10000):
         posteriordat.add_row(superpos)
     posteriordat.write('posteriorpdf.fits', overwrite=True)
     #posteriordat.write('posteriorpdf.txt', format='ascii')
+

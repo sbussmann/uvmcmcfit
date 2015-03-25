@@ -20,7 +20,7 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
 
     # grab the last Ngood fits
     fitresults = fitresults[-Ngood:]
-    lnprobstring = "prior to pruning <Ln Prob>: {:f}"
+    #lnprobstring = "prior to pruning <Ln Prob>: {:f}"
     #print(lnprobstring.format(fitresults['lnprob'].mean()))
 
     # identify the good fits
@@ -32,7 +32,7 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
     nrow = nparams / ncol + 1
     j = 1
 
-    fig = plt.figure(figsize=(12.0, 1.5 * nrow))
+    plt.figure(figsize=(12.0, 1.5 * nrow))
 
     # set up the plotting window
     plt.subplots_adjust(left=0.08, bottom=0.15, right=0.95, top=0.95,
@@ -272,6 +272,7 @@ def makeVis(config, miriad=False, idtag=''):
         SBmapLoc = 'LensedSBmap.fits'
         modelvisfile = name + '_model_' + idtag + tag
 
+        os.system('rm -rf ' + modelvisfile)
         if miriad:
             SBmapMiriad = 'LensedSBmap.miriad'
             os.system('rm -rf ' + SBmapMiriad)
@@ -391,7 +392,6 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
     from astropy.io import fits
 
         
-    #import pdb; pdb.set_trace()
     visfile = config['UVData']
     target = config['ObjectName']
     fitsim = config['ImageName']
@@ -662,11 +662,10 @@ def plotImage(model, data, config, modeltype, fitresult, tag=''):
     goodregion = mask == 0
 
     # compute sigma image from cutout of SMA flux image
-    dv = 1.
-    bunit = headim['BUNIT']
-    if bunit == 'JY/BEAM.KM/S':
-        dv = 500.
-    #import pdb; pdb.set_trace()
+    # dv = 1.
+    # bunit = headim['BUNIT']
+    # if bunit == 'JY/BEAM.KM/S':
+    #     dv = 500.
     rms = im[goodregion].std()# * dv
 
     # Obtain measurements of beamsize and image min/max
@@ -826,9 +825,17 @@ def plotImage(model, data, config, modeltype, fitresult, tag=''):
 
     plt.text(0.92, 0.88, grayscalename, transform=ax.transAxes,
             fontsize='xx-large', ha='right')
-    objname = config['ObjectName']
-    plt.text(0.08, 0.88, objname, transform=ax.transAxes,
-            fontsize='xx-large')
+    try:
+        from astropy.table import Table
+        tloc = '../../../Papers/Bussmann_2015a/Bussmann2015/Data/targetlist.dat'
+        hackstep = Table.read(tloc, format='ascii')
+        objname = config['ObjectName']
+        match = hackstep['dataname'] == objname
+        shortname = hackstep['shortname'][match][0]
+        plt.text(0.08, 0.88, shortname, transform=ax.transAxes,
+                fontsize='xx-large')
+    except:
+        pass
     bigtag = '.' + modeltype + '.' + tag
 
     savefig('LensedSBmap' + bigtag + '.pdf')

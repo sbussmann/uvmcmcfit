@@ -53,11 +53,11 @@ def writeVis(vis_complex, visdataloc, modelvisloc, miriad=False):
 
         # replace the data visibilities with the model visibilities
         visfile[0].data = visibilities
-        #visfile.flush()
+        visfile.flush()
         
     else:
         from taskinit import tb
-        print(modelvisloc)
+        print("Writing visibility data to " + modelvisloc)
         tb.open(visdataloc)
         os.system('rm -rf ' + modelvisloc)
         tb.copy(modelvisloc)
@@ -75,7 +75,7 @@ def getVis(sbmodelloc, visdataloc):
     modelheader = fits.getheader(sbmodelloc)
      
     # load the uv data, including the phase center of the data
-    uu, vv = uvutil.uvload(visdataloc)
+    uu, vv, ww = uvutil.uvload(visdataloc)
      
     # load the uv data, including the phase center of the data
     pcd = uvutil.pcdload(visdataloc)
@@ -97,6 +97,10 @@ def getVis(sbmodelloc, visdataloc):
 def replace(sbmodelloc, visdataloc, modelvisloc, miriad=False):
 
     vis_model = getVis(sbmodelloc, visdataloc)
+    import matplotlib.pyplot as plt
+    plt.plot(numpy.real(vis_model.flatten()), ',')
+    import pdb; pdb.set_trace()
+    
     #sub_complex, vis_weight = uvutil.visload(visdataloc)
 
     writeVis(vis_model, visdataloc, modelvisloc, miriad=miriad)
@@ -116,6 +120,9 @@ def subtract(sbmodelloc, visdataloc, modelvisloc, miriad=False):
     writeVis(vis_data, visdataloc, modelvisloc, miriad=miriad)
 
     return
+
+"""
+this will eventually be a routine to add arbitrary models to existing data.
 
 def add(sbmodelloc, visdataloc, WeightByRMS=True, ExcludeChannels='none'):
 
@@ -177,3 +184,4 @@ def add(sbmodelloc, visdataloc, WeightByRMS=True, ExcludeChannels='none'):
     #visfile[0].data = vismodel
 
     return visfile
+"""

@@ -74,15 +74,17 @@ def uvload(visfile):
             if nfreq > 0:
                 uu = numpy.zeros([nvis, nspw, nfreq, npol])
                 vv = numpy.zeros([nvis, nspw, nfreq, npol])
+                ww = numpy.zeros([nvis, nspw, nfreq, npol])
             else:
                 uu = numpy.zeros([nvis, nspw, npol])
                 vv = numpy.zeros([nvis, nspw, npol])
+                ww = numpy.zeros([nvis, nspw, npol])
             #wgt = numpy.zeros([nvis, nspw, nfreq, npol])
             for ispw in range(nspw):
                 if nspw > 1:
                     freqif = freq0 + visfreq['IF FREQ'][0][ispw]
                 else:
-                    freqif = freq0
+                    freqif = freq0 + visfreq['IF FREQ'][0]
                 #uu[:, ispw] = freqif * visibilities['UU']
                 #vv[:, ispw] = freqif * visibilities['VV']
                 for ipol in range(npol):
@@ -93,9 +95,12 @@ def uvload(visfile):
                         uu[:, ispw, :, ipol] = freqvis[0] * freqvis[1]
                         freqvis = numpy.meshgrid(freq, visibilities['VV'])
                         vv[:, ispw, :, ipol] = freqvis[0] * freqvis[1]
+                        freqvis = numpy.meshgrid(freq, visibilities['WW'])
+                        ww[:, ispw, :, ipol] = freqvis[0] * freqvis[1]
                     else:
                         uu[:, ispw, ipol] = freqif * visibilities['UU']
                         vv[:, ispw, ipol] = freqif * visibilities['VV']
+                        ww[:, ispw, ipol] = freqif * visibilities['WW']
 
         if visheader['NAXIS'] == 6:
 
@@ -109,6 +114,7 @@ def uvload(visfile):
             nspw = 1
             uu = numpy.zeros([nvis, nfreq, npol])
             vv = numpy.zeros([nvis, nfreq, npol])
+            ww = numpy.zeros([nvis, nfreq, npol])
             #wgt = numpy.zeros([nvis, nspw, nfreq, npol])
 
             freqif = freq0
@@ -124,10 +130,12 @@ def uvload(visfile):
                     uu[:, 0, :, ipol] = freqvis[0] * freqvis[1]
                     freqvis = numpy.meshgrid(freq, visibilities['VV'])
                     vv[:, 0, :, ipol] = freqvis[0] * freqvis[1]
+                    freqvis = numpy.meshgrid(freq, visibilities['WW'])
+                    ww[:, 0, :, ipol] = freqvis[0] * freqvis[1]
                 else:
                     uu[:, 0, ipol] = freqif * visibilities['UU']
                     vv[:, 0, ipol] = freqif * visibilities['VV']
-                    #www = freqif * visibilities['WW']
+                    ww[:, 0, ipol] = freqif * visibilities['WW']
     
     else:
         from taskinit import tb
@@ -155,16 +163,20 @@ def uvload(visfile):
 
         uu = []
         vv = []
+        ww = []
         for ipol in range(npol):
             uu.append(uvw[0, :])
             vv.append(uvw[1, :])
+            ww.append(uvw[2, :])
         uu = numpy.array(uu)
         vv = numpy.array(vv)
+        ww = numpy.array(ww)
         if uu[:, 0].size == 1:
             uu = uu.flatten()
             vv = vv.flatten()
+            ww = ww.flatten()
 
-    return uu, vv
+    return uu, vv, ww
 
 def visload(visfile):
 
