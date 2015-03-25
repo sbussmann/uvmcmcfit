@@ -84,8 +84,7 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
     savefile = tag + 'PDFs.png'
     savefig(savefile)
 
-def makeSBmap(config, fitresult, tag='', cleanup=True,
-        showOptical=False, interactive=True):
+def makeSBmap(config, fitresult):
 
     """
 
@@ -251,7 +250,7 @@ def makeVis(config, miriad=False, idtag=''):
             nameindx = visfile.find('ms')
             name = visfile[0:nameindx-1]
         if miriad:
-            tag = '.uvfits'
+            tag = '.miriad'
         else:
             tag = '.ms'
             # check to see if the CASA ms exists
@@ -274,16 +273,16 @@ def makeVis(config, miriad=False, idtag=''):
 
         os.system('rm -rf ' + modelvisfile)
         if miriad:
-            SBmapMiriad = 'LensedSBmap.miriad'
+            SBmapMiriad = 'LensedSBmap' + tag
             os.system('rm -rf ' + SBmapMiriad)
             command = 'fits op=xyin in=' + SBmapLoc + ' out=' \
                     + SBmapMiriad
             os.system(command)
             command = 'uvmodel options=replace vis=' + visfile + \
                     ' model=' + SBmapMiriad + ' out=' + modelvisfile
-            os.system(command)
-            command = 'cp ' + visfile + '/wflags ' + modelvisfile
-            os.system(command)
+            os.system(command + ' > uvmodeloutput.txt')
+            #command = 'cp ' + visfile + '/wflags ' + modelvisfile
+            #os.system(command)
         else:
             uvmodel.replace(SBmapLoc, visfile, modelvisfile, 
                     miriad=miriad)
@@ -292,7 +291,7 @@ def makeVis(config, miriad=False, idtag=''):
         modelvisfile = name + '_residual_' + idtag + tag
         os.system('rm -rf ' + modelvisfile)
         if miriad:
-            SBmapMiriad = 'LensedSBmap.miriad'
+            SBmapMiriad = 'LensedSBmap' + tag
             os.system('rm -rf ' + SBmapMiriad)
             command = 'fits op=xyin in=' + SBmapLoc + ' out=' \
                     + SBmapMiriad
@@ -302,8 +301,8 @@ def makeVis(config, miriad=False, idtag=''):
                     ' model=' + SBmapMiriad + ' out=' + modelvisfile
             os.system(command)
 
-            command = 'cp ' + visfile + '/wflags ' + modelvisfile
-            os.system(command)
+            #command = 'cp ' + visfile + '/wflags ' + modelvisfile
+            #os.system(command)
         else:
             uvmodel.subtract(SBmapLoc, visfile, modelvisfile, 
                     miriad=miriad)
@@ -343,8 +342,8 @@ def makeVis(config, miriad=False, idtag=''):
                             ' model=' + SBmapMiriad + ' out=' + modelivisfile
                     os.system(command)
 
-                    command = 'cp ' + ivisfile + '/wflags ' + modelivisfile
-                    os.system(command)
+                    #command = 'cp ' + ivisfile + '/wflags ' + modelivisfile
+                    #os.system(command)
                 else:
                     ivisfile = name + tag
                     modelivisfile = name + '_model_' + idtag + tag
@@ -366,8 +365,8 @@ def makeVis(config, miriad=False, idtag=''):
                             ' model=' + SBmapMiriad + ' out=' + modelivisfile
                     os.system(command)
 
-                    command = 'cp ' + ivisfile + '/wflags ' + modelivisfile
-                    os.system(command)
+                    #command = 'cp ' + ivisfile + '/wflags ' + modelivisfile
+                    #os.system(command)
                 else:
                     modelivisfile = name + '_residual_' + idtag + tag
                     os.system('rm -rf ' + modelivisfile)
@@ -390,6 +389,7 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
 
     import os
     from astropy.io import fits
+    import miriadutil
 
         
     visfile = config['UVData']
@@ -429,11 +429,20 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
                     + ' out=' + uvmirloc
             #os.system(command + ' > fitsoutput.txt')
 
-            imloc = target + '_model'
+            imloc = target + '_clean_model'
             niter = '10000'
-            miriadin = uvmirloc + ' ' + imloc + ' ' + imsize + ' ' \
-                    + cell + ' ' + niter
-            command = 'csh image.csh ' + miriadin
+            cutoff = '2e-3'
+            cutoff2 = '4e-3'
+            robust = '+0.5'
+            region = 'quarter'
+            region2 = 'quarter'
+            gain = '0.1'
+            fwhm = '0'
+            sup = '0'
+            parameters = [uvmirloc, imloc, imsize, cell, niter, cutoff, \
+                    cutoff2, robust, region, region2, gain, fwhm, sup]
+            miriadutil.makeScript(parameters)
+            command = 'csh image.csh'
             os.system(command + ' > imageoutput.txt')
 
             # the simulated residual visibilities
@@ -445,11 +454,11 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
                     + ' out=' + uvmirloc
             #os.system(command + ' >> fitsoutput.txt')
 
-            imloc = target + '_residual'
-            niter = '10000'
-            miriadin = uvmirloc + ' ' + imloc + ' ' + imsize + ' ' \
-                    + cell + ' ' + niter
-            command = 'csh image.csh ' + miriadin
+            imloc = target + '_clean_residual'
+            parameters = [uvmirloc, imloc, imsize, cell, niter, cutoff, \
+                    cutoff2, robust, region, region2, gain, fwhm, sup]
+            miriadutil.makeScript(parameters)
+            command = 'csh image.csh'
             os.system(command)# + ' >> imageoutput.txt')
         except:
             try:
@@ -482,18 +491,18 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
 
                 invisloc = ','.join(modellist)
                 imloc = target + '_model'
-                niter = '10000'
-                miriadin = invisloc + ' ' + imloc + ' ' + imsize + ' ' \
-                        + cell + ' ' + niter
-                command = 'csh image.csh ' + miriadin
+                parameters = [invisloc, imloc, imsize, cell, niter, cutoff, \
+                        cutoff2, robust, region, region2, gain, fwhm, sup]
+                miriadutil.makeScript(parameters)
+                command = 'csh image.csh'
                 os.system(command + ' > imageoutput.txt')
 
                 invisloc = ','.join(residlist)
                 imloc = target + '_residual'
-                niter = '10000'
-                miriadin = invisloc + ' ' + imloc + ' ' + imsize + ' ' \
-                        + cell + ' ' + niter
-                command = 'csh image.csh ' + miriadin
+                parameters = [invisloc, imloc, imsize, cell, niter, cutoff, \
+                        cutoff2, robust, region, region2, gain, fwhm, sup]
+                miriadutil.makeScript(parameters)
+                command = 'csh image.csh'
                 os.system(command)# + ' >> imageoutput.txt')
             except:
                 msg = "Visibility datasets must be specified as either a "\
@@ -868,12 +877,12 @@ def plotFit(config, fitresult, tag='', cleanup=True, showOptical=False,
 
 
     # make the lensed image
-    makeSBmap(config, fitresult, tag=tag, cleanup=True,
-        showOptical=False, interactive=True)
+    makeSBmap(config, fitresult)
 
     # are we using miriad to image the best-fit model?
     if config.keys().count('UseMiriad') > 0:
         miriad = config['UseMiriad']
+        interactive = False
     else:
         miriad = False
 
