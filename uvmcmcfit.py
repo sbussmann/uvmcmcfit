@@ -85,6 +85,7 @@ import lensutil
 import uvutil
 import setuputil
 import yaml
+from subprocess import call
 
 
 #cwd = os.getcwd()
@@ -222,7 +223,36 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
                 amp.extend([1.0])
                 amp.extend([1.0])
 
-    model_complex = sample_vis.uvmodel(g_lensimage_all, headmod, uuu, vvv, pcd)
+    if miriad:
+        # save the fits image of the lensed source
+        SBmapLoc = 'LensedSBmap.fits'
+        fits.writeto(SBmapLoc, g_lensimage_all, header=headmod, clobber=True)
+
+        # convert fits format to miriad format
+        SBmapMiriad = 'LensedSBmap.miriad'
+        os.system('rm -rf ' + SBmapMiriad)
+        cmd = 'fits op=xyin in=' + SBmapLoc + ' out=' + SBmapMiriad
+        call(cmd + ' > /dev/null 2>&1', shell=True)
+
+        # compute simulated visibilities
+        modelvisfile = 'SimulatedVisibilities.miriad'
+        cmd = 'uvmodel options=replace vis=' + visfilemiriad + \
+                ' model=' + SBmapMiriad + ' out=' + modelvisfile
+        call(cmd + ' > /dev/null 2>&1', shell=True)
+
+        # convert simulated visibilities to uvfits format
+        mvuvfits = 'SimulatedVisibilities.uvfits'
+        cmd = 'fits op=uvout in=' + modelvisfile + ' out=' + mvuvfits
+        call(cmd + ' > /dev/null 2>&1', shell=True)
+
+        # read simulated visibilities
+        mvuv = fits.open(mvuvfits)
+        model_real = mvuv[0].data['DATA'][:, 0, 0, 0, 0, 0]
+        model_imag = mvuv[0].data['DATA'][:, 0, 0, 0, 0, 1]
+        model_complex = model_real + 1.0j * model_imag
+    else:
+        model_complex = sample_vis.uvmodel(g_lensimage_all, headmod, 
+                uuu, vvv, pcd)
     #model_real += numpy.real(model_complex)
     #model_imag += numpy.imag(model_complex)
 
@@ -357,13 +387,24 @@ headim = fits.getheader(config['ImageName'])
 #--------------------------------------------------------------------------
 # read in visibility data
 visfile = config['UVData']
+
+# Determine if we will use miriad to compute simulated visibilities
+if config.keys().count('UseMiriad') > 0:
+    miriad = config['UseMiriad']
+    interactive = False
+    index = visfile.index('uvfits')
+    visfilemiriad = visfile[0:index] + 'miriad'
+else:
+    miriad = False
+
+# attempt to process multiple visibility files.  This won't work if miriad=True
 try:
     filetype = visfile[-6:]
     if filetype == 'uvfits':
         uvfits = True
     else:
         uvfits = False
-    uuu, vvv = uvutil.uvload(visfile)
+    uuu, vvv, www = uvutil.uvload(visfile)
     pcd = uvutil.pcdload(visfile)
     vis_complex, wgt = uvutil.visload(visfile)
 except:
