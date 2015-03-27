@@ -236,12 +236,14 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
 
         # compute simulated visibilities
         modelvisfile = 'SimulatedVisibilities.miriad'
+        call('rm -rf ' + modelvisfile, shell=True)
         cmd = 'uvmodel options=replace vis=' + visfilemiriad + \
                 ' model=' + SBmapMiriad + ' out=' + modelvisfile
         call(cmd + ' > /dev/null 2>&1', shell=True)
 
         # convert simulated visibilities to uvfits format
         mvuvfits = 'SimulatedVisibilities.uvfits'
+        call('rm -rf ' + mvuvfits, shell=True)
         cmd = 'fits op=uvout in=' + modelvisfile + ' out=' + mvuvfits
         call(cmd + ' > /dev/null 2>&1', shell=True)
 
@@ -249,7 +251,9 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
         mvuv = fits.open(mvuvfits)
         model_real = mvuv[0].data['DATA'][:, 0, 0, 0, 0, 0]
         model_imag = mvuv[0].data['DATA'][:, 0, 0, 0, 0, 1]
-        model_complex = model_real + 1.0j * model_imag
+        model_wgt = mvuv[0].data['DATA'][:, 0, 0, 0, 0, 2]
+        goodvis = model_wgt > 0
+        model_complex = model_real[goodvis] + 1.0j * model_imag[goodvis]
     else:
         model_complex = sample_vis.uvmodel(g_lensimage_all, headmod, 
                 uuu, vvv, pcd)
@@ -296,9 +300,10 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
 
     # assert that lnlike is equal to -1 * maximum likelihood estimate
     # use visibilities where weight is greater than 0
-    goodvis = wgt > 0
-    likeln = -0.5 * lnlike[goodvis].sum()
-    #likeln = -0.5 * lnlike.sum()
+    #goodvis = wgt > 0
+    #likeln = -0.5 * lnlike[goodvis].sum()
+    likeln = -0.5 * lnlike.sum()
+    print(likeln)
     if likeln * 0 != 0:
         likeln = -numpy.inf
 
@@ -443,14 +448,13 @@ except:
         raise TypeError
 
 
-if not miriad:
-    # remove the data points with zero or negative weight
-    positive_definite = wgt > 0
-    vis_complex = vis_complex[positive_definite]
-    wgt = wgt[positive_definite]
-    uuu = uuu[positive_definite]
-    vvv = vvv[positive_definite]
-    #www = www[positive_definite]
+# remove the data points with zero or negative weight
+positive_definite = wgt > 0
+vis_complex = vis_complex[positive_definite]
+wgt = wgt[positive_definite]
+uuu = uuu[positive_definite]
+vvv = vvv[positive_definite]
+#www = www[positive_definite]
 
 npos = wgt.size
 
