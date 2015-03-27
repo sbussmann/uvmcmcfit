@@ -303,7 +303,7 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
     #goodvis = wgt > 0
     #likeln = -0.5 * lnlike[goodvis].sum()
     likeln = -0.5 * lnlike.sum()
-    print(likeln)
+    #print(pcd, likeln)
     if likeln * 0 != 0:
         likeln = -numpy.inf
 
@@ -398,6 +398,11 @@ if config.keys().count('UseMiriad') > 0:
     interactive = False
     index = visfile.index('uvfits')
     visfilemiriad = visfile[0:index] + 'miriad'
+
+    # scale the weights
+    newvisfile = visfile[0:index] + 'scaled.uvfits'
+    uvutil.scalewt(visfile, newvisfile)
+    visfile = newvisfile
 else:
     miriad = False
 
@@ -551,7 +556,9 @@ os.system('date')
 for pos, prob, state, amp in sampler.sample(pzero, iterations=10000):
 
     print("Mean acceptance fraction: {:f}".
-          format(numpy.mean(sampler.acceptance_fraction)))
+            format(numpy.mean(sampler.acceptance_fraction)), 
+            "\nMean lnprob value: {:f}".
+            format(numpy.mean(prob)))
     os.system('date')
     #ff.write(str(prob))
     superpos = numpy.zeros(1 + nparams + nmu)

@@ -337,7 +337,7 @@ def scalewt(visdataloc, newvisdataloc):
     wgtrealimag = wgt_scaled * (data_real ** 2 + data_imag ** 2)
     wgtsum = wgtrealimag[wgzero].sum()
     wgtscale = N_vis / wgtsum
-    print(wgtscale)
+    print("Scaling the weights by a factor of ", wgtscale)
     wgt_scaled = wgt_scaled * wgtscale
 
     # read in the uvfits data
@@ -345,7 +345,7 @@ def scalewt(visdataloc, newvisdataloc):
         visfile[0].data['DATA'][:, 0, 0, :, :, :, 2] = wgt_scaled
     else:
         visfile[0].data['DATA'][:, 0, 0, :, :, 2] = wgt_scaled
-    visfile.writeto(newvisdataloc)
+    visfile.writeto(newvisdataloc, clobber=True)
 
 def zerowt(visdataloc, newvisdataloc, ExcludeChannels):
 
