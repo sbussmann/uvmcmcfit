@@ -58,8 +58,8 @@ def writeVis(vis_complex, visdataloc, modelvisloc, miriad=False):
     else:
         from taskinit import tb
         print("Writing visibility data to " + modelvisloc)
-        tb.open(visdataloc)
         os.system('rm -rf ' + modelvisloc)
+        tb.open(visdataloc)
         tb.copy(modelvisloc)
         tb.close()
         tb.open(modelvisloc, nomodify=False)
@@ -70,6 +70,7 @@ def writeVis(vis_complex, visdataloc, modelvisloc, miriad=False):
 
 def getVis(sbmodelloc, visdataloc):
 
+    print(sbmodelloc, visdataloc)
     # read in the surface brightness map of the model
     modelimage = fits.getdata(sbmodelloc)
     modelheader = fits.getheader(sbmodelloc)
@@ -97,9 +98,6 @@ def getVis(sbmodelloc, visdataloc):
 def replace(sbmodelloc, visdataloc, modelvisloc, miriad=False):
 
     vis_model = getVis(sbmodelloc, visdataloc)
-    import matplotlib.pyplot as plt
-    plt.plot(numpy.real(vis_model.flatten()), ',')
-    import pdb; pdb.set_trace()
     
     #sub_complex, vis_weight = uvutil.visload(visdataloc)
 

@@ -266,9 +266,6 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
     #plt.colorbar()
     #plt.show()
 
-    # use all visibilities
-    #goodvis = (vis_complex * 0 == 0)
-
     # calculate chi^2 assuming natural weighting
     #fnuisance = 0.0
     #modvariance_real = 1 / wgt #+ fnuisance ** 2 * model_real ** 2
@@ -298,8 +295,10 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
     #ndof = nmeasure - nparam
 
     # assert that lnlike is equal to -1 * maximum likelihood estimate
-    #likeln = -0.5 * lnlike[goodvis].sum()
-    likeln = -0.5 * lnlike.sum()
+    # use visibilities where weight is greater than 0
+    goodvis = wgt > 0
+    likeln = -0.5 * lnlike[goodvis].sum()
+    #likeln = -0.5 * lnlike.sum()
     if likeln * 0 != 0:
         likeln = -numpy.inf
 
@@ -444,13 +443,14 @@ except:
         raise TypeError
 
 
-# remove the data points with zero or negative weight
-positive_definite = wgt > 0
-vis_complex = vis_complex[positive_definite]
-wgt = wgt[positive_definite]
-uuu = uuu[positive_definite]
-vvv = vvv[positive_definite]
-#www = www[positive_definite]
+if not miriad:
+    # remove the data points with zero or negative weight
+    positive_definite = wgt > 0
+    vis_complex = vis_complex[positive_definite]
+    wgt = wgt[positive_definite]
+    uuu = uuu[positive_definite]
+    vvv = vvv[positive_definite]
+    #www = www[positive_definite]
 
 npos = wgt.size
 
