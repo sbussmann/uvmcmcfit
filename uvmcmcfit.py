@@ -86,6 +86,7 @@ import uvutil
 import setuputil
 import yaml
 from subprocess import call
+import time
 
 
 #cwd = os.getcwd()
@@ -547,7 +548,8 @@ else:
         fixindx, paramSetup], threads=Nthreads)
 
 # Sample, outputting to a file
-os.system('date')
+#os.system('date')
+currenttime = time.time()
 
 # pos is the position of the sampler
 # prob the Ln probability
@@ -558,8 +560,10 @@ for pos, prob, state, amp in sampler.sample(pzero, iterations=10000):
     print("Mean acceptance fraction: {:f}".
             format(numpy.mean(sampler.acceptance_fraction)), 
             "\nMean lnprob value: {:f}".
-            format(numpy.mean(prob)))
-    os.system('date')
+            format(numpy.mean(prob)),
+            "\nTime to run previous set of walkers (seconds): {:f}".
+            format(time.time() - currenttime))
+    currenttime = time.time()
     #ff.write(str(prob))
     superpos = numpy.zeros(1 + nparams + nmu)
 

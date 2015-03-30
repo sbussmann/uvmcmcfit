@@ -35,8 +35,6 @@ def rollUp(visfile):
     data, weight = uvutil.visload(visfile)
     real = np.real(data)
     imag = np.imag(data)
-    plt.plot(real.flatten(), ',')
-    import pdb; pdb.set_trace()
     nvis = u.size
     rolled = np.zeros((6, nvis))
     rolled[0, :] = u.flatten()
