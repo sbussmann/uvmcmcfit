@@ -251,6 +251,11 @@ def makeVis(config, miriad=False, idtag=''):
             name = visfile[0:nameindx-1]
         if miriad:
             tag = '.miriad'
+            DataMiriad = name + tag
+            print("Creating new miriad data file: " + DataMiriad)
+            os.system('rm -rf ' + DataMiriad)
+            command = 'fits op=uvin in=' + visfile + ' out=' + DataMiriad
+            os.system(command)
         else:
             tag = '.ms'
             # check to see if the CASA ms exists
@@ -885,7 +890,9 @@ def plotFit(config, fitresult, tag='', cleanup=True, showOptical=False,
     # are we using miriad to image the best-fit model?
     if config.keys().count('UseMiriad') > 0:
         miriad = config['UseMiriad']
-        interactive = False
+        if miriad == 'Visualize':
+            miriad = True
+            interactive = False
     else:
         miriad = False
 

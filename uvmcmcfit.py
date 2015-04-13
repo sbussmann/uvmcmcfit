@@ -396,14 +396,18 @@ visfile = config['UVData']
 # Determine if we will use miriad to compute simulated visibilities
 if config.keys().count('UseMiriad') > 0:
     miriad = config['UseMiriad']
-    interactive = False
-    index = visfile.index('uvfits')
-    visfilemiriad = visfile[0:index] + 'miriad'
 
-    # scale the weights
-    newvisfile = visfile[0:index] + 'scaled.uvfits'
-    uvutil.scalewt(visfile, newvisfile)
-    visfile = newvisfile
+    if miriad == True:
+        interactive = False
+        index = visfile.index('uvfits')
+        visfilemiriad = visfile[0:index] + 'miriad'
+
+        # scale the weights
+        newvisfile = visfile[0:index] + 'scaled.uvfits'
+        uvutil.scalewt(visfile, newvisfile)
+        visfile = newvisfile
+    else:
+        miriad = False
 else:
     miriad = False
 
