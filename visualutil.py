@@ -439,6 +439,7 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
 
             imloc = target + '_clean_model'
             niter = '10000'
+            cell = str(fitshead['CDELT2'] * 3600)
             cutoff = '2e-3'
             cutoff2 = '4e-3'
             robust = '+0.5'
