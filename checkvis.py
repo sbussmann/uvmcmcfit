@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 from pylab import savefig
 from subprocess import call
 import uvmodel
+import os
 
 
 def iterPlot(simvis, nfigures, color, label):
@@ -88,8 +89,8 @@ def miriadVis(model, data, simfile):
 
     # first turn the model image into miriad format
     try:
-        index = model.index('fits')
-        modelmiriad = model[0:index] + 'miriad'
+        oldbase_model = os.path.splitext(model)[0]
+        modelmiriad = oldbase_model + '.miriad'
         cmd = 'rm -rf ' + modelmiriad
         call(cmd, shell=True)
     except:
@@ -101,8 +102,8 @@ def miriadVis(model, data, simfile):
         print("Uh oh, couldn't make the miriad model image.")
 
     # next, turn the observed visibilities into miriad format
-    index = data.index('uvfits')
-    datamiriad = data[0:index] + 'miriad'
+    oldbase_data = os.path.splitext(data)[0]
+    datamiriad = oldbase_data + '.miriad'
     cmd = 'rm -rf ' + datamiriad
     call(cmd, shell=True)
     cmd = 'fits op=uvin in=' + data + ' out=' + datamiriad
@@ -116,8 +117,8 @@ def miriadVis(model, data, simfile):
     call(cmd, shell=True)
 
     # and convert the simulated visibilities to uvfits format
-    index = simfile.index('miriad')
-    simfilefits = simfile[0:index] + 'uvfits'
+    oldbase_sim = os.path.splitext(simfile)[0]
+    simfilefits = oldbase_sim + '.uvfits'
     cmd = 'rm -rf ' + simfilefits
     call(cmd, shell=True)
     cmd = 'fits op=uvout in=' + simfile + ' out=' + simfilefits
