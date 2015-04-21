@@ -226,38 +226,46 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
 
     if miriad:
         # save the fits image of the lensed source
-        SBmapLoc = 'LensedSBmap.fits'
+        ptag = str(os.getpid())
+        SBmapLoc = 'LensedSBmap' + ptag + '.fits'
         fits.writeto(SBmapLoc, g_lensimage_all, header=headmod, clobber=True)
 
         # convert fits format to miriad format
-        SBmapMiriad = 'LensedSBmap.miriad'
+        SBmapMiriad = 'LensedSBmap' + ptag + '.miriad'
         os.system('rm -rf ' + SBmapMiriad)
         cmd = 'fits op=xyin in=' + SBmapLoc + ' out=' + SBmapMiriad
         call(cmd + ' > /dev/null 2>&1', shell=True)
 
         # compute simulated visibilities
-        modelvisfile = 'SimulatedVisibilities.miriad'
+        modelvisfile = 'SimulatedVisibilities' + ptag + '.miriad'
         call('rm -rf ' + modelvisfile, shell=True)
-        cmd = 'uvmodel options=replace vis=' + visfilemiriad + \
+        cmd = 'uvmodel options=subtract vis=' + visfilemiriad + \
                 ' model=' + SBmapMiriad + ' out=' + modelvisfile
         call(cmd + ' > /dev/null 2>&1', shell=True)
 
         # convert simulated visibilities to uvfits format
-        mvuvfits = 'SimulatedVisibilities.uvfits'
+        mvuvfits = 'SimulatedVisibilities' + ptag + '.uvfits'
         call('rm -rf ' + mvuvfits, shell=True)
         cmd = 'fits op=uvout in=' + modelvisfile + ' out=' + mvuvfits
         call(cmd + ' > /dev/null 2>&1', shell=True)
 
         # read simulated visibilities
         mvuv = fits.open(mvuvfits)
-        model_real = mvuv[0].data['DATA'][:, 0, 0, 0, 0, 0]
-        model_imag = mvuv[0].data['DATA'][:, 0, 0, 0, 0, 1]
-        model_wgt = mvuv[0].data['DATA'][:, 0, 0, 0, 0, 2]
-        goodvis = model_wgt > 0
-        model_complex = model_real[goodvis] + 1.0j * model_imag[goodvis]
+        diff_real = mvuv[0].data['DATA'][:, 0, 0, 0, 0, 0]
+        diff_imag = mvuv[0].data['DATA'][:, 0, 0, 0, 0, 1]
+        wgt = mvuv[0].data['DATA'][:, 0, 0, 0, 0, 2]
+        #model_complex = model_real[goodvis] + 1.0j * model_imag[goodvis]
+        diff_all = numpy.append(diff_real, diff_imag)
+        wgt = numpy.append(wgt, wgt)
+        goodvis = wgt > 0
+        diff_all = diff_all[goodvis]
+        wgt = wgt[goodvis]
+        chi2_all = wgt * diff_all * diff_all
     else:
         model_complex = sample_vis.uvmodel(g_lensimage_all, headmod, 
                 uuu, vvv, pcd)
+        diff_all = numpy.abs(vis_complex - model_complex)
+        chi2_all = wgt * diff_all * diff_all
     #model_real += numpy.real(model_complex)
     #model_imag += numpy.imag(model_complex)
 
@@ -279,8 +287,6 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
     #chi2_real_all = (real - model_real) ** 2. / modvariance_real
     #chi2_imag_all = (imag - model_imag) ** 2. / modvariance_imag
     #chi2_all = numpy.append(chi2_real_all, chi2_imag_all)
-    diff_all = numpy.abs(vis_complex - model_complex)
-    chi2_all = wgt * diff_all * diff_all
     
     # compute the sigma term
     #sigmaterm_real = numpy.log(2 * numpy.pi / wgt)
