@@ -252,10 +252,11 @@ def makeVis(config, miriad=False, idtag=''):
         if miriad:
             tag = '.miriad'
             DataMiriad = name + tag
-            print("Creating new miriad data file: " + DataMiriad)
-            os.system('rm -rf ' + DataMiriad)
-            command = 'fits op=uvin in=' + visfile + ' out=' + DataMiriad
-            os.system(command)
+            if not os.path.exists(DataMiriad):
+                print("Creating new miriad data file: " + DataMiriad)
+                os.system('rm -rf ' + DataMiriad)
+                command = 'fits op=uvin in=' + visfile + ' out=' + DataMiriad
+                os.system(command)
         else:
             tag = '.ms'
             # check to see if the CASA ms exists
