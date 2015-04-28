@@ -43,6 +43,8 @@ def pcdload(visfile):
         from taskinit import tb
         tb.open(visfile + '/SOURCE')
         pcd_ra = tb.getcol('DIRECTION')[0][0] * 180 / numpy.pi
+        if pcd_ra < 0:
+            pcd_ra += 360
         pcd_dec = tb.getcol('DIRECTION')[1][0] * 180 / numpy.pi
         tb.close()
         pcd = [pcd_ra, pcd_dec]
