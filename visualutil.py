@@ -169,7 +169,11 @@ def makeSBmap(config, fitresult):
         model_types = paramData['model_types'][regioni]
 
         SBmap, LensedSBmap, Aperture, LensedAperture, mu_tot, mu_mask = \
-                lensutil.sbmap(x, y, nlens, nsource, parameters, model_types)
+                lensutil.sbmap(x, y, nlens, nsource, parameters, model_types, \
+                computeamp=True)
+
+        print("Found the following parameters for this fit:")
+        print(parameters)
 
         caustics = False
         if caustics:

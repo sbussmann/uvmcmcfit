@@ -145,6 +145,7 @@ def gauss_2d(x, y, par):
     (xnew,ynew) = xy_rotate(x, y, -par[2], par[3], par[5] + 90)
     r_ell_sq = ((xnew**2)*par[4] + (ynew**2)/par[4]) / N.abs(par[1])**2
     expgauss = N.exp(-0.5*r_ell_sq)
+    #import pdb; pdb.set_trace()
     return par[0] * expgauss
 
 def sie_grad(x, y, par):
@@ -226,7 +227,7 @@ def sie_grad(x, y, par):
     # Return value:
     return (xg, yg, mu)
 
-def sbmap(x, y, nlens, nsource, parameters, model_types, amp=False):
+def sbmap(x, y, nlens, nsource, parameters, model_types, computeamp=True):
 
     # define the x, y, and magnification maps
     dx = x.copy()
@@ -289,7 +290,7 @@ def sbmap(x, y, nlens, nsource, parameters, model_types, amp=False):
             gpar[0] *= normflux * 1e-3
 
         # re-evaluate unlensed image with normalized flux
-        if amp:
+        if computeamp:
             if model_type == 'Gaussian':
                 g_image = gauss_2d(x, y, gpar)
             if model_type == 'cylinder':
@@ -315,7 +316,7 @@ def sbmap(x, y, nlens, nsource, parameters, model_types, amp=False):
             g_lensimage += tmplens
 
         if nlens > 0:
-            if amp:
+            if computeamp:
                 # Set elliptical source parameters and pack them into an array:
                 epar = gpar.copy()
                 epar[0] = 1.0
@@ -354,4 +355,5 @@ def sbmap(x, y, nlens, nsource, parameters, model_types, amp=False):
                 e_image = 1
                 e_lensimage = 1
 
+    import pdb; pdb.set_trace()
     return g_image, g_lensimage, e_image, e_lensimage, amp1, amp2

@@ -136,7 +136,7 @@ def lnprior(pzero_regions, paramSetup):
 
 
 def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd, 
-           fixindx, paramSetup, amp=False):
+           fixindx, paramSetup, computeamp=True):
     """ Function that computes the Ln likelihood of the data"""
 
     # search poff_models for parameters fixed relative to other parameters
@@ -190,7 +190,7 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
 
         g_image, g_lensimage, e_image, e_lensimage, amp_tot, amp_mask = \
                 lensutil.sbmap(x, y, nlens, nsource, parameters, model_types,
-                amp=amp)
+                computeamp=computeamp)
         e_image_all += e_image
         e_lensimage_all += e_lensimage
         g_image_all += g_image
@@ -204,7 +204,7 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
         # --------------------------------------------------------------------
 
         if nlens > 0:
-            if amp:
+            if computeamp:
                 # Evaluate amplification for each region
                 lensmask = e_lensimage != 0
                 mask = e_image != 0
@@ -317,7 +317,7 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
     return likeln, amp
 
 def lnprob(pzero_regions, vis_complex, wgt, uuu, vvv, pcd, 
-           fixindx, paramSetup, amp=False):
+           fixindx, paramSetup, computeamp=True):
 
     """
 
@@ -333,7 +333,7 @@ def lnprob(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
         return probln, mu
 
     ll, mu = lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd, 
-           fixindx, paramSetup, amp=amp)
+           fixindx, paramSetup, computeamp=computeamp)
 
     normalization = 1.0#2 * real.size
     probln = lp * normalization + ll
@@ -347,10 +347,10 @@ config = yaml.load(configfile)
 
 
 # Determine if we are going to compute the amplification of every model
-if config.keys().count('Amp') > 0:
-    amp = config['Amp']
+if config.keys().count('ComputeAmp') > 0:
+    computeamp = config['ComputeAmp']
 else:
-    amp = True
+    computeamp = True
 
 # Determine parallel processing options
 if config.keys().count('MPI') > 0:
@@ -551,11 +551,11 @@ fixindx = setuputil.fixParams(paramSetup)
 if mpi:
     sampler = emcee.EnsembleSampler(nwalkers, nparams, lnprob, pool=pool, \
         args=[vis_complex, wgt, uuu, vvv, pcd, \
-        fixindx, paramSetup])
+        fixindx, paramSetup, computeamp])
 else:
     sampler = emcee.EnsembleSampler(nwalkers, nparams, lnprob, \
         args=[vis_complex, wgt, uuu, vvv, pcd, \
-        fixindx, paramSetup], threads=Nthreads)
+        fixindx, paramSetup, computeamp], threads=Nthreads)
 
 # Sample, outputting to a file
 #os.system('date')
