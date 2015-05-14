@@ -355,5 +355,4 @@ def sbmap(x, y, nlens, nsource, parameters, model_types, computeamp=True):
                 e_image = 1
                 e_lensimage = 1
 
-    import pdb; pdb.set_trace()
     return g_image, g_lensimage, e_image, e_lensimage, amp1, amp2
