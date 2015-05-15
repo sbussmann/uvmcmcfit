@@ -762,7 +762,7 @@ def plotImage(model, data, config, modeltype, fitresult, tag=''):
     xhi = radialextent
     ylo = -radialextent
     yhi = radialextent
-    ncell = (xhi - xlo) / cell
+    ncell = modelcut[:, 0].size#(xhi - xlo) / cell
     modx = -numpy.linspace(xlo, xhi, ncell)
     mody = numpy.linspace(ylo, yhi, ncell)
     #modx = -(numpy.arange(2 * pixextent) - pixextent) * cellp - cell/2.
@@ -801,6 +801,7 @@ def plotImage(model, data, config, modeltype, fitresult, tag=''):
     #ny_contour = datacut[:, 0].size
     #cmodx = -(numpy.arange(nx_contour) - pixextent) * cellp - cell/2.
     #cmody = (numpy.arange(ny_contour) - pixextent) * cellp + cell/2.
+    ncell = datacut[:, 0].size#(xhi - xlo) / cell
     cmodx = -numpy.linspace(xlo, xhi, ncell)
     cmody = numpy.linspace(ylo, yhi, ncell)
     plt.contour(cmodx, cmody, datacut, colors=pcolor, levels=plevs, \
