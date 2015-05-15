@@ -73,7 +73,7 @@ def uvload(visfile):
             nspw = visibilities['DATA'][0, 0, 0, :, 0, 0, 0].size
             nfreq = visibilities['DATA'][0, 0, 0, 0, :, 0, 0].size
             npol = visibilities['DATA'][0, 0, 0, 0, 0, :, 0].size
-            if nfreq > 0:
+            if nfreq > 1:
                 uu = numpy.zeros([nvis, nspw, nfreq, npol])
                 vv = numpy.zeros([nvis, nspw, nfreq, npol])
                 ww = numpy.zeros([nvis, nspw, nfreq, npol])
@@ -91,7 +91,7 @@ def uvload(visfile):
                 #vv[:, ispw] = freqif * visibilities['VV']
                 for ipol in range(npol):
                    # then compute the spatial frequencies:
-                    if nfreq > 0:
+                    if nfreq > 1:
                         freq = (numpy.arange(nfreq) - cfreq + 1) * dfreq + freqif
                         freqvis = numpy.meshgrid(freq, visibilities['UU'])
                         uu[:, ispw, :, ipol] = freqvis[0] * freqvis[1]
@@ -195,15 +195,27 @@ def visload(visfile):
 
         # if we are dealing with SMA data
         if visheader['NAXIS'] == 6:
-            data_real = visdata[0].data['DATA'][:,0,0,:,:,0]
-            data_imag = visdata[0].data['DATA'][:,0,0,:,:,1]
-            data_wgt = visdata[0].data['DATA'][:,0,0,:,:,2]
+            nfreq = visdata[0].data['DATA'][0, 0, 0, :, 0, 0].size
+            if nfreq > 1:
+                data_real = visdata[0].data['DATA'][:,0,0,:,:,0]
+                data_imag = visdata[0].data['DATA'][:,0,0,:,:,1]
+                data_wgt = visdata[0].data['DATA'][:,0,0,:,:,2]
+            else:
+                data_real = visdata[0].data['DATA'][:,0,0,0,:,0]
+                data_imag = visdata[0].data['DATA'][:,0,0,0,:,1]
+                data_wgt = visdata[0].data['DATA'][:,0,0,0,:,2]
 
         # if we are dealing with ALMA or PdBI data
         if visheader['NAXIS'] == 7:
-            data_real = visdata[0].data['DATA'][:,0,0,:,:,:,0]
-            data_imag = visdata[0].data['DATA'][:,0,0,:,:,:,1]
-            data_wgt = visdata[0].data['DATA'][:,0,0,:,:,:,2]
+            nfreq = visdata[0].data['DATA'][0, 0, 0, 0, :, 0, 0].size
+            if nfreq > 1:
+                data_real = visdata[0].data['DATA'][:,0,0,:,:,:,0]
+                data_imag = visdata[0].data['DATA'][:,0,0,:,:,:,1]
+                data_wgt = visdata[0].data['DATA'][:,0,0,:,:,:,2]
+            else:
+                data_real = visdata[0].data['DATA'][:,0,0,:,0,:,0]
+                data_imag = visdata[0].data['DATA'][:,0,0,:,0,:,1]
+                data_wgt = visdata[0].data['DATA'][:,0,0,:,0,:,2]
 
         data_complex = numpy.array(data_real) + \
                 1j * numpy.array(data_imag)

@@ -569,8 +569,8 @@ for pos, prob, state, amp in sampler.sample(pzero, iterations=10000):
 
     print("Mean acceptance fraction: {:f}".
             format(numpy.mean(sampler.acceptance_fraction)), 
-            "\nMean lnprob value: {:f}".
-            format(numpy.mean(prob)),
+            "\nMean lnprob and Max lnprob values: {:f} {:f}".
+            format(numpy.mean(prob), numpy.max(prob)),
             "\nTime to run previous set of walkers (seconds): {:f}".
             format(time.time() - currenttime))
     currenttime = time.time()

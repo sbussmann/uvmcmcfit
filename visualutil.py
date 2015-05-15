@@ -708,8 +708,8 @@ def plotImage(model, data, config, modeltype, fitresult, tag=''):
     pix = datawcs.wcs_world2pix(ra_centroid, dec_centroid, 1)
     x0 = numpy.round(pix[0])
     y0 = numpy.round(pix[1])
-    imrady = radialextent / cell# nymod / 2.
-    imradx = radialextent / cell# nxmod / 2.
+    imrady = numpy.round(radialextent / cell)# nymod / 2.
+    imradx = numpy.round(radialextent / cell)# nxmod / 2.
 
     # make data cutout
     totdx1 = x0 - imradx
@@ -749,8 +749,8 @@ def plotImage(model, data, config, modeltype, fitresult, tag=''):
     pix = modelwcs.wcs_world2pix(ra_centroid, dec_centroid, 1)
     x0 = numpy.round(pix[0])
     y0 = numpy.round(pix[1])
-    modrady = radialextent / cellmod
-    modradx = radialextent / cellmod
+    modrady = numpy.round(radialextent / cellmod)
+    modradx = numpy.round(radialextent / cellmod)
     totdx1 = x0 - modradx
     totdx2 = x0 + modradx
     totdy1 = y0 - modrady
@@ -889,6 +889,8 @@ def plotFit(config, fitresult, tag='', cleanup=True, showOptical=False,
 
     from astropy.io import fits
 
+    # print the best-fit model parameters and lnprob value
+    printFit(fitresult)
 
     # make the lensed image
     makeSBmap(config, fitresult)
@@ -935,6 +937,15 @@ def plotFit(config, fitresult, tag='', cleanup=True, showOptical=False,
     # remove the intermediate files
     if cleanup:
         removeTempFiles()
+
+def printFit(fitresult):
+
+    """ Print lnprob value for this fit. (eventually, goal is to print all
+    parameters for this model) """
+
+    strlnprob = str(fitresult[0])
+
+    print("Ln-prob value: " + strlnprob)
 
 def preProcess(config, paramData, fitresult, tag='', cleanup=True,
         showOptical=False, interactive=True):
