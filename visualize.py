@@ -209,6 +209,7 @@ def printFitParam(fitresult, fitKeys, mag=False):
         fitresult = fitresult[:-4]
         fitkeys = fitKeys[:-4]
 
+    print("Found the following parameters for this fit:")
     for k, v in zip(fitKeys, fitresult):
         print("%s : %.4f" %(k,v))
 
