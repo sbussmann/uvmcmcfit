@@ -48,7 +48,7 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
         rmsval = numpy.std(frg)
         if rmsval > 1e-6:
             avgval = numpy.mean(frg)
-            print(pname + ' = ', avgval, ' +/- ', rmsval)
+            print(pname + ' = ' + str(avgval) + ' +/- ' + str(rmsval))
             totalwidth = frg.max() - frg.min()
             nbins = totalwidth / rmsval * 5
             ax = plt.subplot(nrow, ncol, j)
