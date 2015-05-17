@@ -51,6 +51,8 @@ def plot(cleanup=True, configloc='sandbox.yaml', interactive=True):
     for i in range(nmu):
         testfit = numpy.append(testfit, 0)
     tag = 'sandbox'
+    for k, v in zip(paramSetup['pname'], testfit[1:-4]):
+        print("%s : %.4f" %(k,v))
     visualutil.plotFit(config, testfit, tag=tag, cleanup=cleanup,
             interactive=interactive)
         
