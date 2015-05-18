@@ -48,7 +48,7 @@ def plotPDF(fitresults, tag, limits='', Ngood=5000, axes='auto'):
         rmsval = numpy.std(frg)
         if rmsval > 1e-6:
             avgval = numpy.mean(frg)
-            print(pname + ' = ', avgval, ' +/- ', rmsval)
+            print(pname + ' = ' + str(avgval) + ' +/- ' + str(rmsval))
             totalwidth = frg.max() - frg.min()
             nbins = totalwidth / rmsval * 5
             ax = plt.subplot(nrow, ncol, j)
@@ -171,9 +171,6 @@ def makeSBmap(config, fitresult):
         SBmap, LensedSBmap, Aperture, LensedAperture, mu_tot, mu_mask = \
                 lensutil.sbmap(x, y, nlens, nsource, parameters, model_types, \
                 computeamp=True)
-
-        print("Found the following parameters for this fit:")
-        print(parameters)
 
         caustics = False
         if caustics:
@@ -890,9 +887,6 @@ def plotFit(config, fitresult, tag='', cleanup=True, showOptical=False,
 
     from astropy.io import fits
 
-    # print the best-fit model parameters and lnprob value
-    printFit(fitresult)
-
     # make the lensed image
     makeSBmap(config, fitresult)
 
@@ -938,15 +932,6 @@ def plotFit(config, fitresult, tag='', cleanup=True, showOptical=False,
     # remove the intermediate files
     if cleanup:
         removeTempFiles()
-
-def printFit(fitresult):
-
-    """ Print lnprob value for this fit. (eventually, goal is to print all
-    parameters for this model) """
-
-    strlnprob = str(fitresult[0])
-
-    print("Ln-prob value: " + strlnprob)
 
 def preProcess(config, paramData, fitresult, tag='', cleanup=True,
         showOptical=False, interactive=True):

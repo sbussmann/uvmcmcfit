@@ -200,6 +200,19 @@ def covariance(bestfitloc='posteriorpdf.fits'):
     savefig('covariance.pdf')
     plt.clf()        
 
+def printFitParam(fitresult, fitKeys, mag=False):
+    """ Print parameters for this model                                                         
+    mag: bool                                                                                   
+        if True, print magnification factors as well                                            
+    """
+    if mag is False:
+        fitresult = fitresult[:-4]
+        fitkeys = fitKeys[:-4]
+
+    print("Found the following parameters for this fit:")
+    for k, v in zip(fitKeys, fitresult):
+        print("%s : %.4f" %(k,v))
+
 def bestFit(bestfitloc='posteriorpdf.fits', showOptical=False, cleanup=True,
         interactive=True):
 
@@ -217,11 +230,16 @@ def bestFit(bestfitloc='posteriorpdf.fits', showOptical=False, cleanup=True,
     print("Found posterior PDF file: {:s}".format(bestfitloc))
     fitresults = fits.getdata(bestfitloc)
 
+    from astropy.table import Table
+    fitKeys = Table.read(bestfitloc).keys()
+
     # identify best-fit model
     minchi2 = fitresults['lnprob'].max()
     index = fitresults['lnprob'] == minchi2
     bestfit = fitresults[index][0]
     tag = 'bestfit'
+
+    printFitParam(bestfit, fitKeys)
     visualutil.plotFit(config, bestfit, tag=tag, cleanup=cleanup,
             showOptical=showOptical, interactive=interactive)
 
@@ -246,6 +264,10 @@ def goodFits(bestfitloc='posteriorpdf.fits', Nfits=12, Ngood=5000,
     fitresults = fits.getdata(bestfitloc)
     fitresults = fitresults[-Ngood:]
     fitresults = modifypdf.prune(fitresults)
+    
+    # get keys
+    from astropy.table import Table
+    fitKeys = Table.read(bestfitloc).keys()
 
     # select the random realizations model
     Nunprune = len(fitresults)
@@ -255,5 +277,6 @@ def goodFits(bestfitloc='posteriorpdf.fits', Nfits=12, Ngood=5000,
         realid = numpy.int(realids[ifit])
         fitresult = fitresults[realid]
         tag = 'goodfit' + str(realid).zfill(4)
+        printFitParam(fitresult, fitKeys)
         visualutil.plotFit(config, fitresult, tag=tag, showOptical=showOptical,
                 cleanup=cleanup, interactive=interactive)
