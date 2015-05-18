@@ -53,7 +53,7 @@ def plot(cleanup=True, configloc='sandbox.yaml', interactive=True):
     tag = 'sandbox'
 
     print("lnprob: %f" %testlnprob)
-    print("Using the following sandbox parameters:")    
+    print("Using the following model parameters:")    
     for k, v in zip(paramSetup['pname'], testfit[1:-4]):
         print("%s : %.4f" %(k,v))
     visualutil.plotFit(config, testfit, tag=tag, cleanup=cleanup,

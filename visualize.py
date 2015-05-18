@@ -19,7 +19,7 @@ from __future__ import print_function
 import os
 from astropy.io import fits
 import visualutil
-import sys
+#import sys
 #cwd = os.getcwd()
 #sys.path.append(cwd)
 #import config
@@ -207,7 +207,7 @@ def printFitParam(fitresult, fitKeys, mag=False):
     """
     if mag is False:
         fitresult = fitresult[:-4]
-        fitkeys = fitKeys[:-4]
+        fitKeys = fitKeys[:-4]
 
     print("Found the following parameters for this fit:")
     for k, v in zip(fitKeys, fitresult):

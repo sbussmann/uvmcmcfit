@@ -291,10 +291,10 @@ def makeVis(config, miriad=False, idtag=''):
             #command = 'cp ' + visfile + '/wflags ' + modelvisfile
             #os.system(command)
         else:
-            print(visfile, modelvisfile)
+            #print(visfile, modelvisfile)
             uvmodel.replace(SBmapLoc, visfile, modelvisfile, 
                     miriad=miriad)
-            print(visfile, modelvisfile)
+            #print(visfile, modelvisfile)
         
         # Python version of UVMODEL's "subtract" subroutine:
         modelvisfile = name + '_residual_' + idtag + tag
@@ -313,7 +313,7 @@ def makeVis(config, miriad=False, idtag=''):
             #command = 'cp ' + visfile + '/wflags ' + modelvisfile
             #os.system(command)
         else:
-            print(visfile, modelvisfile)
+            #print(visfile, modelvisfile)
             uvmodel.subtract(SBmapLoc, visfile, modelvisfile, 
                     miriad=miriad)
     except:
