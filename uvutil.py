@@ -27,6 +27,8 @@ def pcdload(visfile):
             # identify the phase center
             pcd_ra = visdata['AIPS SU '].data['RAEPO'][0]
             pcd_dec = visdata['AIPS SU '].data['DECEPO'][0]
+            if pcd_ra < 0:
+                pcd_ra += 360
             pcd = [pcd_ra, pcd_dec]
             return pcd
 
@@ -35,6 +37,8 @@ def pcdload(visfile):
            # identify the channel frequency(ies):
             pcd_ra = visdata[0].header['OBSRA']
             pcd_dec = visdata[0].header['OBSDEC']
+            if pcd_ra < 0:
+                pcd_ra += 360
             pcd = [pcd_ra, pcd_dec]
             return pcd
 
@@ -238,6 +242,13 @@ def visload(visfile):
 
         data_complex = vis_complex
         data_wgt = vis_weight
+        wgtshape = data_wgt.shape
+        if len(wgtshape) == 2:
+            npol = wgtshape[0]
+            nrow = wgtshape[1]
+            wgtshape = (npol, 1, nrow)
+        
+        data_wgt = data_wgt.reshape(wgtshape)
         #data_complex = []
         #data_wgt = []
         #for ipol in range(npol):

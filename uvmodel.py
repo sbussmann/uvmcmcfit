@@ -70,7 +70,7 @@ def writeVis(vis_complex, visdataloc, modelvisloc, miriad=False):
 
 def getVis(sbmodelloc, visdataloc):
 
-    print(sbmodelloc, visdataloc)
+    #print(sbmodelloc, visdataloc)
     # read in the surface brightness map of the model
     modelimage = fits.getdata(sbmodelloc)
     modelheader = fits.getheader(sbmodelloc)

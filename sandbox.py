@@ -32,6 +32,7 @@ def plot(cleanup=True, configloc='sandbox.yaml', interactive=True):
     uuu, vvv, www = uvutil.uvload(visfile)
     pcd = uvutil.pcdload(visfile)
     vis_complex, wgt = uvutil.visload(visfile)
+
     # remove the data points with zero or negative weight
     positive_definite = wgt > 0
     vis_complex = vis_complex[positive_definite]
@@ -237,8 +238,10 @@ def lnlike(pzero_regions, vis_complex, wgt, uuu, vvv, pcd,
     else:
         model_complex = sample_vis.uvmodel(g_lensimage_all, headmod, 
                 uuu, vvv, pcd)
-        diff_all = numpy.abs(vis_complex - model_complex)
-        chi2_all = wgt * diff_all * diff_all
+        vis_complex -= model_complex
+        diff_all = wgt * numpy.abs(vis_complex) ** 2
+        chi2_all = diff_all#wgt * diff_all * diff_all
+        #import pdb; pdb.set_trace()
     #model_real += numpy.real(model_complex)
     #model_imag += numpy.imag(model_complex)
 
