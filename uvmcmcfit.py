@@ -435,7 +435,7 @@ except:
                 uvfits = True
             else:
                 uvfits = False
-            iuuu, ivvv = uvutil.uvload(ivisfile)
+            iuuu, ivvv, iwww = uvutil.uvload(ivisfile)
             ipcd = uvutil.pcdload(ivisfile)
             ivis_complex, iwgt = uvutil.visload(ivisfile)
             if i == 0:

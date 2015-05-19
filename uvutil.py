@@ -25,8 +25,12 @@ def pcdload(visfile):
         if visheader['NAXIS'] == 7:
 
             # identify the phase center
-            pcd_ra = visdata['AIPS SU '].data['RAEPO'][0]
-            pcd_dec = visdata['AIPS SU '].data['DECEPO'][0]
+            try:
+                pcd_ra = visdata['AIPS SU '].data['RAEPO'][0]
+                pcd_dec = visdata['AIPS SU '].data['DECEPO'][0]
+            except:
+                pcd_ra = visheader['CRVAL5']
+                pcd_dec = visheader['CRVAL6']
             if pcd_ra < 0:
                 pcd_ra += 360
             pcd = [pcd_ra, pcd_dec]
@@ -35,8 +39,8 @@ def pcdload(visfile):
         if visheader['NAXIS'] == 6:
 
            # identify the channel frequency(ies):
-            pcd_ra = visdata[0].header['OBSRA']
-            pcd_dec = visdata[0].header['OBSDEC']
+            pcd_ra = visdata[0].header['CRVAL5']
+            pcd_dec = visdata[0].header['CRVAL6']
             if pcd_ra < 0:
                 pcd_ra += 360
             pcd = [pcd_ra, pcd_dec]
@@ -90,7 +94,10 @@ def uvload(visfile):
                 if nspw > 1:
                     freqif = freq0 + visfreq['IF FREQ'][0][ispw]
                 else:
-                    freqif = freq0 + visfreq['IF FREQ'][0]
+                    try:
+                        freqif = freq0 + visfreq['IF FREQ'][0]
+                    except:
+                        freqif = freq0
                 #uu[:, ispw] = freqif * visibilities['UU']
                 #vv[:, ispw] = freqif * visibilities['VV']
                 for ipol in range(npol):
@@ -373,7 +380,10 @@ def scalewt(visdataloc, newvisdataloc):
     if data_real.ndim == 4:
         visfile[0].data['DATA'][:, 0, 0, :, :, :, 2] = wgt_scaled
     else:
-        visfile[0].data['DATA'][:, 0, 0, :, :, 2] = wgt_scaled
+        if visfile[0].header['NAXIS'] == 6:
+            visfile[0].data['DATA'][:, 0, 0, :, :, 2] = wgt_scaled
+        if visfile[0].header['NAXIS'] == 7:
+            visfile[0].data['DATA'][:, 0, 0, 0, :, :, 2] = wgt_scaled
     visfile.writeto(newvisdataloc, clobber=True)
 
 def zerowt(visdataloc, newvisdataloc, ExcludeChannels):
