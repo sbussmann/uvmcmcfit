@@ -564,11 +564,11 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
             modelvisloc = []
             for i, ivisfile in enumerate(visfile):
                 visname, visext = os.path.splitext(ivisfile)
-                modelvisloc.append(visname + '_model_' + idtag + '.ms')
+                modelvisloc.append(visname + '_residual_' + idtag + '.ms')
         # handle single visibility files
         else:
             visname, visext = os.path.splitext(ivisfile)
-            modelvisloc = visname + '_model_' + idtag + '.ms'
+            modelvisloc = visname + '_residual_' + idtag + '.ms'
 
         # use CASA's clean task to make the images
         clean(vis=modelvisloc, imagename=imloc, mode='mfs', niter=10000,
