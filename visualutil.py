@@ -230,53 +230,49 @@ def makeVis(config, miriad=False, idtag=''):
     import os
 
 
-    # get the list of uvfits files
+    # get the uvfits files
     visfile = config['UVData']
-    
+
     #----------------------------------------------------------------------
     # Python version of UVMODEL
     # "Observe" the lensed emission with the SMA and write to a new file
     #----------------------------------------------------------------------
     # Python version of UVMODEL's "replace" subroutine:
-    try:
-        checker = visfile.find('uvfits')
-        if checker == -1:
-            uvfits = False
-        else:
-            uvfits = True
-        if uvfits:
-            nameindx = visfile.find('uvfits')
-            name = visfile[0:nameindx-1]
-        else:
-            nameindx = visfile.find('ms')
-            name = visfile[0:nameindx-1]
+
+    # is visfile a list of visibilities files?
+    if not type(visfile) is list:
+    
+        visname, visext = os.path.splitext(visfile)
         if miriad:
+            # We use miriad to do the imaging
             tag = '.miriad'
-            DataMiriad = name + tag
+            DataMiriad = visname + tag
             if not os.path.exists(DataMiriad):
                 print("Creating new miriad data file: " + DataMiriad)
                 os.system('rm -rf ' + DataMiriad)
                 command = 'fits op=uvin in=' + visfile + ' out=' + DataMiriad
                 os.system(command)
         else:
+            # We use CASA to do the imaging
             tag = '.ms'
+
             # check to see if the CASA ms exists
             try:
                 from taskinit import tb
-                tb.open(name + tag)
+                tb.open(visname + tag)
                 tb.close()
                 print "Found an existing CASA ms file."
             except RuntimeError:
-                print "No CASA ms file found, creating one from " + name \
+                print "No CASA ms file found, creating one from " + visname \
                         + ".uvfits file."
                 from casa import importuvfits
-                infile = name + '.uvfits'
-                outfile = name + '.ms'
+                infile = visname + '.uvfits'
+                outfile = visname + '.ms'
                 importuvfits(fitsfile=infile, vis=outfile)
 
-        visfile = name + tag
+        visfile = visname + tag
         SBmapLoc = 'LensedSBmap.fits'
-        modelvisfile = name + '_model_' + idtag + tag
+        modelvisfile = visname + '_model_' + idtag + tag
 
         os.system('rm -rf ' + modelvisfile)
         if miriad:
@@ -297,7 +293,7 @@ def makeVis(config, miriad=False, idtag=''):
             #print(visfile, modelvisfile)
         
         # Python version of UVMODEL's "subtract" subroutine:
-        modelvisfile = name + '_residual_' + idtag + tag
+        modelvisfile = visname + '_residual_' + idtag + tag
         os.system('rm -rf ' + modelvisfile)
         if miriad:
             SBmapMiriad = 'LensedSBmap' + tag
@@ -316,72 +312,75 @@ def makeVis(config, miriad=False, idtag=''):
             #print(visfile, modelvisfile)
             uvmodel.subtract(SBmapLoc, visfile, modelvisfile, 
                     miriad=miriad)
-    except:
-        #try:
-            for i, ivisfile in enumerate(visfile):
-                checker = ivisfile.find('uvfits')
-                if checker == -1:
-                    uvfits = False
-                else:
-                    uvfits = True
-                if uvfits:
-                    nameindx = ivisfile.find('uvfits')
-                    name = ivisfile[0:nameindx-1]
-                else:
-                    nameindx = ivisfile.find('ms')
-                    name = ivisfile[0:nameindx-1]
-                print(name)
-                if miriad:
-                    tag = '.uvfits'
-                else:
-                    tag = '.ms'
+    else:
+        for i, ivisfile in enumerate(visfile):
+            visname, visext = os.path.splitext(ivisfile)
+            print(visname)
+            if miriad:
+                tag = '.uvfits'
+            else:
+                tag = '.ms'
 
-                SBmapLoc = 'LensedSBmap.fits'
+            # check to see if the CASA ms exists
+            try:
+                from taskinit import tb
+                tb.open(visname + tag)
+                tb.close()
+                print "Found an existing CASA ms file."
+            except RuntimeError:
+                print "No CASA ms file found, creating one from " + visname \
+                        + ".uvfits file."
+                from casa import importuvfits
+                infile = visname + '.uvfits'
+                outfile = visname + '.ms'
+                importuvfits(fitsfile=infile, vis=outfile)
 
-                if miriad:
-                    SBmapMiriad = 'LensedSBmap.miriad'
-                    os.system('rm -rf ' + SBmapMiriad)
-                    command = 'fits op=xyin in=' + SBmapLoc + ' out=' \
-                            + SBmapMiriad
-                    os.system(command)
+            SBmapLoc = 'LensedSBmap.fits'
 
-                    ivisfile = name + '.miriad'
-                    modelivisfile = name + '_model_' + idtag + '.miriad'
-                    os.system('rm -rf ' + modelivisfile)
-                    command = 'uvmodel options=replace vis=' + ivisfile + \
-                            ' model=' + SBmapMiriad + ' out=' + modelivisfile
-                    os.system(command)
+            if miriad:
+                SBmapMiriad = 'LensedSBmap.miriad'
+                os.system('rm -rf ' + SBmapMiriad)
+                command = 'fits op=xyin in=' + SBmapLoc + ' out=' \
+                        + SBmapMiriad
+                os.system(command)
 
-                    #command = 'cp ' + ivisfile + '/wflags ' + modelivisfile
-                    #os.system(command)
-                else:
-                    ivisfile = name + tag
-                    modelivisfile = name + '_model_' + idtag + tag
-                    os.system('rm -rf ' + modelivisfile)
-                    uvmodel.replace(SBmapLoc, ivisfile, modelivisfile, 
-                            miriad=miriad)
-                
-                # Python version of UVMODEL's "subtract" subroutine:
-                if miriad:
-                    SBmapMiriad = 'LensedSBmap.miriad'
-                    os.system('rm -rf ' + SBmapMiriad)
-                    command = 'fits op=xyin in=' + SBmapLoc + ' out=' \
-                            + SBmapMiriad
-                    os.system(command)
+                ivisfile = visname + '.miriad'
+                modelivisfile = visname + '_model_' + idtag + '.miriad'
+                os.system('rm -rf ' + modelivisfile)
+                command = 'uvmodel options=replace vis=' + ivisfile + \
+                        ' model=' + SBmapMiriad + ' out=' + modelivisfile
+                os.system(command)
 
-                    modelivisfile = name + '_residual_' + idtag + '.miriad'
-                    os.system('rm -rf ' + modelivisfile)
-                    command = 'uvmodel options=subtract vis=' + ivisfile + \
-                            ' model=' + SBmapMiriad + ' out=' + modelivisfile
-                    os.system(command)
+                #command = 'cp ' + ivisfile + '/wflags ' + modelivisfile
+                #os.system(command)
+            else:
+                ivisfile = visname + tag
+                modelivisfile = visname + '_model_' + idtag + tag
+                os.system('rm -rf ' + modelivisfile)
+                uvmodel.replace(SBmapLoc, ivisfile, modelivisfile, 
+                        miriad=miriad)
+            
+            # Python version of UVMODEL's "subtract" subroutine:
+            if miriad:
+                SBmapMiriad = 'LensedSBmap.miriad'
+                os.system('rm -rf ' + SBmapMiriad)
+                command = 'fits op=xyin in=' + SBmapLoc + ' out=' \
+                        + SBmapMiriad
+                os.system(command)
 
-                    #command = 'cp ' + ivisfile + '/wflags ' + modelivisfile
-                    #os.system(command)
-                else:
-                    modelivisfile = name + '_residual_' + idtag + tag
-                    os.system('rm -rf ' + modelivisfile)
-                    uvmodel.subtract(SBmapLoc, ivisfile, modelivisfile, 
-                            miriad=miriad)
+                modelivisfile = visname + '_residual_' + idtag + '.miriad'
+                os.system('rm -rf ' + modelivisfile)
+                command = 'uvmodel options=subtract vis=' + ivisfile + \
+                        ' model=' + SBmapMiriad + ' out=' + modelivisfile
+                os.system(command)
+
+                #command = 'cp ' + ivisfile + '/wflags ' + modelivisfile
+                #os.system(command)
+            else:
+                modelivisfile = visname + '_residual_' + idtag + tag
+                os.system('rm -rf ' + modelivisfile)
+                uvmodel.subtract(SBmapLoc, ivisfile, modelivisfile, 
+                        miriad=miriad)
         #except:
         #    msg = "Visibility datasets must be specified as either a string " \
         #            + "or a list of strings."
@@ -525,13 +524,27 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
         # use CASA for imaging
         from clean import clean
         from casa import exportfits
-        print(visfile)
-        index = visfile.find('.uvfits')
-        name = visfile[0:index]
+
+        # ---------------------------------------
+        # invert and clean the model visibilities
+
+        # remove any existing clean products
         imloc = target + '_clean_model'
-        miriadmodelvisloc = name + '_model_' + idtag + '.ms'
         os.system('rm -rf ' + imloc + '*')
-        clean(vis=miriadmodelvisloc, imagename=imloc, mode='mfs', niter=10000,
+
+        # handle lists of visibility files
+        if type(visfile) is list:
+            modelvisloc = []
+            for i, ivisfile in enumerate(visfile):
+                visname, visext = os.path.splitext(ivisfile)
+                modelvisloc.append(visname + '_model_' + idtag + '.ms')
+        # handle single visibility files
+        else:
+            visname, visext = os.path.splitext(ivisfile)
+            modelvisloc = visname + '_model_' + idtag + '.ms'
+
+        # use CASA's clean task to make the images
+        clean(vis=modelvisloc, imagename=imloc, mode='mfs', niter=10000,
             threshold='0.2mJy', interactive=interactive, mask=mask, 
             imsize=imsize, cell=cell, weighting='briggs', robust=0.5)
 
@@ -539,11 +552,26 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
         os.system('rm -rf ' + imloc + '.fits')
         exportfits(imagename=imloc + '.image', fitsimage=imloc + '.fits')
 
+        # ---------------------------------------
         # invert and clean the residual visibilities
+
+        # remove any existing clean products
         imloc = target + '_clean_residual'
-        miriadmodelvisloc = name + '_residual_' + idtag + '.ms'
         os.system('rm -rf ' + imloc + '*')
-        clean(vis=miriadmodelvisloc, imagename=imloc, mode='mfs', niter=10000,
+
+        # handle lists of visibility files
+        if type(visfile) is list:
+            modelvisloc = []
+            for i, ivisfile in enumerate(visfile):
+                visname, visext = os.path.splitext(ivisfile)
+                modelvisloc.append(visname + '_model_' + idtag + '.ms')
+        # handle single visibility files
+        else:
+            visname, visext = os.path.splitext(ivisfile)
+            modelvisloc = visname + '_model_' + idtag + '.ms'
+
+        # use CASA's clean task to make the images
+        clean(vis=modelvisloc, imagename=imloc, mode='mfs', niter=10000,
             threshold='0.2mJy', interactive=interactive, mask=mask, 
             imsize=imsize, cell=cell, weighting='briggs', robust=0.5)
 
