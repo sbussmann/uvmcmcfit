@@ -540,7 +540,7 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
                 modelvisloc.append(visname + '_model_' + idtag + '.ms')
         # handle single visibility files
         else:
-            visname, visext = os.path.splitext(ivisfile)
+            visname, visext = os.path.splitext(visfile)
             modelvisloc = visname + '_model_' + idtag + '.ms'
 
         # use CASA's clean task to make the images
@@ -567,7 +567,7 @@ def makeImage(config, interactive=True, miriad=False, idtag=''):
                 modelvisloc.append(visname + '_residual_' + idtag + '.ms')
         # handle single visibility files
         else:
-            visname, visext = os.path.splitext(ivisfile)
+            visname, visext = os.path.splitext(visfile)
             modelvisloc = visname + '_residual_' + idtag + '.ms'
 
         # use CASA's clean task to make the images
