@@ -19,3 +19,16 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Note that part of the software in this repository is based on lensutil.py,
+originally written by Adam Bolton.  This software carries the following
+license:
+
+Copyright 2009 by Adam S. Bolton
+Creative Commons Attribution-Noncommercial-ShareAlike 3.0 license applies:
+http://creativecommons.org/licenses/by-nc-sa/3.0/
+All redistributions, modified or otherwise, must include this
+original copyright notice, licensing statement, and disclaimer.
+DISCLAIMER: ABSOLUTELY NO WARRANTY EXPRESS OR IMPLIED.
+AUTHOR ASSUMES NO LIABILITY IN CONNECTION WITH THIS COMPUTER CODE.
+

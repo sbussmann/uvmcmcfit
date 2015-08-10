@@ -684,6 +684,20 @@ def plotImage(model, data, config, modeltype, fitresult, tag=''):
                     angle=source_pa, ec='white', lw=0.5, fc='magenta', \
                     zorder=2, fill=True, alpha=0.5)
             ax.add_artist(e)
+            if config.keys().count('xtextoff') > 0:
+                xytext = (xxx + config['xtextoff'][i], 
+                        yyy + config['ytextoff'][i])
+                if iregion == 0:
+                    if modeltype != 'optical':
+                        plt.annotate(str(i), xy=(xxx, yyy), xytext=xytext, 
+                                fontsize='xx-large')
+                else:
+                    xytext = (xxx + config['xtextoff'][i+2], 
+                            yyy + config['ytextoff'][i+2])
+                    if modeltype != 'optical':
+                        plt.annotate(str(i + 2), xy=(xxx, yyy), xytext=xytext, 
+                                fontsize='xx-large')
+
         for i in range(nlens):
             i5 = i * 5
             xxx = numpy.array([parameters[i5 + 1]])
@@ -905,7 +919,7 @@ def removeTempFiles():
     os.system(cmd)    
 
 def plotFit(config, fitresult, tag='', cleanup=True, showOptical=False,
-        interactive=True):
+        interactive=True, plotonly=False):
 
     """
 
@@ -915,23 +929,25 @@ def plotFit(config, fitresult, tag='', cleanup=True, showOptical=False,
 
     from astropy.io import fits
 
-    # make the lensed image
-    makeSBmap(config, fitresult)
+    if not plotonly:
 
-    # are we using miriad to image the best-fit model?
-    if config.keys().count('UseMiriad') > 0:
-        miriad = config['UseMiriad']
-        if miriad == 'Visualize':
-            miriad = True
-            interactive = False
-    else:
-        miriad = False
+        # make the lensed image
+        makeSBmap(config, fitresult)
 
-    # make the simulated visibilities
-    makeVis(config, miriad=miriad, idtag=tag)
+        # are we using miriad to image the best-fit model?
+        if config.keys().count('UseMiriad') > 0:
+            miriad = config['UseMiriad']
+            if miriad == 'Visualize':
+                miriad = True
+                interactive = False
+        else:
+            miriad = False
 
-    # image the simulated visibilities
-    makeImage(config, miriad=miriad, interactive=interactive, idtag=tag)
+        # make the simulated visibilities
+        makeVis(config, miriad=miriad, idtag=tag)
+
+        # image the simulated visibilities
+        makeImage(config, miriad=miriad, interactive=interactive, idtag=tag)
 
     # read in the images of the simulated visibilities
     objectname = config['ObjectName']

@@ -214,7 +214,7 @@ def printFitParam(fitresult, fitKeys, mag=False):
         print("%s : %.4f" %(k,v))
 
 def bestFit(bestfitloc='posteriorpdf.fits', showOptical=False, cleanup=True,
-        interactive=True):
+        interactive=True, plotonly=False):
 
     """ 
 
@@ -241,7 +241,8 @@ def bestFit(bestfitloc='posteriorpdf.fits', showOptical=False, cleanup=True,
 
     printFitParam(bestfit, fitKeys)
     visualutil.plotFit(config, bestfit, tag=tag, cleanup=cleanup,
-            showOptical=showOptical, interactive=interactive)
+            showOptical=showOptical, interactive=interactive, 
+            plotonly=plotonly)
 
 def goodFits(bestfitloc='posteriorpdf.fits', Nfits=12, Ngood=5000,
         cleanup=True, interactive=True, showOptical=False):
